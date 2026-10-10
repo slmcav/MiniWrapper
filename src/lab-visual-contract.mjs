@@ -28,12 +28,33 @@ const projectList=node('div','contract-project-list');sidebar.append(projectList
 const separator=node('div','contract-divider');sidebar.append(separator);
 const nav=node('nav','contract-nav');nav.setAttribute('aria-label','Project navigation');sidebar.append(nav);
 function scrollToNode(id){$(id)?.scrollIntoView({behavior:'smooth',block:'center'});}
-function action(name,callback){const b=node('button',null,name);b.type='button';b.addEventListener('click',callback);nav.append(b);}
+const ICON_PATHS=Object.freeze({
+ Projects:'M3 7h6l2 2h10v11H3z M3 7V5h7l2 2',
+ Demos:'M7 5v14l12-7z',
+ Builder:'M4 4h6v6H4z M14 14h6v6h-6z M10 7h4 M17 10v4',
+ Papers:'M6 3h9l4 4v14H6z M15 3v4h4 M9 12h7 M9 16h7',
+ References:'M3 4h8c2 0 3 1 3 3v14c0-2-1-3-3H3z M14 7c0-2 1-3 3-3h4v14h-4c-2 0-3 1-3 3',
+ Export:'M12 3v13 M7 8l5-5 5 5 M4 15v5h16v-5',
+ Settings:'M12 3v3 M12 18v3 M3 12h3 M18 12h3 M5.6 5.6l2 2 M16.4 16.4l2 2 M18.4 5.6l-2 2 M7.6 16.4l-2 2 M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
+ Preview:'M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6',
+ Code:'M8 6 2 12l6 6 M16 6l6 6-6 6'
+});
+function navIcon(name){
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('class','contract-nav-icon');
+ svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');
+ svg.setAttribute('stroke-width','1.8');svg.setAttribute('stroke-linecap','round');
+ svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');
+ const path=document.createElementNS(svg.namespaceURI,'path');
+ path.setAttribute('d',ICON_PATHS[name]||ICON_PATHS.Builder);svg.append(path);
+ return svg;
+}
+function action(name,callback){const b=node('button');b.append(navIcon(name),document.createTextNode(name));b.type='button';b.addEventListener('click',callback);nav.append(b);}
 const science=node('details','contract-science');science.id='contractScience';
 science.append(node('summary',null,'Experiment methods, evidence, source reviews and research archive'));
 function openResearch(id){science.open=true;requestAnimationFrame(()=>scrollToNode(id));}
 action('Projects',()=>{$('projectName').focus();scrollToNode('projectName');});
-const demo=document.createElement('a');demo.href='./index.html';demo.textContent='Demos';nav.append(demo);
+const demo=document.createElement('a');demo.href='./index.html';demo.append(navIcon('Demos'),document.createTextNode('Demos'));nav.append(demo);
 action('Builder',()=>{$('tabBuild').click();scrollToNode('graphChain');});
 action('Papers',()=>scrollToNode('paperStatus'));
 action('References',()=>openResearch('auditResults'));
@@ -105,7 +126,7 @@ async function updateMeta(ok){
   const row=node('div');row.append(node('dt',null,'Source SHA-256'),node('dd',null,hash.slice(0,20)+'…'));metadata.append(row);
  }
 }
-window.glslLabBridge?.onValidationChange(valid=>{updateMeta(valid);drawWires();});
+window.glslLabBridge?.onValidationChange(valid=>{$('buildState').dataset.verified=String(valid);updateMeta(valid);drawWires();});
 function mode(){
  if(wide.matches){
   stage.append(workflow);
@@ -122,7 +143,7 @@ for(const [label,fn] of [
  ['Code',()=>{window.glslLabDrawer?.open();$('tabCode').click();}],
  ['Papers',()=>{window.glslLabDrawer?.close();scrollToNode('paperStatus');}]
 ]){
- const b=node('button',null,label);b.type='button';b.addEventListener('click',fn);mobileNav.append(b);
+ const b=node('button');b.append(navIcon(label),node('span',null,label));b.type='button';b.addEventListener('click',fn);mobileNav.append(b);
 }
 document.body.append(mobileNav);
 mode();
