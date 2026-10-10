@@ -7,7 +7,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
 createServer(async(req,res)=>{
   try {
     const path=new URL(req.url,'http://localhost').pathname;
-    if(!/^\/(index\.html|glsl-lab\.html|src\/(expression-graph|graph-editor|graph-ui|graph-dag|graph-dag-ui|build-evidence|project-store|lab-projects|research-capture|lab-research|research-figures|lab-figures|research-experiments|lab-experiments|research-replications|lab-replications|reference-registry|methodology-audit|lab-methodology|manuscript-engine|manuscript-render|lab-manuscript|research-pdf|scholarly-review|manuscript-verify|lab-bundle-verify|source-lineage|source-review-dossier|lab-source-review|source-claim-crosswalk|p8-methods-evidence|lab-p8-methods|manuscript-latex|latex-build-scripts|pdf-filename|research-source-policy|lab-workflow-guide)\.mjs|docs\/P8_EVIDENCE_REGISTER\.json)$/.test(path)){
+    if(!/^\/(index\.html|glsl-lab\.html|src\/[a-z0-9-]+\.mjs|docs\/P8_EVIDENCE_REGISTER\.json)$/.test(path)){
       res.writeHead(404);res.end('Not found');return;
     }
     const file=resolve(base,path.slice(1));
