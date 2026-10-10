@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+# A new push supersedes older checks on the same branch.
+concurrency:
+  group: miniwrapper-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   fast:
     name: Fast regression and expression graph tests
