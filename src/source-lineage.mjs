@@ -3,11 +3,11 @@
 // The matching-file regression gate must be updated whenever the generator changes.
 export const SOURCE_LINEAGE_SCHEMA='glsl-lab/source-lineage/1';
 export const PINNED_REPOSITORY='slmcav/MiniWrapper';
-export const SOURCE_SNAPSHOT_COMMIT='f1ba410ac38c12be0c3960faa163a7feb6cbf25d';
+export const SOURCE_SNAPSHOT_COMMIT='7679016597639009e9e55af59d67e5db9292c1ca';
 export const PINNED_SOURCE_BLOBS=Object.freeze([
   {
     "path": "glsl-lab.html",
-    "gitBlobSha1": "fc72864a4588f6e05083bee5c18e358e874b2cdb"
+    "gitBlobSha1": "7d1b9ce87cd430e4c2e38da842b102634baac5b4"
   },
   {
     "path": "src/build-evidence.mjs",
@@ -74,16 +74,20 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
     "gitBlobSha1": "66db4a7b6b6f1704977a30611e90995cddf5879c"
   },
   {
+    "path": "src/source-claim-crosswalk.mjs",
+    "gitBlobSha1": "17e616ca5627fca4746f86d73f851f87e07db7b1"
+  },
+  {
     "path": "package.json",
     "gitBlobSha1": "bcff00ca93f79e5a607288dd47e0f77ce0e5228a"
   },
   {
     "path": "src/source-review-dossier.mjs",
-    "gitBlobSha1": "0416056be678c7058a3f5294dfa52decd6bf8294"
+    "gitBlobSha1": "ed416313334c05b94ed9d40f7891a664b52447c5"
   },
   {
     "path": "src/lab-source-review.mjs",
-    "gitBlobSha1": "4fa2c50b6a4e12b03e2c0658fc2d98b4308093c8"
+    "gitBlobSha1": "c60c26a5587e877739abc42bd182168ebb4ae60b"
   }
 ].map(record=>Object.freeze(record)));
 export function exportSourceLineage(){
