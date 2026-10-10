@@ -695,6 +695,10 @@ test('Phase 2 visual contract: real dashboard panels remain simultaneous on desk
  await expect(page.locator('#contractCodePane #paneCode')).toBeVisible();
  await expect(page.locator('.contract-sources a')).toHaveCount(4);
  await expect(page.locator('.contract-meta dd').first()).toContainText(/verified draw|Awaiting GPU/);
+ await page.getByRole('navigation',{name:'Project navigation'}).getByRole('button',{name:'Settings'}).click();
+ await expect(page.locator('#panePlay')).toBeVisible();
+ await expect(page.locator('#zoom')).toBeVisible();
+ await expect(page.locator('#graphChain')).toBeVisible();
  const positions=await page.evaluate(()=>{
    const bounds=sel=>{const b=document.querySelector(sel).getBoundingClientRect();
      return {x:b.left,y:b.top,w:b.width,h:b.height};};
