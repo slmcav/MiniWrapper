@@ -91,3 +91,28 @@ test('P1 mobile project and evidence workflow saves, verifies and reloads',async
   await expect(page.locator('#projectName')).toHaveValue('Research test project');
   await expect(page.locator('#projectStatus')).toContainText('Project loaded');
 });
+
+test('P2 mobile builder compiles a typed graph and saves its project',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  await page.locator('#tabBuild').click();
+  await expect(page.locator('#graphChain .graph-node')).toHaveCount(5);
+  await page.locator('#addWave').click();
+  await expect(page.locator('#graphChain .graph-node')).toHaveCount(6);
+  await page.locator('#builderUndo').click();
+  await expect(page.locator('#graphChain .graph-node')).toHaveCount(5);
+  await page.locator('#builderRedo').click();
+  await expect(page.locator('#graphChain .graph-node')).toHaveCount(6);
+  await page.locator('#builderRender').click();
+  await expect(page.locator('#error')).toBeEmpty({timeout:30000});
+  await expect(page.locator('#saveBuild')).toBeEnabled({timeout:30000});
+  await page.locator('#projectName').fill('Typed graph proof');
+  await page.locator('#saveProject').click();
+  await expect(page.locator('#projectStatus')).toContainText('Project saved');
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('glsl-lab:projects:v1'))[0]);
+  expect(saved.demoId).toBe('builder');
+  expect(saved.graph.nodes).toHaveLength(6);
+  await page.reload();
+  await page.locator('#projectPicker').selectOption(saved.id);
+  await expect(page.locator('#paneBuild')).toBeVisible();
+  await expect(page.locator('#graphChain .graph-node')).toHaveCount(6);
+});
