@@ -64,7 +64,7 @@ test('P3 tampering archived pixels, parameters or drawing order invalidates the 
  const forged=structuredClone(study);forged.trials[2].receipt.parameters.zoom=1.9;
  const {sha256,...body}=forged;
  forged.sha256=await sha256Hex(canonicalJson(body),subtle);
- await assert.rejects(()=>verifySweepSession(forged,subtle),/SHA-256 mismatch|settings/);
+ await assert.rejects(()=>verifySweepSession(forged,subtle),/SHA-256 mismatch|hash mismatch|settings/);
 });
 test('P3 archive exports complete verified experiment JSON and all PNGs as ZIP',async()=>{
  const s=await make('session_0001'),zip=Buffer.from(await exportSweepZip(s,subtle));
