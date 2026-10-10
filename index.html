@@ -42,6 +42,11 @@
     <textarea id="code" spellcheck="false" aria-describedby="status"></textarea>
     <div class="toolbar">
       <button id="render" class="primary" type="button">Render (Ctrl/⌘ + Enter)</button>
+      <label for="example">Example</label>
+      <select id="example" aria-label="Shader example">
+        <option value="original">Original field</option>
+        <option value="rotation">Rotating 3D fractal</option>
+      </select>
       <button id="pause" type="button">Pause</button>
       <button id="reset" type="button">Reset time</button>
       <label for="scale">Resolution</label>
@@ -63,6 +68,9 @@
 
 // Exact snippet supplied for MiniWrapper, retained in the editor without rewriting.
 const DEFAULT_SNIPPET = 'float i,e,R,s;vec3 q,p,d=vec3(FC.xy/r*.4-vec2(.2,-.8),1);for(q.zy--;i++<70.;){o.rgb+=hsv(.59,R,min(e*s-.15,1.)/40.);s=4.;p=q+=d*e*R*.3;p=vec3(log(R=length(p*1.3)),exp2(-p.z/R),atan(p.y,p.x)*s-t*.3);for(e=--p.y;s<1e3;s+=s)e+=sin(dot(cos(p*s),sin(p.xyx*s+t*.9)))/s*.5;}';
+
+// Alternate compact GLSL expression supplied for the rotation-compatibility fix.
+const ROTATION_SNIPPET = 'for(float i,g,e,s;++i<99.;o.rgb+=.01-hsv(.1,g*.016-e*.3,s/2e2)){vec3 p=vec3((FC.xy-.5*r)/r.y*5.+vec2(0,9),g)*rotate3D(-1.1-cos(t*.15)*.1,vec3(1,11.+sin(t)*.15,-1.5));s=2.;for(int i;i++<19;p=vec3(.08,4,-1)-abs(abs(p)*e-vec3(3,4,3)))s*=e=7.1/dot(p,p*.51);g+=p.y/s;s=log2(s)/exp(e);}';
 
 const codeEl = document.getElementById('code');
 const statusEl = document.getElementById('status');
@@ -92,7 +100,11 @@ if (!gl) {
   function seedUninitializedLocals(source) {
     return source
       .replace(/\bfloat\s+i\s*,\s*e\s*,\s*R\s*,\s*s\s*;/, 'float i=0.,e=1.,R=1.,s=4.;')
-      .replace(/\bvec3\s+q\s*,\s*p\s*,\s*d\s*=/, 'vec3 q=vec3(0.),p=vec3(0.),d=');
+      .replace(/\bvec3\s+q\s*,\s*p\s*,\s*d\s*=/, 'vec3 q=vec3(0.),p=vec3(0.),d=')
+      // The second example reads outer and inner loop counters before assignment.
+      .replace(/\bfor\s*\(\s*float\s+i\s*,\s*g\s*,\s*e\s*,\s*s\s*;/g,
+               'for(float i=0.,g=0.,e=0.,s=0.;')
+      .replace(/\bfor\s*\(\s*int\s+i\s*;/g, 'for(int i=0;');
   }
 
   function fragmentSource(body) {
@@ -105,6 +117,17 @@ vec3 hsv(float h, float s, float v) {
   vec4 K = vec4(1., 2./3., 1./3., 3.);
   vec3 p = abs(fract(vec3(h) + K.xyz) * 6. - K.www);
   return v * mix(K.xxx, clamp(p - K.xxx, 0., 1.), s);
+}
+// Axis-angle rotation with a unit axis, returning a 3x3 column-major matrix.
+// GLSL supports both mat3 * vec3 and vec3 * mat3 (the latter is row-vector multiplication).
+mat3 rotate3D(float angle, vec3 axis) {
+  vec3 a = normalize(axis);
+  float c = cos(angle), s = sin(angle), k = 1. - c;
+  return mat3(
+    c + a.x*a.x*k,   a.y*a.x*k + a.z*s, a.z*a.x*k - a.y*s,
+    a.x*a.y*k-a.z*s, c + a.y*a.y*k,     a.z*a.y*k + a.x*s,
+    a.x*a.z*k+a.y*s, a.y*a.z*k-a.x*s,   c + a.z*a.z*k
+  );
 }
 void main() {
   vec2 FC = gl_FragCoord.xy;
@@ -203,6 +226,10 @@ void main() {
   }
 
   document.getElementById('render').addEventListener('click', compile);
+  document.getElementById('example').addEventListener('change', event => {
+    codeEl.value = event.target.value === 'rotation' ? ROTATION_SNIPPET : DEFAULT_SNIPPET;
+    compile();
+  });
   codeEl.addEventListener('keydown', event => {
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
       event.preventDefault();
