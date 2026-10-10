@@ -490,6 +490,16 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   expect(dossier.assessmentCount).toBe(1);
   expect(dossier.publicationAuthorized).toBe(false);
   expect(dossier.assessments[0].referenceId).toBe('khronos-webgl2');
+  await expect(page.locator('#sourceClaimCrosswalk')).toContainText('1/3 cited sources');
+  await expect(page.locator('#sourceClaimCrosswalk')).toContainText('khronos-glsl-es300 [not_assessed]');
+  await expect(page.locator('#sourceCrosswalkExport')).toBeEnabled();
+  const crosswalkDl=page.waitForEvent('download');
+  await page.locator('#sourceCrosswalkExport').click();
+  const crosswalk=JSON.parse((await readFile(await (await crosswalkDl).path())).toString('utf8'));
+  expect(crosswalk.schema).toBe('glsl-lab/source-claim-crosswalk/1');
+  expect(crosswalk.summary.citedSources).toBe(3);
+  expect(crosswalk.summary.sourcesWithAssessments).toBe(1);
+  expect(crosswalk.publicationAuthorized).toBe(false);
   await page.locator('#sourceReviewImport').setInputFiles({
     name:'reviewer-dossier.json',mimeType:'application/json',
     buffer:Buffer.from(JSON.stringify(dossier))
