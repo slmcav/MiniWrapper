@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import {readFile} from 'node:fs/promises';
 
 test('mobile navigation: classic editor opens Lab without losing presets',async({page})=>{
   await page.goto('/index.html');
@@ -223,4 +224,59 @@ test('P3 research capture cannot proceed without a freshly validated frame',asyn
   await expect(page.locator('#researchStatus')).toContainText('Captured actual WebGL pixels',{timeout:30000});
   const observed=await page.evaluate(()=>JSON.parse(localStorage.getItem('glsl-lab:receipts:v1'))[0]);
   expect(observed.parameters.zoom).toBe(1.75);
+});
+
+test('P3 lossless full-resolution PNG and manifest export work on actual GPU',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  const available=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+  test.skip(!available,'GPU readback is required to validate a real full-resolution figure');
+  await expect(page.locator('#figureCapture')).toBeEnabled({timeout:30000});
+  await page.locator('#figureCapture').click();
+  await expect(page.locator('#figureStatus')).toContainText('Captured lossless full-resolution figure',{timeout:30000});
+  await expect(page.locator('#figureCount')).toContainText('1 full-resolution figure');
+  await expect(page.locator('#figureExport')).toBeEnabled();
+  const result=page.waitForEvent('download');
+  await page.locator('#figureExport').click();
+  const item=await result;
+  expect(item.suggestedFilename()).toBe('glsl-lab-full-figures-1-frames.zip');
+  const zip=Buffer.from(await readFile(await item.path()));
+  expect(zip.readUInt32LE(0)).toBe(0x04034b50);
+  const nameLength=zip.readUInt16LE(26),extra=zip.readUInt16LE(28),length=zip.readUInt32LE(18);
+  expect(zip.toString('utf8',30,30+nameLength)).toBe('manifest.json');
+  const manifest=JSON.parse(zip.toString('utf8',30+nameLength+extra,30+nameLength+extra+length));
+  expect(manifest.schema).toBe('glsl-lab/figure-bundle/1');
+  expect(manifest.figures).toHaveLength(1);
+  expect(manifest.figures[0].pngSha256).toMatch(/^[a-f0-9]{64}$/);
+  expect(manifest.figures[0].fullFrameMetrics.sampleCount).toBe(
+    manifest.figures[0].width*manifest.figures[0].height
+  );
+  expect(manifest.captures).toHaveLength(1);
+  expect(manifest.receipts).toHaveLength(1);
+  await page.reload();
+  await expect(page.locator('#figureCount')).toContainText('0 full-resolution figure');
+  await expect(page.locator('#figureExport')).toBeDisabled();
+});
+test('P3 controlled three-draw series measures frame differences and exports linked figures',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  const available=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+  test.skip(!available,'GPU timing and readback require a real WebGL2 context');
+  await expect(page.locator('#figureSeries')).toBeEnabled({timeout:30000});
+  await page.locator('#figureSeries').click();
+  await expect(page.locator('#figureStatus')).toContainText('Captured 3 independent draw submissions',{timeout:30000});
+  await expect(page.locator('#figureCount')).toContainText('3 full-resolution figure');
+  await expect(page.locator('#figureComparison')).toContainText('Controlled series: 3 observed frames');
+  await expect(page.locator('#figureComparison')).toContainText('mean absolute RGB8 difference');
+  const result=page.waitForEvent('download');
+  await page.locator('#figureExport').click();
+  const item=await result,zip=Buffer.from(await readFile(await item.path()));
+  const offset=30+zip.readUInt16LE(26)+zip.readUInt16LE(28);
+  const manifest=JSON.parse(zip.toString('utf8',offset,offset+zip.readUInt32LE(18)));
+  expect(manifest.figures).toHaveLength(3);
+  expect(manifest.series.frames).toHaveLength(3);
+  expect(manifest.series.pairs).toHaveLength(2);
+  expect(manifest.series.pairs[0].pixels).toBe(manifest.figures[0].width*manifest.figures[0].height);
+  expect(manifest.series.pairs[0].changedRgbPixelFraction).toBeGreaterThanOrEqual(0);
+  expect(manifest.series.pairs[0].changedRgbPixelFraction).toBeLessThanOrEqual(1);
+  await page.locator('#figureClear').click();
+  await expect(page.locator('#figureCount')).toContainText('0 full-resolution figure');
 });
