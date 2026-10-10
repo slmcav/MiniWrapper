@@ -32,8 +32,9 @@ export async function renderLaTeXManuscript(bundle,subtle=globalThis.crypto?.sub
   (ref.doi?' DOI: \\url{https://doi.org/'+ref.doi+'}.':'')+
   ' \\url{'+ref.url+'}.'
  );
- const provenance=(name,hash)=>name+': \\texttt{'+hash.slice(0,32)+'}\\\\\n'+
-  '\\texttt{'+hash.slice(32)+'}.';
+ const provenance=(name,hash)=>'\\noindent\\textbf{'+name+'}:\\par\n'+
+  '\\noindent\\texttt{'+hash.slice(0,32)+'}\\\\\n'+
+  '\\texttt{'+hash.slice(32)+'}\\par';
  const sections=[
   '\\documentclass[11pt,a4paper]{article}',
   '\\usepackage[T1]{fontenc}','\\usepackage[utf8]{inputenc}',
