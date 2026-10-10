@@ -98,7 +98,7 @@ test('P9 explicit caveat: unsigned packet checksum is not a verified manuscript 
  assert.equal(await verifyUnsignedEditorialPacket(p,subtle),true);
  assert.notEqual(p.sha256,alternate.sha256);
  const d=await createSourceReviewDossier(p,[note('lagae2010')],{subtle,clock:()=>when});
- await assert.rejects(()=>verifySourceReviewDossier(d,alternate,subtle),/altered/);
+ await assert.rejects(()=>verifySourceReviewDossier(d,alternate,subtle),/refer to a citation|altered/);
  assert.equal(d.independentPeerReviewEstablished,false);
  assert.equal(d.publicationAuthorized,false);
 });
