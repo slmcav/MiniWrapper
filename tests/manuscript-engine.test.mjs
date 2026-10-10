@@ -151,7 +151,7 @@ test('P5 PDF generation honors nine-frame treatment statistics and verified sour
   const pdf=Buffer.from(await createDirectPdf(draft,{subtle}));
   assert.ok(pdf.includes(Buffer.from('Sample SD =')));
   assert.ok(pdf.includes(Buffer.from('@YoheiNishitsuji')));
-  assert.ok(pdf.includes(Buffer.from('independent experimental units'))===false);
+  assert.ok(pdf.includes(Buffer.from('independent experimental units')));
   assert.ok(pdf.includes(Buffer.from('UNREVIEWED')));
 });
 test('P5 tampered sources cannot produce a seemingly valid direct PDF',async()=>{
