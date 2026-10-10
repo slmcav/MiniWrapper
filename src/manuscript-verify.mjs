@@ -59,7 +59,7 @@ export async function verifyManuscriptZip(zip,{
   const incoming=zip instanceof ArrayBuffer?new Uint8Array(zip):zip;
   const files=readEntries(incoming);
   const manifest=parseJSON(files,'manifest.json');
-  need(manifest?.schema==='glsl-lab/manuscript-bundle/1'&&
+  need(manifest?.schema==='glsl-lab/manuscript-bundle/2'&&
     manifest.verification?.academicManuscriptUnlocked===false&&
     manifest.verification?.manuscriptReviewCompleted===false,
     'Bundle does not have an unreviewed research manifest');
@@ -67,6 +67,10 @@ export async function verifyManuscriptZip(zip,{
   const lineage=parseJSON(files,'source-lineage.json');
   need(canonicalJson(lineage)===canonicalJson(exportSourceLineage()),
     'Bundle source lineage differs from this verifier release; use the matching Git source snapshot');
+  need(manifest.typesetting?.engine==='pdfLaTeX'&&
+    manifest.typesetting?.input==='manuscript.tex'&&
+    manifest.typesetting?.compiledPdfIncluded===false,
+    'Canonical bundle requires a LaTeX source, not an untracked PDF');
   need(typeof manifest.manuscript?.generatedAt==='string','Bundle manuscript timestamp absent');
   const regenerated=await assembleManuscript(study,{
     audit,subtle,clock:()=>manifest.manuscript.generatedAt
@@ -89,9 +93,9 @@ export async function verifyManuscriptZip(zip,{
     observedGpuDraws:study.trials.length,studySha256:study.sha256,
     manuscriptSha256:regenerated.record.sha256,auditSha256:audit.sha256,
     inventoryEntries:manifest.fileInventory.length,
-    pdfVerified:true,sourceFiguresVerified:regenerated.figures.length,
+    pdfVerified:false,latexSourceVerified:true,sourceFiguresVerified:regenerated.figures.length,
     bibliographyAndReviewPacketVerified:true,
     manuscriptReviewCompleted:false,publicationAuthorized:false,
-    meaning:'Complete canonical archive, evidence, PDF and unsigned review handoff reproduced; NOT proof of authorship, independent experimental replication or peer review'
+    meaning:'Complete canonical LaTeX source archive, evidence and unsigned review handoff reproduced; NOT proof of authorship, independent experimental replication or peer review'
   };
 }
