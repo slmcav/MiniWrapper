@@ -13,7 +13,7 @@ The app compiles the textbox text into a GLSL ES 3.00 fragment shader, draws a f
 
 ## Included demos
 
-All three supplied shader demos are credited to **@YoheiNishitsuji**. MiniWrapper preserves their compact expressions in the demo selector.
+All **17 supplied shader demos** are credited to **@YoheiNishitsuji**. MiniWrapper preserves the supplied compact expressions verbatim in the demo selector, with compatibility initialization applied only when compiling. Demos 4–17 are the additional snippets from the October 2026 batch.
 
 ### 1. Original field (@YoheiNishitsuji)
 
@@ -33,6 +33,12 @@ for(float i,g,e,s;++i<99.;o.rgb+=.01-hsv(.1,g*.016-e*.3,s/2e2)){vec3 p=vec3((FC.
 float i,e,R,s;vec3 q,p,d=vec3((FC.xy-.5*r)/r.y,.8);for(q.z--;i++<99.;){o.rgb+=hsv(.1,-e,e/1.5e1);p=q+=d*max(e,.004)*R*.22;p=vec3(log2(R=length(p))-t*.3,e=asin(-p.z/R-.01)-.9,atan(p.x,p.y)*2.5-t*.3);for(s=2.;s<1e3/(i*.3);s+=s)e+=abs(dot(sin(p.yzx*s),cos(p.yzx*s)))/s;}
 ```
 
+### Demos 4–17
+
+The remaining fourteen expressions are included verbatim in `index.html` and are selectable as **Demo 4** through **Demo 17** (each labeled `(@YoheiNishitsuji)`). These cover iterative log-polar transformations, rotated fields, harmonic ray-marching, particle-like projections, and other procedural fragment programs. The numbered names intentionally avoid inventing original titles for unnamed snippets.
+
+A few source expressions leave local counters uninitialized; Demo 5 also references an otherwise undeclared `s`. MiniWrapper supplies deterministic fallback initializations in the compiled shader rather than silently modifying the saved/demo expressions. For Demo 5, `s=0.` is an implementation fallback, **not** a value supplied by the original expression.
+
 ## Symbols supplied by the wrapper
 
 | Symbol | GLSL type | Meaning |
@@ -43,10 +49,12 @@ float i,e,R,s;vec3 q,p,d=vec3((FC.xy-.5*r)/r.y,.8);for(q.z--;i++<99.;){o.rgb+=hs
 | `o` | `vec4` | RGBA fragment output; initialized to opaque black for each pixel |
 | `hsv(h,s,v)` | `vec3` | HSV-to-RGB conversion returning a color to add to `o.rgb` |
 | `rotate3D(angle, axis)` | `mat3` | Axis-angle 3D rotation matrix helper used by the rotating fractal demo |
+| `rotate2D(angle)` | `mat2` | 2D planar rotation matrix for shader snippets that multiply `vec2` values by a matrix |
+| `PI` | `float` | Mathematical constant π used by Demo 5 |
 
 ## Portability notes
 
-Several compact mini-shader snippets rely on implicit starting values that are not guaranteed by GLSL. To keep the demos reproducible across drivers, the wrapper normalizes a few known declaration patterns during compilation:
+Several compact mini-shader snippets rely on implicit starting values that are not guaranteed by GLSL. The wrapper includes additional narrowly targeted initialization patterns for the new demo loop counters and vectors, alongside the original patterns. To keep the demos reproducible across drivers, the wrapper normalizes a few known declaration patterns during compilation:
 
 ```glsl
 float i=0.,e=1.,R=1.,s=4.;
