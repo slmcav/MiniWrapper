@@ -116,3 +116,16 @@ test('P3 refuse figure archives whose image data or series summaries are altered
  const forged={...a,png:new Uint8Array(a.png)};forged.png[44]^=1;
  await assert.rejects(()=>exportFigureBundle([forged],null,[a.receipt],[a.capture],{subtle}),/PNG bytes were modified/);
 });
+
+test('P3 GPU draw identifiers and original observation times survive hashes and series export',async()=>{
+  const a=await evidence(px(4,3),4,3,0,1),b=await evidence(px(4,3),4,3,0,2);
+  const first=await createFigureEvidence(a.receipt,a.capture,a.rgba,{subtle,clock:clock(1),drawSequence:11});
+  const second=await createFigureEvidence(b.receipt,b.capture,b.rgba,{subtle,clock:clock(2),drawSequence:12});
+  const x={...first,receipt:a.receipt,capture:a.capture},y={...second,receipt:b.receipt,capture:b.capture};
+  const series=await createFrameSeries([x,y],{subtle});
+  assert.deepEqual(series.frames.map(f=>f.drawSequence),[11,12]);
+  assert.equal(series.pairs[0].changedRgbPixelFraction,0);
+  assert.equal(await verifyFigureEvidence(x,a.receipt,a.capture,subtle),true);
+  const invalid={...y,record:{...y.record,drawSequence:10}};
+  await assert.rejects(()=>createFrameSeries([x,invalid],{subtle}),/distinct, ordered GPU draw/);
+});

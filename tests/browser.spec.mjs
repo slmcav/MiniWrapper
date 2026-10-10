@@ -273,6 +273,10 @@ test('P3 controlled three-draw series measures frame differences and exports lin
   const manifest=JSON.parse(zip.toString('utf8',offset,offset+zip.readUInt32LE(18)));
   expect(manifest.figures).toHaveLength(3);
   expect(manifest.series.frames).toHaveLength(3);
+  expect(manifest.series.frames.every(f=>Number.isSafeInteger(f.drawSequence))).toBe(true);
+  expect(manifest.series.frames[0].drawSequence).toBeLessThan(manifest.series.frames[1].drawSequence);
+  expect(manifest.series.frames[1].drawSequence).toBeLessThan(manifest.series.frames[2].drawSequence);
+  expect(manifest.series.frames.every(f=>/Z$/.test(f.capturedAt))).toBe(true);
   expect(manifest.series.pairs).toHaveLength(2);
   expect(manifest.series.pairs[0].pixels).toBe(manifest.figures[0].width*manifest.figures[0].height);
   expect(manifest.series.pairs[0].changedRgbPixelFraction).toBeGreaterThanOrEqual(0);
