@@ -85,7 +85,7 @@ test('P4 repeated study article reports n=3 and descriptive sample SD without in
   assert.ok(manuscript.record.treatments.every(x=>x.stdevLuma8!==null));
   const html=renderManuscriptHTML(manuscript);
   assert.ok(html.includes('divisor n − 1 = 2'));
-  assert.ok(html.includes('not independently established'));
+  assert.ok(html.includes('do not establish independent replication'));
   assert.equal(manuscript.figures.length,9);
   assert.equal(await verifyManuscript(manuscript,subtle),true);
 });
