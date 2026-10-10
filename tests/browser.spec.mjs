@@ -421,3 +421,61 @@ test('P4 complete real WebGL sweep produces a hash-verified limited methodology 
   expect(audit.references.some(r=>r.id==='jeremias-quilez2013')).toBe(false);
   await expect(page.locator('#generatePaper')).toBeDisabled();
 });
+
+test('P4 verified GPU experiment unlocks research draft with styled HTML and evidence ZIP',async({page})=>{
+  test.setTimeout(180000);
+  await page.goto('/glsl-lab.html');
+  await expect(page.locator('#generatePaper')).toBeDisabled();
+  const available=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+  test.skip(!available,'GPU verified study required for publication-style research draft');
+  await expect(page.locator('#sweepRun')).toBeEnabled({timeout:30000});
+  await page.locator('#sweepRun').click();
+  await expect(page.locator('#sweepStatus')).toContainText('Experiment verified',{timeout:60000});
+  const exported=page.waitForEvent('download');
+  await page.locator('#sweepExportJson').click();
+  const study=await readFile(await (await exported).path());
+  await page.locator('#auditStudyImport').setInputFiles({
+    name:'observed-experiment.json',mimeType:'application/json',buffer:study
+  });
+  await expect(page.locator('#auditStatus')).toContainText('Experiment and methodology findings',{timeout:60000});
+  await expect(page.locator('#generatePaper')).toBeEnabled({timeout:10000});
+  await page.locator('#generatePaper').click();
+  await expect(page.locator('#paperStatus')).toContainText('Evidence-grounded technical manuscript assembled',{timeout:60000});
+  await expect(page.locator('#paperPreview')).toBeVisible();
+  await expect(page.frameLocator('#paperPreview').locator('h1')).toContainText('Reproducible Descriptive Study');
+  await expect(page.frameLocator('#paperPreview').locator('figure img')).toHaveCount(3);
+  await expect(page.frameLocator('#paperPreview').locator('.status')).toContainText('UNREVIEWED');
+  await expect(page.locator('#paperSource')).toContainText('3 source-scoped citations');
+  const htmlDl=page.waitForEvent('download');
+  await page.locator('#paperDownloadHtml').click();
+  const html=(await readFile(await (await htmlDl).path())).toString('utf8');
+  expect(html).toContain('Y′ = 0.2126 R');
+  expect(html).toContain('data:image/png;base64,');
+  expect(html).toContain('References');
+  expect(html).toContain('Appendix A');
+  expect(html).toContain('@page');
+  const zipDl=page.waitForEvent('download');
+  await page.locator('#paperExportZip').click();
+  const zip=Buffer.from(await readFile(await (await zipDl).path()));
+  expect(zip.readUInt32LE(0)).toBe(0x04034b50);
+  expect(zip.includes(Buffer.from('manuscript.html'))).toBe(true);
+  expect(zip.includes(Buffer.from('figures/frame-03.png'))).toBe(true);
+  expect(zip.includes(Buffer.from('references.bib'))).toBe(true);
+  const n=zip.readUInt16LE(26),offset=30+n+zip.readUInt16LE(28),size=zip.readUInt32LE(18);
+  const manifest=JSON.parse(zip.toString('utf8',offset,offset+size));
+  expect(manifest.verification.academicManuscriptUnlocked).toBe(false);
+  expect(manifest.fileInventory.every(f=>/^[a-f0-9]{64}$/.test(f.sha256))).toBe(true);
+});
+test('P4 manuscript release gate closes again when a subsequent audit fails',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  await expect(page.locator('#generatePaper')).toBeDisabled();
+  await page.locator('#auditStudyImport').setInputFiles({
+    name:'unsupported.json',mimeType:'application/json',
+    buffer:Buffer.from('{"schema":"invalid"}')
+  });
+  await expect(page.locator('#auditStatus')).toContainText('Audit rejected');
+  await expect(page.locator('#generatePaper')).toBeDisabled();
+  await expect(page.locator('#paperDownloadHtml')).toBeDisabled();
+  await expect(page.locator('#paperExportZip')).toBeDisabled();
+  await expect(page.locator('#paperPreview')).toBeHidden();
+});
