@@ -13,6 +13,7 @@ import {createReplicatedProtocol,createReplicatedSession} from '../src/research-
 import {auditMethodology} from '../src/methodology-audit.mjs';
 import {assembleManuscript,verifyManuscript,manuscriptRows} from '../src/manuscript-engine.mjs';
 import {renderManuscriptHTML,exportManuscriptBundle} from '../src/manuscript-render.mjs';
+import {renderLaTeXManuscript} from '../src/manuscript-latex.mjs';
 import {createDirectPdf} from '../src/research-pdf.mjs';
 import {verifyManuscriptZip,BUNDLE_VERIFICATION_SCHEMA} from '../src/manuscript-verify.mjs';
 import {prepareEditorialPacket,verifyEditorialPacket} from '../src/scholarly-review.mjs';
@@ -270,4 +271,14 @@ test('P6 offline Node CLI independently replays exported study and exits nonzero
   }finally{
     await rm(dir,{recursive:true,force:true});
   }
+});
+
+test('Replicated nine-frame scientific PDF typesets every original study image',async()=>{
+ const {session,audit}=await fixture(true);
+ const manuscript=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+ const latex=await renderLaTeXManuscript(manuscript,subtle);
+ assert.equal((latex.match(/\\includegraphics\[/g)||[]).length,9);
+ assert.ok(latex.includes('Additional archived observations'));
+ for(let i=1;i<=9;i++)assert.ok(latex.includes('figures/frame-'+String(i).padStart(2,'0')+'.png'));
+ assert.ok(latex.includes('\\lstinputlisting{shader.glsl}'));
 });
