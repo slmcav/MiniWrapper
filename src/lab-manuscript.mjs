@@ -42,7 +42,7 @@ $('generatePaper').addEventListener('click',async()=>{
     $('paperSource').textContent='Manuscript SHA-256: '+draft.record.sha256+
       '\n'+draft.record.observedDraws+' verified GPU observations; '+
       draft.references.length+' source-scoped citations; '+draft.figures.length+
-      ' full-resolution figures in evidence bundle.\nStatus: UNREVIEWED RESEARCH DRAFT';
+      ' full-resolution figures in evidence bundle.\nDocument: Descriptive research manuscript';
     label('Technical manuscript assembled from verified GPU observations.');
   }catch(e){
     invalidate();label('Manuscript generation blocked: '+String(e.message||e),true);
