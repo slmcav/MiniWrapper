@@ -120,7 +120,7 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
   },
   {
     "path": "src/manuscript-latex.mjs",
-    "gitBlobSha1": "bc175fb4b2d668b1be06e81dd6f4105a3dfd8b78"
+    "gitBlobSha1": "5006fe8181e72ddffc173f056eea8cf8a83932eb"
   },
   {
     "path": "src/latex-build-scripts.mjs",
