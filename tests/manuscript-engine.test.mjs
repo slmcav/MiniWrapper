@@ -189,6 +189,7 @@ test('P6 imported manuscript ZIP reproduces every image, PDF, source, citation, 
   assert.equal(proof.verdict,'PASS');
   assert.equal(proof.studySha256,session.sha256);
   assert.equal(proof.manuscriptSha256,draft.record.sha256);
+  assert.equal(proof.archiveSha256,Buffer.from(await subtle.digest('SHA-256',product.zip)).toString('hex'));
   assert.equal(proof.observedGpuDraws,3);
   assert.equal(proof.sourceFiguresVerified,3);
   assert.equal(proof.inventoryEntries,10);
@@ -250,6 +251,7 @@ test('P6 offline Node CLI independently replays exported study and exits nonzero
     const detail=JSON.parse(await readFile(receipt,'utf8'));
     assert.equal(detail.manuscriptSha256,paper.record.sha256);
     assert.equal(detail.publicationAuthorized,false);
+    assert.equal(detail.archiveSha256,Buffer.from(await subtle.digest('SHA-256',exportData.zip)).toString('hex'));
     const badBytes=new Uint8Array(exportData.zip);badBytes[130]^=1;
     await writeFile(output,badBytes);
     const bad=spawnSync(process.execPath,[cmd,output],{
