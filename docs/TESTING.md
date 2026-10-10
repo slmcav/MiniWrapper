@@ -44,3 +44,7 @@ G9 — P2 advanced branched workspace: validate graph v2 inputs and output, reje
 
 
 G10 — P3 GPU research samples: center-point pixel selection, known-color metric fixtures, reproducible hash linkage to validated shader receipts, tamper detection, stored-sample reanalysis, Chromium GPU readback, research JSON export and reload. Do not promote sample statistics into full-frame claims. Independent gates are required for lossless full-resolution figures and controlled longitudinal analysis.
+
+
+G11 — Full-frame figures: pixel-for-pixel RGBA8 losslessness, correct vertical origin, PNG IHDR/CRC and decompression fixture, SHA-256 linkage to immutable build and sampled capture, tampered pixel/PNG rejection, manifest ZIP file checksums, and actual Chromium download.
+G12 — Controlled observed series: distinct verified draw submissions, identical shader/graph/parameters/viewport, ordered observation times, repeatable comparison calculations and rejection of altered series. Identical images remain valid frame observations; claims remain strictly descriptive. Actual browser tests must exercise full-resolution capture and repeated observation.

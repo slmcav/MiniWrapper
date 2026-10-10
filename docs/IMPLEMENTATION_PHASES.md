@@ -92,3 +92,12 @@ The implemented P3 foundation records actual WebGL2 RGBA8 center-point samples a
 For framebuffer width W and height H, grid columns C=min(32,W), rows R=min(24,H), sample coordinates are x=floor((i+0.5)W/C) and y=floor((j+0.5)H/R), WebGL origin bottom-left. Y-prime = 0.2126R + 0.7152G + 0.0722B on the encoded 8-bit channel values. Population moments, 16 histogram bins of width 16, and clipped-channel/alpha fractions use C×R sample points only.
 
 The sampling method deliberately does not support conclusions about unsampled pixels, the full image, physical luminance, GPU timing, or research significance. Remaining P3 gates: capture/hash full-resolution lossless figures, link figures to research receipts, controlled repetitions with conditions and uncertainties, and produce a research bundle that can independently reproduce every displayed result.
+
+
+## P3 lossless figure and controlled-comparison checkpoint
+
+A separate research-figures module now constructs standards-conformant, lossless RGBA8 PNG images directly from complete WebGL readPixels buffers. All observed framebuffer pixels are included, vertically oriented for PNG, independently hashed and linked to their immutable build receipt and sample record. The ZIP manifest stores figure SHA-256, raw RGBA byte SHA-256, PNG SHA-256, full-frame metrics, frame dimensions, GLSL shader time, UTC capture timestamp and validated provenance.
+
+A controlled three-frame action collects three distinct draw submissions with unchanged source/parameters/viewport and produces per-pair **descriptive** absolute RGB8 differences and changed-pixel fractions. It accepts repeated identical frames as independent *draw observations*, but does not claim statistically independent experimental trials. The record verifies deterministic figure contents and series results before archival ZIP creation. ZIP files are downloaded locally, and image bytes do not persist through browser reload.
+
+Remaining P3 science gates include deliberately controlled parameter sweeps, explicitly reported graphics platform/software precision, repeatability under independent sessions, variance/uncertainty treatment appropriate to the design, and independent source/citation verification. P4 academic-paper generation is still disabled; it must not treat these descriptive comparisons as hypothesis-test significance or novelty.
