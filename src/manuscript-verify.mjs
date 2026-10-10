@@ -4,6 +4,7 @@
 import {canonicalJson} from './build-evidence.mjs';
 import {assembleManuscript} from './manuscript-engine.mjs';
 import {exportManuscriptBundle} from './manuscript-render.mjs';
+import {exportSourceLineage} from './source-lineage.mjs';
 export const BUNDLE_VERIFICATION_SCHEMA='glsl-lab/bundle-verification/1';
 const LIMIT=48*1024*1024,decoder=new TextDecoder('utf-8',{fatal:true});
 const need=(x,m)=>{if(!x)throw new TypeError(m);};
@@ -63,6 +64,9 @@ export async function verifyManuscriptZip(zip,{
     manifest.verification?.manuscriptReviewCompleted===false,
     'Bundle does not have an unreviewed research manifest');
   const study=parseJSON(files,'study.json'),audit=parseJSON(files,'methodology-audit.json');
+  const lineage=parseJSON(files,'source-lineage.json');
+  need(canonicalJson(lineage)===canonicalJson(exportSourceLineage()),
+    'Bundle source lineage differs from this verifier release; use the matching Git source snapshot');
   need(typeof manifest.manuscript?.generatedAt==='string','Bundle manuscript timestamp absent');
   const regenerated=await assembleManuscript(study,{
     audit,subtle,clock:()=>manifest.manuscript.generatedAt
@@ -81,6 +85,7 @@ export async function verifyManuscriptZip(zip,{
   return {
     schema:BUNDLE_VERIFICATION_SCHEMA,verdict:'PASS',
     archiveSha256,
+    sourceSnapshotCommit:lineage.sourceSnapshotCommit,
     observedGpuDraws:study.trials.length,studySha256:study.sha256,
     manuscriptSha256:regenerated.record.sha256,auditSha256:audit.sha256,
     inventoryEntries:manifest.fileInventory.length,
