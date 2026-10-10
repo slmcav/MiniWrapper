@@ -82,9 +82,10 @@ test('P9 manuscript-specific citations can differ from the original three fixed 
  assert.equal((await verifyClaimCrosswalk(x,p,d,subtle)).verdict,'INTEGRITY_ONLY');
 });
 test('P9 packet refuses uncited source fabrication, zero citations and still-pending bibliography items',async()=>{
- await assert.rejects(()=>verifyUnsignedEditorialPacket(await packet([]),subtle),/at least one cited/);
- await assert.rejects(()=>verifyUnsignedEditorialPacket(
-  await packet(['jeremias-quilez2013']),subtle),/bibliography cannot be silently altered/);
+ const empty=await packet([]);
+ await assert.rejects(()=>verifyUnsignedEditorialPacket(empty,subtle),/at least one cited/);
+ const pending=await packet(['jeremias-quilez2013']);
+ await assert.rejects(()=>verifyUnsignedEditorialPacket(pending,subtle),/bibliography cannot be silently altered/);
  const p=await packet(['khronos-glsl-es300']);
  await assert.rejects(()=>createSourceReviewDossier(p,[note('lagae2010')],{subtle}),/refer to a citation/);
  const forged={...p,publicationAuthorized:true};
