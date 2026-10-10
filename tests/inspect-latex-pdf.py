@@ -59,7 +59,10 @@ def inspect(directory):
         assert token.lower() in output.lower(), "Missing paper section: " + token
     images = run("pdfimages", "-list", str(pdf))
     image_count = len(re.findall(r"^\s*\d+\s+\d+\s+image\s+", images, re.MULTILINE))
-    assert image_count >= 3, "Three original GPU images not embedded"
+    expected_frames = len(list((directory / "figures").glob("frame-*.png")))
+    assert expected_frames in (3, 9), "Unexpected source figure count"
+    assert image_count >= expected_frames, "Not all authenticated framebuffer figures are embedded"
+
     xml = run("pdftotext", "-bbox-layout", str(pdf), "-")
     audit = BoundsAudit()
     audit.feed(xml)
