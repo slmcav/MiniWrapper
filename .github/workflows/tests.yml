@@ -24,6 +24,39 @@ jobs:
           node-version: '22'
       - run: npm run test:fast
 
+  pdf:
+    name: Direct PDF parse and raster check
+    runs-on: ubuntu-latest
+    needs: fast
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Generate synthetic evidence-backed PDF
+        run: node tests/pdf-smoke.mjs
+      - name: Parse and render PDF with independent Poppler tools
+        run: |
+          command -v pdfinfo
+          command -v pdftotext
+          command -v pdftoppm
+          pdfinfo test-results/pdf-render/shader-study.pdf > test-results/pdf-render/structure.txt
+          pdftotext -layout test-results/pdf-render/shader-study.pdf test-results/pdf-render/extracted.txt
+          grep -q 'Materials and methods' test-results/pdf-render/extracted.txt
+          grep -q 'UNREVIEWED' test-results/pdf-render/extracted.txt
+          grep -q 'References' test-results/pdf-render/extracted.txt
+          grep -q 'Appendix A' test-results/pdf-render/extracted.txt
+          pdftoppm -f 1 -l 2 -scale-to 1100 -png test-results/pdf-render/shader-study.pdf test-results/pdf-render/page >/dev/null
+          test -s test-results/pdf-render/page-1.png
+          test -s test-results/pdf-render/page-2.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: miniwrapper-direct-pdf-qa
+          path: test-results/pdf-render/
+          if-no-files-found: ignore
+
   browser:
     name: Mobile browser and WebGL smoke
     runs-on: ubuntu-latest
