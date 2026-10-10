@@ -52,6 +52,14 @@
     .figure-panel h3 { margin:0 0 6px; font-size:.96rem; }
     .figure-panel .figure-readout { white-space:pre-wrap; color:#b2e4dc; font:12px/1.5 ui-monospace,monospace; }
     .figure-panel .build-buttons { margin:9px 0; }
+    .sweep-panel { margin-top:12px; padding:12px; border:1px solid #3d6273; border-radius:12px; background:#122432; }
+    .sweep-panel h3 { margin:0 0 8px; font-size:.98rem; }
+    .sweep-panel .fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:9px; }
+    .sweep-panel .fields label { display:grid; gap:4px; font-size:.79rem; }
+    .sweep-panel select,.sweep-panel input[type=number] { width:100%; padding:9px; border-radius:8px; background:#0c1b27; border:1px solid #436476; color:#e4f3f8; min-height:42px; }
+    .sweep-panel input[type=file] { max-width:100%; }
+    .sweep-panel .out { white-space:pre-wrap; overflow-wrap:anywhere; font:12px/1.5 ui-monospace,monospace; color:#c3dfd7; }
+    .sweep-panel [data-error=true] { color:#ffb3ac; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
     .tabs { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
@@ -181,6 +189,33 @@
           <p id="figureComparison" class="figure-readout">Comparison available after a controlled series.</p>
           <p class="research-warning">Full-resolution figure pixels are held in memory until export, not preserved through reload. A three-frame comparison describes only those observed frames; it is not a GPU performance benchmark or significance test.</p>
         </div>
+        <section class="sweep-panel" aria-label="Controlled experiments and cross-session comparisons">
+          <h3>Controlled 3-point experiment</h3>
+          <p>Change one shader uniform at a time while holding the shader time and every other control fixed. Each level captures every RGBA pixel with an independently verifiable source receipt.</p>
+          <div class="fields">
+            <label for="sweepParameter">Parameter
+              <select id="sweepParameter"><option value="zoom">Zoom</option><option value="hue">Hue</option><option value="angle">Rotation</option><option value="brightness">Brightness</option></select>
+            </label>
+            <label for="sweepStep">Change on either side
+              <input id="sweepStep" type="number" value="0.2" min="0.01" max="60" step="0.01">
+            </label>
+            <label for="sweepTime">Fixed shader time (s)
+              <input id="sweepTime" type="number" value="2" min="0" max="3600" step="0.1">
+            </label>
+          </div>
+          <div class="build-buttons">
+            <button id="sweepRun" type="button" disabled>Run 3-point sweep</button>
+            <button id="sweepExportJson" type="button" disabled>Export session JSON</button>
+            <button id="sweepExportZip" type="button" disabled>Export figures ZIP</button>
+          </div>
+          <label for="sweepImport">Compare with an exported session JSON
+            <input id="sweepImport" type="file" accept=".json,application/json">
+          </label>
+          <p id="sweepStatus" role="status" aria-live="polite">Waiting for a verified shader.</p>
+          <p id="sweepSummary" class="out">No experiment recorded.</p>
+          <p id="sweepComparison" class="out">Import another independently initiated session to compare the same protocol.</p>
+          <p class="research-warning">Three treatment levels are descriptive, not three independent experimental replications. Cross-session comparisons require the exact same protocol and shader and do not establish independence, significance or GPU performance.</p>
+        </section>
       </section>
     </section>
     <section class="panel" aria-label="GLSL Lab controls">
@@ -361,6 +396,44 @@ window.glslLabBridge={
   onValidationChange(listener){frameListeners.add(listener);listener(validFrame!==null);return ()=>frameListeners.delete(listener);},
   capture(){if(!validFrame)throw new Error('No successfully drawn frame to capture');return JSON.parse(JSON.stringify(validFrame));},
   getFrameNumber(){return validFrame?frameNumber:-1;},
+  renderSweepPoint(parameters,shaderTimeSeconds){
+    if(!gl||!program||!compiledOK||gl.isContextLost?.())throw new Error('A validated WebGL2 program is required');
+    if(!Number.isFinite(shaderTimeSeconds)||shaderTimeSeconds<0||shaderTimeSeconds>3600)throw new Error('Invalid fixed shader time');
+    const limits={zoom:[.5,2.5],angle:[-180,180],speed:[0,2.5],hue:[-180,180],brightness:[.25,2]};
+    if(!parameters||Object.keys(parameters).sort().join(',')!==Object.keys(limits).sort().join(','))
+      throw new Error('Five controlled uniform parameters required');
+    for(const [key,[min,max]] of Object.entries(limits))
+      if(!Number.isFinite(parameters[key])||parameters[key]<min||parameters[key]>max)
+        throw new Error('Invalid experimental parameter '+key);
+    sizeCanvas();
+    const width=canvas.width,height=canvas.height;
+    if(width*height>500000)throw new Error('Experiment framebuffer exceeds 500,000 pixels; use a smaller viewport');
+    invalidateBuild();
+    gl.useProgram(program);gl.bindVertexArray(vao);
+    gl.uniform2f(loc.r,width,height);
+    gl.uniform1f(loc.t,shaderTimeSeconds);
+    gl.uniform1f(loc.zoom,parameters.zoom);
+    gl.uniform1f(loc.angle,parameters.angle*Math.PI/180);
+    gl.uniform1f(loc.hue,parameters.hue/360);
+    gl.uniform1f(loc.brightness,parameters.brightness);
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    if(gl.getError()!==gl.NO_ERROR)throw new Error('Experimental GPU draw failed');
+    const pixels=new Uint8Array(width*height*4);
+    gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+    if(gl.getError()!==gl.NO_ERROR)throw new Error('Experimental GPU readback failed');
+    frameNumber++;
+    const observedAt=new Date().toISOString();
+    const observation={
+      shaderBody:activeBody,expandedShader:expandedSource,demoId:current,attribution:activeAttribution,
+      ...(current==='builder'&&activeGraph?{graph:JSON.parse(JSON.stringify(activeGraph))}:{}),
+      checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
+      viewport:{width,height},parameters:{...parameters},
+      shaderTimeSeconds,compileCpuMs
+    };
+    // Return to the user's live presentation on the next animation tick.
+    requestDraw();
+    return {observation,pixels,frameId:frameNumber,observedAt};
+  },
   isPlaying(){return running&&!document.hidden;},
   readPixelsForResearch(){
     if(!compiledOK||!validFrame)throw new Error('Wait for a verified WebGL draw before capturing pixels');
@@ -613,5 +686,6 @@ else{compile('original');requestDraw();}
 <script type="module" src="./src/lab-projects.mjs"></script>
 <script type="module" src="./src/lab-research.mjs"></script>
 <script type="module" src="./src/lab-figures.mjs"></script>
+<script type="module" src="./src/lab-experiments.mjs"></script>
 </body>
 </html>
