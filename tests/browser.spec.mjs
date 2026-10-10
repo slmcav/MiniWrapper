@@ -474,7 +474,7 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   await page.locator('#sourceReviewClaim').fill('The WebGL2 interface exposes framebuffer readPixels operations.');
   await page.locator('#sourceReviewNote').fill('The API specification defines readPixels behavior but does not certify platform equivalence.');
   await page.locator('#sourceReviewAdd').click();
-  await expect(page.locator('#sourceReviewStatus')).toContainText('reviewer identity remain unverified');
+  await expect(page.locator('#sourceReviewStatus')).toContainText('Source reading saved with an integrity receipt');
   await expect(page.locator('#sourceReviewExport')).toBeEnabled();
   const dossierDl=page.waitForEvent('download');
   await page.locator('#sourceReviewExport').click();
