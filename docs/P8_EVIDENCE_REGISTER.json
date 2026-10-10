@@ -1,0 +1,131 @@
+{
+  "schema": "glsl-lab/methods-evidence-register/1",
+  "researchDate": "2026-10-10",
+  "companion": "docs/P8_INDEPENDENT_METHODS.md",
+  "sourceCrosswalk": "docs/SOURCE_CLAIM_CROSSWALK.md",
+  "sourcePacketModified": false,
+  "existingManuscriptsModified": false,
+  "independentHumanPeerReviewEstablished": false,
+  "publicationAuthorized": false,
+  "fullTextOfAllLiteratureReviewed": false,
+  "independentGpuExperimentRun": false,
+  "claimRows": [
+    {
+      "id": "P8-C01",
+      "claim": "GLSL conformance",
+      "strengtheningEvidenceRequired": "Independent conformance harness and platform-specific shader tests",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C02",
+      "claim": "Archived frame authenticity",
+      "strengtheningEvidenceRequired": "External capture attestation and independent archive replay",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C03",
+      "claim": "Cross-device equivalence",
+      "strengtheningEvidenceRequired": "Preregistered multi-GPU driver browser matrix and image equivalence tolerances",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C04",
+      "claim": "Physical/linear luminance",
+      "strengtheningEvidenceRequired": "Color-space and transfer-function identification with calibrated measurement",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C05",
+      "claim": "Independent treatment replication",
+      "strengtheningEvidenceRequired": "Independently sampled experimental units and stochastic model",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C06",
+      "claim": "Carryover removal",
+      "strengtheningEvidenceRequired": "Repeated randomized trials and period/carryover diagnostics",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C07",
+      "claim": "Temporal reproducibility",
+      "strengtheningEvidenceRequired": "Repeated sessions and preregistered equality thresholds",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C08",
+      "claim": "GPU performance",
+      "strengtheningEvidenceRequired": "Validated GPU timing and control of warmup and noise",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C09",
+      "claim": "Noise method identification",
+      "strengtheningEvidenceRequired": "Operator-level source code mapping to literature",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C10",
+      "claim": "Builder novelty",
+      "strengtheningEvidenceRequired": "Originality matrix against prior graphics tools and peer assessment",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C11",
+      "claim": "Publication approval",
+      "strengtheningEvidenceRequired": "Verified human peer/editorial decision and rights clearances",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C12",
+      "claim": "Inferential uncertainty",
+      "strengtheningEvidenceRequired": "Specified inferential model, estimand and justified independent replication",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    },
+    {
+      "id": "P8-C13",
+      "claim": "Reader-authentication",
+      "strengtheningEvidenceRequired": "Attributable verified reading with passage review and independent verification",
+      "strongerClaimEstablished": false,
+      "evidenceStatus": "methodological_gap_identified",
+      "reviewAuthority": "none",
+      "readerDeclarationsPromoted": false
+    }
+  ]
+}
