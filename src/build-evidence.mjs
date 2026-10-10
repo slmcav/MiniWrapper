@@ -35,6 +35,12 @@ function canonical(value) {
   }
   return out;
 }
+function deepFreeze(value) {
+  if (Array.isArray(value) || isPlain(value)) {
+    for (const child of Object.values(value)) deepFreeze(child);
+  }
+  return Object.freeze(value);
+}
 export function canonicalJson(value) { return JSON.stringify(canonical(value)); }
 export async function sha256Hex(value, subtle=globalThis.crypto?.subtle) {
   stringField(value,'SHA-256 input');
@@ -85,7 +91,7 @@ export async function createBuildReceipt(input,{subtle=globalThis.crypto?.subtle
   const capturedAt=clock();
   requireCondition(typeof capturedAt==='string' && !Number.isNaN(Date.parse(capturedAt)) && /Z$/.test(capturedAt),'Timestamp must be UTC ISO-8601');
   const digest=await sha256Hex(canonicalJson(content),subtle);
-  return Object.freeze({...content,sha256:digest,capturedAt,evidenceClass:'observed-compile-link-draw'});
+  return deepFreeze({...content,sha256:digest,capturedAt,evidenceClass:'observed-compile-link-draw'});
 }
 export function validateBuildReceipt(receipt) {
   requireCondition(isPlain(receipt),'Receipt must be a plain object');
