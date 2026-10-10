@@ -89,7 +89,9 @@ jobs:
         if: always()
         with:
           name: academic-latex-pdf-qa
-          path: test-results/pdf-render/
+          path: |
+            test-results/pdf-render/
+            test-results/pdf-render-repeat/
           if-no-files-found: ignore
 
   browser:
