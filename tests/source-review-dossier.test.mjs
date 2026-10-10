@@ -5,6 +5,7 @@ import {canonicalJson,sha256Hex} from '../src/build-evidence.mjs';
 import {REFERENCES} from '../src/reference-registry.mjs';
 import {REVIEW_SCHEMA} from '../src/scholarly-review.mjs';
 import {verifyUnsignedEditorialPacket,createSourceReviewDossier,verifySourceReviewDossier} from '../src/source-review-dossier.mjs';
+import {createClaimCrosswalk,verifyClaimCrosswalk} from '../src/source-claim-crosswalk.mjs';
 const subtle=webcrypto.subtle;
 const H='b'.repeat(64);
 const when=()=>new Date('2026-10-10T12:00:00.000Z').toISOString();
@@ -96,4 +97,60 @@ test('P7 unsigned source notes cannot alter the original manuscript paper gate',
  assert.equal(d.publicationAuthorized,false);
  assert.equal(p.publicationAuthorized,false);
  assert.equal(p.humanReviewComplete,false);
+});
+
+test('P7 claim-level crosswalk exposes unassessed sources without granting approval',async()=>{
+ const p=await packet(),d=await createSourceReviewDossier(p,[annotation()],{subtle,clock:when});
+ const x=await createClaimCrosswalk(p,d,{subtle,clock:when});
+ assert.equal(x.summary.citedSources,3);
+ assert.equal(x.summary.sourcesWithAssessments,1);
+ assert.equal(x.summary.sourceCoverageOnly,'1/3');
+ assert.equal(x.summary.claimsWithContradictions,0);
+ assert.equal(x.summary.claimsWithConflictingDeclarations,0);
+ assert.deepEqual(x.sourceReviewRows.filter(r=>r.coverage==='not_assessed').map(r=>r.referenceId),
+   ['khronos-glsl-es300','sacks1989']);
+ assert.equal(x.publicationAuthorized,false);
+ assert.equal((await verifyClaimCrosswalk(x,p,d,subtle)).verdict,'INTEGRITY_ONLY');
+});
+test('P7 contradictory assessments of the exact same claim remain explicitly in disagreement',async()=>{
+ const p=await packet();
+ const entries=[
+  annotation(),
+  annotation({entryId:'evidence_0002',assessment:'contradicts_claim',
+   reviewerDeclaredName:'Different Human Reader',
+   note:'An alternative reading disputes the specific claim; disagreement must remain visible.'})
+ ];
+ const d=await createSourceReviewDossier(p,entries,{subtle,clock:when});
+ const x=await createClaimCrosswalk(p,d,{subtle,clock:when});
+ const row=x.sourceReviewRows.find(r=>r.referenceId==='khronos-webgl2');
+ assert.equal(row.coverage,'conflicting_reader_declarations');
+ assert.equal(row.claims.length,1);
+ assert.equal(row.claims[0].status,'conflicting_reader_declarations');
+ assert.deepEqual(row.claims[0].declaredReaders,['Different Human Reader','Example Human Reader']);
+ assert.equal(x.summary.claimsWithConflictingDeclarations,1);
+ assert.equal(x.independentHumanVerification,false);
+});
+test('P7 distinct claims are never merged solely because they cite the same source',async()=>{
+ const p=await packet(),second=annotation({
+  entryId:'evidence_0002',claim:'WebGL2 readPixels behavior is not evidence of calibrated physical luminance.',
+  assessment:'requires_revision',
+  note:'This particular output-color claim requires an independently calibrated colorimetry source.'
+ });
+ const d=await createSourceReviewDossier(p,[annotation(),second],{subtle,clock:when});
+ const x=await createClaimCrosswalk(p,d,{subtle,clock:when});
+ const row=x.sourceReviewRows.find(r=>r.referenceId==='khronos-webgl2');
+ assert.equal(row.distinctClaims,2);
+ assert.equal(row.coverage,'revision_requested');
+ assert.equal(row.claims.some(c=>c.status==='conflicting_reader_declarations'),false);
+ assert.equal(x.summary.claimsRequiringRevision,1);
+});
+test('P7 changed review details or forged crosswalk approval fail content replay',async()=>{
+ const p=await packet(),d=await createSourceReviewDossier(p,[annotation()],{subtle,clock:when});
+ const x=await createClaimCrosswalk(p,d,{subtle,clock:when});
+ const modified=structuredClone(x);modified.sourceReviewRows[1].coverage='limited_support_declared';
+ await assert.rejects(()=>verifyClaimCrosswalk(modified,p,d,subtle),/no longer reproduces/);
+ const forged=structuredClone(x);forged.publicationAuthorized=true;
+ await assert.rejects(()=>verifyClaimCrosswalk(forged,p,d,subtle),/no longer reproduces/);
+ const other=structuredClone(d);other.assessments[0].note+=' Changed.';
+ await assert.rejects(()=>createClaimCrosswalk(p,other,{subtle}),/altered/);
 });
