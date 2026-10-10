@@ -113,7 +113,7 @@ body.contract-dashboard {
     overflow-y:auto;overflow-x:hidden;border-radius:13px}
   .contract-dashboard .panel .tabs {display:none}
   .contract-dashboard #paneBuild[hidden] {display:block!important}
-  .contract-dashboard #labControls > #panePlay {display:none!important}
+  .contract-dashboard #labControls > #panePlay[hidden] {display:none!important}
   .contract-dashboard #paneBuild {padding:9px}
   .contract-dashboard #paneBuild > #advancedToggle {min-height:30px;padding:5px 8px;font-size:.75rem}
   .contract-dashboard #paneBuild #quickBuilder > strong,
