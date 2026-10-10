@@ -56,7 +56,9 @@ jobs:
         if: always()
         with:
           name: miniwrapper-direct-pdf-qa
-          path: test-results/pdf-render/
+          path: |
+            test-results/pdf-render/
+            test-results/pdf-render-repeat/
           if-no-files-found: ignore
 
   latex:
@@ -77,6 +79,12 @@ jobs:
         run: cd test-results/pdf-render && bash build-latex.sh
       - name: Check PDF checksum filename, pages, image count and text bounds
         run: python3 tests/inspect-latex-pdf.py test-results/pdf-render
+      - name: Build nine-observation replicated manuscript
+        run: node tests/pdf-smoke.mjs --repeat
+      - name: Compile nine-observation appendix with native pdfLaTeX
+        run: cd test-results/pdf-render-repeat && bash build-latex.sh
+      - name: Independently inspect all nine embedded source images and receipt
+        run: python3 tests/inspect-latex-pdf.py test-results/pdf-render-repeat
       - uses: actions/upload-artifact@v4
         if: always()
         with:
