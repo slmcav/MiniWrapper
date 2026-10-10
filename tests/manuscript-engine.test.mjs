@@ -10,6 +10,7 @@ import {auditMethodology} from '../src/methodology-audit.mjs';
 import {assembleManuscript,verifyManuscript,manuscriptRows} from '../src/manuscript-engine.mjs';
 import {renderManuscriptHTML,exportManuscriptBundle} from '../src/manuscript-render.mjs';
 import {createDirectPdf} from '../src/research-pdf.mjs';
+import {verifyManuscriptZip,BUNDLE_VERIFICATION_SCHEMA} from '../src/manuscript-verify.mjs';
 import {prepareEditorialPacket,verifyEditorialPacket} from '../src/scholarly-review.mjs';
 const subtle=webcrypto.subtle;
 globalThis.btoa??=s=>Buffer.from(s,'binary').toString('base64');
@@ -173,4 +174,56 @@ test('P5 unsigned editorial packet explicitly requires real independent human re
   assert.equal(await verifyEditorialPacket(packet,draft,subtle),true);
   const forgery=structuredClone(packet);forgery.publicationAuthorized=true;
   await assert.rejects(()=>verifyEditorialPacket(forgery,draft,subtle),/falsely represents/);
+});
+
+test('P6 imported manuscript ZIP reproduces every image, PDF, source, citation, review packet and manifest',async()=>{
+  const {session,audit}=await fixture();
+  const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const product=await exportManuscriptBundle(draft,{subtle});
+  const proof=await verifyManuscriptZip(product.zip,{subtle});
+  assert.equal(proof.schema,BUNDLE_VERIFICATION_SCHEMA);
+  assert.equal(proof.verdict,'PASS');
+  assert.equal(proof.studySha256,session.sha256);
+  assert.equal(proof.manuscriptSha256,draft.record.sha256);
+  assert.equal(proof.observedGpuDraws,3);
+  assert.equal(proof.sourceFiguresVerified,3);
+  assert.equal(proof.inventoryEntries,10);
+  assert.equal(proof.manuscriptReviewCompleted,false);
+  assert.equal(proof.publicationAuthorized,false);
+});
+test('P6 independent nine-frame manuscript archive roundtrip verifies every GPU figure',async()=>{
+  const {session,audit}=await fixture(true);
+  const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const {zip}=await exportManuscriptBundle(draft,{subtle});
+  const proof=await verifyManuscriptZip(zip.buffer.slice(zip.byteOffset,zip.byteOffset+zip.byteLength),{subtle});
+  assert.equal(proof.observedGpuDraws,9);
+  assert.equal(proof.sourceFiguresVerified,9);
+  assert.equal(proof.pdfVerified,true);
+});
+test('P6 file tampering, ZIP truncation, and unsupported compression cannot pass imported archive check',async()=>{
+  const {session,audit}=await fixture();
+  const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const {zip}=await exportManuscriptBundle(draft,{subtle});
+  const broken=new Uint8Array(zip);broken[150]^=1;
+  await assert.rejects(()=>verifyManuscriptZip(broken,{subtle}),/CRC-32 mismatch|does not reproduce/);
+  await assert.rejects(()=>verifyManuscriptZip(zip.subarray(0,zip.length-21),{subtle}),/central directory|end record/);
+  const compressed=new Uint8Array(zip);compressed[8]=8;
+  await assert.rejects(()=>verifyManuscriptZip(compressed,{subtle}),/uncompressed/);
+});
+test('P6 imported research ZIP rejects forged central-directory and publication approval data',async()=>{
+  const {session,audit}=await fixture();
+  const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const {zip}=await exportManuscriptBundle(draft,{subtle});
+  const altered=new Uint8Array(zip);
+  const offset=altered.length-6;
+  altered[offset]^=1;
+  await assert.rejects(()=>verifyManuscriptZip(altered,{subtle}),/central directory offset mismatch/);
+  const other=new Uint8Array(zip);
+  const manifest=Buffer.from('academicManuscriptUnlocked');
+  const at=Buffer.from(other).indexOf(manifest);
+  assert.ok(at>0);
+  const falseOffset=at+manifest.length+3;
+  // Flip the serialized approval value in the manifest: a hash and/or byte check must reject it.
+  other[falseOffset]^=1;
+  await assert.rejects(()=>verifyManuscriptZip(other,{subtle}),/CRC-32 mismatch|does not reproduce|unreviewed/);
 });
