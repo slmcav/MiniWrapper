@@ -28,6 +28,13 @@
     #status.error { color: #ff9d9d; }
     .downloads { margin-top: 8px; }
     .downloads small { color: #95a3b1; }
+    .recording-indicator { display: inline-block; width: 12px; height: 12px; flex: 0 0 12px; border-radius: 50%; background: #ff3636; animation: recording-pulse 1.2s ease-in-out infinite; }
+    .recording-indicator[hidden] { display: none; }
+    @keyframes recording-pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,54,54,.55); }
+      50% { opacity: .6; box-shadow: 0 0 0 7px rgba(255,54,54,0); }
+    }
+    @media (prefers-reduced-motion: reduce) { .recording-indicator { animation: none; } }
     .viewport { min-height: 320px; position: relative; }
     canvas { display: block; width: 100%; height: 100%; min-height: 320px; background: #030408; }
     .hint { position: absolute; right: 13px; bottom: 11px; pointer-events: none; color: #a8b8c8; background: #0b1016b8; border-radius: 4px; padding: 4px 7px; font-size: 11px; }
@@ -53,8 +60,8 @@
       <button id="render" class="primary" type="button">Render (Ctrl/⌘ + Enter)</button>
       <label for="example">Demos</label>
       <select id="example" aria-label="Shader demos">
-        <option value="original">Original field</option>
-        <option value="rotation">Rotating 3D fractal</option>
+        <option value="original">Original field (@YoheiNishitsuji)</option>
+        <option value="rotation">Rotating 3D fractal (@YoheiNishitsuji)</option>
         <option value="yohei">Log-polar bloom (@YoheiNishitsuji)</option>
       </select>
       <button id="pause" type="button">Pause</button>
@@ -69,7 +76,8 @@
     <div id="status" role="status" aria-live="polite"></div>
     <div class="downloads" aria-label="Downloads">
       <button id="download-image" type="button">Download PNG</button>
-      <button id="record-video" type="button">Record video</button>
+      <button id="record-video" type="button" aria-pressed="false">Record video</button>
+      <span id="recording-indicator" class="recording-indicator" role="status" aria-label="Recording in progress" hidden></span>
       <small>Native exports: still frame as PNG, animation as WebM or MP4 depending on browser support.</small>
     </div>
   </section>
@@ -78,7 +86,7 @@
     <span class="hint">WebGL2 · time in seconds</span>
   </div>
   <footer>
-    References: Demo 3 shader credited in the selector and here to <span>@YoheiNishitsuji</span>. Other demos are retained from supplied MiniWrapper snippets.
+    Shader demo attribution: All three demo expressions by <span>@YoheiNishitsuji</span>.
   </footer>
 </main>
 <script>
@@ -98,6 +106,12 @@ const scaleEl = document.getElementById('scale');
 const exampleEl = document.getElementById('example');
 const downloadImageButton = document.getElementById('download-image');
 const recordVideoButton = document.getElementById('record-video');
+const recordingIndicator = document.getElementById('recording-indicator');
+
+function setRecordingActive(active) {
+  recordingIndicator.hidden = !active;
+  recordVideoButton.setAttribute('aria-pressed', String(active));
+}
 
 exampleEl.value = 'original';
 codeEl.value = DEMOS[exampleEl.value];
@@ -337,28 +351,59 @@ void main() {
   recordVideoButton.addEventListener('click', () => {
     if (!program || recordVideoButton.disabled) return;
     if (mediaRecorder && mediaRecorder.state === 'recording') {
-      mediaRecorder.stop();
+      try {
+        mediaRecorder.stop();
+        setRecordingActive(false);
+        status('Finishing ' + supportedVideoExtension.toUpperCase() + ' recording...');
+      } catch (error) {
+        status('Unable to stop recording: ' + String(error.message || error), true);
+      }
       return;
     }
+
+    let stream;
     try {
       recordedChunks = [];
-      const stream = canvas.captureStream(30);
-      mediaRecorder = new MediaRecorder(stream, { mimeType: supportedVideoType });
-      mediaRecorder.ondataavailable = event => {
+      stream = canvas.captureStream(30);
+      const recorder = new MediaRecorder(stream, { mimeType: supportedVideoType });
+      mediaRecorder = recorder;
+      let recordingFailed = false;
+      recorder.ondataavailable = event => {
         if (event.data && event.data.size > 0) recordedChunks.push(event.data);
       };
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || supportedVideoType });
-        downloadBlob(blob, 'miniwrapper-' + exampleEl.value + '-' + timestampForFile() + '.' + supportedVideoExtension);
-        recordVideoButton.textContent = recordButtonLabel;
-        status('Downloaded ' + supportedVideoExtension.toUpperCase() + ' recording.');
+      recorder.onerror = event => {
+        recordingFailed = true;
+        if (mediaRecorder === recorder) {
+          setRecordingActive(false);
+          recordVideoButton.textContent = recordButtonLabel;
+        }
+        status('Video recording failed: ' + String(event.error?.message || 'browser recorder error'), true);
         for (const track of stream.getTracks()) track.stop();
       };
-      mediaRecorder.start();
+      recorder.onstop = () => {
+        for (const track of stream.getTracks()) track.stop();
+        if (mediaRecorder === recorder) {
+          setRecordingActive(false);
+          recordVideoButton.textContent = recordButtonLabel;
+        }
+        if (recordingFailed) return;
+        const blob = new Blob(recordedChunks, { type: recorder.mimeType || supportedVideoType });
+        if (!blob.size) {
+          status('No video data captured. Please try again.', true);
+          return;
+        }
+        downloadBlob(blob, 'miniwrapper-' + exampleEl.value + '-' + timestampForFile() + '.' + supportedVideoExtension);
+        status('Downloaded ' + supportedVideoExtension.toUpperCase() + ' recording.');
+      };
+      recorder.start();
+      setRecordingActive(true);
       recordVideoButton.textContent = 'Stop Recording';
       status('Recording ' + supportedVideoExtension.toUpperCase() + '. Tap again to stop and download.');
       requestFrame();
     } catch (error) {
+      if (stream) for (const track of stream.getTracks()) track.stop();
+      setRecordingActive(false);
+      recordVideoButton.textContent = recordButtonLabel;
       status('Video recording failed: ' + String(error.message || error), true);
     }
   });
