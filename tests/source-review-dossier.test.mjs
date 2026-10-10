@@ -148,7 +148,7 @@ test('P7 distinct claims are never merged solely because they cite the same sour
 test('P7 changed review details or forged crosswalk approval fail content replay',async()=>{
  const p=await packet(),d=await createSourceReviewDossier(p,[annotation()],{subtle,clock:when});
  const x=await createClaimCrosswalk(p,d,{subtle,clock:when});
- const modified=structuredClone(x);modified.sourceReviewRows[1].coverage='limited_support_declared';
+ const modified=structuredClone(x);modified.sourceReviewRows[0].coverage='limited_support_declared';
  await assert.rejects(()=>verifyClaimCrosswalk(modified,p,d,subtle),/no longer reproduces/);
  const forged=structuredClone(x);forged.publicationAuthorized=true;
  await assert.rejects(()=>verifyClaimCrosswalk(forged,p,d,subtle),/no longer reproduces/);
