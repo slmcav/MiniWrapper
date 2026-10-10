@@ -18,6 +18,9 @@ test('All seventeen attributed gallery shaders are forbidden as research evidenc
    assert.equal(identifyExampleShader(original),match[1]);
    const mixed=original.slice(0,120)+' /* gallery paste */\n '+original.slice(120);
    assert.equal(identifyExampleShader(mixed),match[1]);
+   const altered=original.slice(0,12)+'x'+original.slice(13,-14)+'y'+original.slice(-13);
+   assert.equal(identifyExampleShader(altered),match[1],match[1]+' lightly edited paste not identified');
+   assert.throws(()=>assertResearchEligibleShader({body:altered,identifier:'builder',attribution:'Independently authored'}),/excluded/);
    assert.throws(()=>assertResearchEligibleShader({
     body:mixed,identifier:'research_fixture',attribution:'Independent reader'
    }),/excluded from research/);
