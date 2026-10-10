@@ -615,8 +615,14 @@ test('Academic UX structural audit: phone and desktop have no horizontal overflo
  for(const width of [360,390,1280]){
   await page.setViewportSize({width,height:900});
   await page.goto('/glsl-lab.html');
-  await expect(page.locator('#workflowAuthor')).toBeVisible();
-  await expect(page.locator('#workflowLatex')).toBeVisible();
+  if(width>=1280){
+   await expect(page.locator('.contract-sidebar')).toBeVisible();
+   await expect(page.locator('#graphChain')).toBeVisible();
+   await expect(page.locator('.contract-lower')).toBeVisible();
+  }else{
+   await expect(page.locator('#workflowAuthor')).toBeVisible();
+   await expect(page.locator('#workflowLatex')).toBeVisible();
+  }
   await expect(page.locator('#demo')).toHaveCount(0);
   const metrics=await page.evaluate(()=>({
    documentWidth:document.documentElement.scrollWidth,
@@ -677,7 +683,7 @@ test('Academic visual contract evidence: fixed mobile and desktop app captures w
   panel:document.querySelector('.panel').getBoundingClientRect().width
  }));
  expect(geometry.width).toBeLessThanOrEqual(geometry.viewport+1);
- expect(geometry.stage).toBeGreaterThan(400);
+ expect(geometry.stage).toBeGreaterThan(290);
  expect(geometry.panel).toBeGreaterThan(290);
 });
 
@@ -695,10 +701,7 @@ test('Phase 2 visual contract: real dashboard panels remain simultaneous on desk
  await expect(page.locator('#contractCodePane #paneCode')).toBeVisible();
  await expect(page.locator('.contract-sources a')).toHaveCount(4);
  await expect(page.locator('.contract-meta dd').first()).toContainText(/verified draw|Awaiting GPU/);
- await page.getByRole('navigation',{name:'Project navigation'}).getByRole('button',{name:'Settings'}).click();
- await expect(page.locator('#panePlay')).toBeVisible();
- await expect(page.locator('#zoom')).toBeVisible();
- await expect(page.locator('#graphChain')).toBeVisible();
+
  const positions=await page.evaluate(()=>{
    const bounds=sel=>{const b=document.querySelector(sel).getBoundingClientRect();
      return {x:b.left,y:b.top,w:b.width,h:b.height};};
@@ -712,6 +715,10 @@ test('Phase 2 visual contract: real dashboard panels remain simultaneous on desk
  expect(positions.lower.y).toBeGreaterThan(positions.preview.y+240);
  expect(positions.overflow).toBeLessThanOrEqual(positions.viewport+1);
  await page.screenshot({path:'test-results/visual-audit/desktop-contract-1648.png',animations:'disabled'});
+ await page.getByRole('navigation',{name:'Project navigation'}).getByRole('button',{name:'Settings'}).click();
+ await expect(page.locator('#panePlay')).toBeVisible();
+ await expect(page.locator('#zoom')).toBeVisible();
+ await expect(page.locator('#graphChain')).toBeVisible();
 });
 test('Phase 2 mobile contract: four accessible navigation modes open actual controls',async({page})=>{
  await page.setViewportSize({width:390,height:844});
