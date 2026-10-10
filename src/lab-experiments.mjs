@@ -111,7 +111,7 @@ $('sweepImport').addEventListener('change',async event=>{
     await verifySweepSession(candidate);
     const compared=session?await compareSweepSessions(candidate,session):null;
     prior=candidate;comparison=compared;output();
-    message(compared?'Verified imported session and computed descriptive differences.':
+    message(compared?'Verified imported session and computed descriptive comparison.':
       'Prior session verified. Run its matching protocol to compare.');
   }catch(e){message('Import rejected: '+String(e.message||e),true);}
   finally{busy=false;event.target.value='';controls();}
