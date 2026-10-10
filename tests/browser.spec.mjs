@@ -680,3 +680,47 @@ test('Academic visual contract evidence: fixed mobile and desktop app captures w
  expect(geometry.stage).toBeGreaterThan(400);
  expect(geometry.panel).toBeGreaterThan(290);
 });
+
+
+test('Phase 2 visual contract: real dashboard panels remain simultaneous on desktop',async({page})=>{
+ await page.setViewportSize({width:1648,height:928});
+ await page.goto('/glsl-lab.html');
+ await expect(page.locator('.contract-sidebar')).toBeVisible();
+ await expect(page.locator('#glcanvas')).toBeVisible();
+ await expect(page.locator('#paneBuild')).toBeVisible();
+ await expect(page.locator('#graphChain .graph-node')).toHaveCount(5);
+ await expect(page.locator('.contract-paper')).toBeVisible();
+ await expect(page.locator('.contract-paper-empty')).toBeVisible();
+ await expect(page.locator('.contract-lower')).toBeVisible();
+ await expect(page.locator('#contractCodePane #paneCode')).toBeVisible();
+ await expect(page.locator('.contract-sources a')).toHaveCount(4);
+ await expect(page.locator('.contract-meta dd').first()).toContainText(/verified draw|Awaiting GPU/);
+ const positions=await page.evaluate(()=>{
+   const bounds=sel=>{const b=document.querySelector(sel).getBoundingClientRect();
+     return {x:b.left,y:b.top,w:b.width,h:b.height};};
+   return {sidebar:bounds('.contract-sidebar'),preview:bounds('.stage'),builder:bounds('.panel'),
+     paper:bounds('.contract-paper'),lower:bounds('.contract-lower'),
+     viewport:innerWidth,overflow:document.documentElement.scrollWidth};
+ });
+ expect(positions.sidebar.x).toBeLessThan(positions.preview.x);
+ expect(positions.preview.x).toBeLessThan(positions.builder.x);
+ expect(positions.builder.x).toBeLessThan(positions.paper.x);
+ expect(positions.lower.y).toBeGreaterThan(positions.preview.y+240);
+ expect(positions.overflow).toBeLessThanOrEqual(positions.viewport+1);
+ await page.screenshot({path:'test-results/visual-audit/desktop-contract-1648.png',animations:'disabled'});
+});
+test('Phase 2 mobile contract: four accessible navigation modes open actual controls',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/glsl-lab.html');
+ await expect(page.locator('.contract-mobile-nav')).toBeVisible();
+ await expect(page.locator('.contract-sidebar')).toBeHidden();
+ await expect(page.locator('.contract-mobile-nav button')).toHaveCount(4);
+ await page.getByRole('navigation',{name:'Mobile research navigation'}).getByRole('button',{name:'Builder'}).click();
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','true');
+ await expect(page.locator('#paneBuild')).toBeVisible();
+ await page.getByRole('navigation',{name:'Mobile research navigation'}).getByRole('button',{name:'Code'}).click();
+ await expect(page.locator('#paneCode')).toBeVisible();
+ await page.getByRole('navigation',{name:'Mobile research navigation'}).getByRole('button',{name:'Preview'}).click();
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','false');
+ await expect(page.locator('#glcanvas')).toBeVisible();
+});
