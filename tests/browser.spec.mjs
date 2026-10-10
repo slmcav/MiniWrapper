@@ -580,3 +580,51 @@ test('P9 mobile research panel fails closed when its pinned register is substitu
  await expect(page.locator('#p8EvidenceRows details')).toHaveCount(0);
  await expect(page.locator('#p8EvidenceStatus')).toContainText('Scientific approval remains unestablished');
 });
+
+
+test('Master/PhD/postdoc journey: author, experiment, audit, manuscript and TeX package',async({page})=>{
+ test.setTimeout(180000);
+ await page.goto('/glsl-lab.html');
+ await page.locator('#workflowAuthor').click();
+ await expect(page.locator('#paneBuild')).toBeVisible();
+ await expect(page.locator('#demo')).toHaveCount(0);
+ const available=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+ test.skip(!available,'Real WebGL2 context required for study journey');
+ await expect(page.locator('#saveBuild')).toBeEnabled({timeout:30000});
+ await page.locator('#workflowStudy').click();
+ await page.locator('#sweepRun').click();
+ await expect(page.locator('#sweepStatus')).toContainText('Experiment verified',{timeout:60000});
+ await expect(page.locator('#workflowStage')).toContainText('Experiment recorded');
+ await page.locator('#workflowAudit').click();
+ await expect(page.locator('#auditStatus')).toContainText('Study audit complete',{timeout:60000});
+ await expect(page.locator('#workflowStage')).toContainText('Methodology verified');
+ await page.locator('#workflowPaper').click();
+ await expect(page.locator('#paperStatus')).toContainText('Technical manuscript assembled',{timeout:60000});
+ await expect(page.locator('#workflowStage')).toContainText('Manuscript ready');
+ const download=page.waitForEvent('download');
+ await page.locator('#workflowLatex').click();
+ const archive=Buffer.from(await readFile(await (await download).path()));
+ expect(archive.includes(Buffer.from('manuscript.tex'))).toBe(true);
+ expect(archive.includes(Buffer.from('shader.glsl'))).toBe(true);
+ expect(archive.includes(Buffer.from('build-latex.sh'))).toBe(true);
+ expect(archive.includes(Buffer.from('build-latex.ps1'))).toBe(true);
+ expect(archive.includes(Buffer.from('manuscript.pdf'))).toBe(false);
+});
+test('Academic UX structural audit: phone and desktop have no horizontal overflow or gallery controls',async({page})=>{
+ for(const width of [360,390,1280]){
+  await page.setViewportSize({width,height:900});
+  await page.goto('/glsl-lab.html');
+  await expect(page.locator('#workflowAuthor')).toBeVisible();
+  await expect(page.locator('#workflowLatex')).toBeVisible();
+  await expect(page.locator('#demo')).toHaveCount(0);
+  const metrics=await page.evaluate(()=>({
+   documentWidth:document.documentElement.scrollWidth,
+   viewport:window.innerWidth,
+   stageWidth:document.querySelector('.stage').getBoundingClientRect().width,
+   canvasWidth:document.getElementById('glcanvas').getBoundingClientRect().width
+  }));
+  expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewport+1);
+  expect(metrics.stageWidth).toBeGreaterThan(200);
+  expect(metrics.canvasWidth).toBeGreaterThan(200);
+ }
+});
