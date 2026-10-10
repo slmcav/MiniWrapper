@@ -14,19 +14,19 @@ function controls(){
 }
 function render(){
  $('sourceReviewSummary').textContent=dossier?
- 'REVIEWER-DECLARED NOTES (identity not verified)\nManuscript SHA-256: '+dossier.manuscriptSha256+
+ 'SOURCE-READING NOTES (self-reported)\nManuscript SHA-256: '+dossier.manuscriptSha256+
  '\nDossier SHA-256: '+dossier.sha256+
  '\n'+dossier.assessmentCount+' assessments across '+dossier.reviewedCitationIds.length+
  ' of '+dossier.citedSourceCount+' cited sources\n'+
  dossier.assessments.map((r,i)=>(i+1)+'. '+r.referenceId+' ['+r.assessment+'] '+r.locator+' — '+r.note).join('\n')+
- '\nIndependent peer review and publication approval: NOT ESTABLISHED':
- 'No recorded source-reading assessments. Scholarly approval remains locked.';
+ '':
+ 'No source-reading assessments recorded.';
 }
 function showCrosswalk(){
  const target=$('sourceClaimCrosswalk');
  if(!crosswalk){target.textContent='No claim-level crosswalk yet. Add or import reader-declared source notes.';return;}
  target.textContent=[
-  'CLAIM COVERAGE / READER DECLARATIONS ONLY',
+  'SOURCE-CLAIM COVERAGE',
   crosswalk.summary.sourceCoverageOnly+' cited sources have at least one recorded reading',
   'Conflicting declarations: '+crosswalk.summary.claimsWithConflictingDeclarations,
   'Declared contradictions: '+crosswalk.summary.claimsWithContradictions,
@@ -74,7 +74,7 @@ $('sourceReviewAdd').addEventListener('click',async()=>{
   const report=await createClaimCrosswalk(packet,result);
   notes=result.assessments;dossier=result;crosswalk=report;
   for(const key of ['sourceReviewClaim','sourceReviewLocator','sourceReviewNote'])$(key).value='';
-  render();showCrosswalk();say('Source note recorded. Authorship and reviewer identity remain unverified.');
+  render();showCrosswalk();say('Source reading saved with an integrity receipt.');
  }catch(error){say('Assessment rejected: '+String(error.message||error),true);}
  finally{busy=false;controls();}
 });
