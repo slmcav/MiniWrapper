@@ -3,7 +3,7 @@
 // The matching-file regression gate must be updated whenever the generator changes.
 export const SOURCE_LINEAGE_SCHEMA='glsl-lab/source-lineage/1';
 export const PINNED_REPOSITORY='slmcav/MiniWrapper';
-export const SOURCE_SNAPSHOT_COMMIT='67fe7d89f5a1aabdbe682bef5bef58faeca5696a';
+export const SOURCE_SNAPSHOT_COMMIT='8a406bed058c18def0a964450cc83a763fe2cb84';
 export const PINNED_SOURCE_BLOBS=Object.freeze([
   {
     "path": "glsl-lab.html",
@@ -138,7 +138,7 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
     "path": "src/lab-drawer.mjs",
     "gitBlobSha1": "a20bacc06f8a5d7f9d3e8fdf6c5aa7a76ecab1ff"
   },
-  { "path": "src/lab-visual-contract.css", "gitBlobSha1": "fdd9ed40ff3172b9dbfcd421876ec24a50d34a3f" },
+  { "path": "src/lab-visual-contract.css", "gitBlobSha1": "1c9987a8387fe7ca5fd0bb08918318bee23bcd75" },
   { "path": "src/lab-visual-contract.mjs", "gitBlobSha1": "e934de64dadb208978e276a781ff276ea1e39144" }
 ].map(record=>Object.freeze(record)));
 export function exportSourceLineage(){
