@@ -36,6 +36,8 @@ jobs:
           node-version: '22'
       - name: Generate synthetic evidence-backed PDF
         run: node tests/pdf-smoke.mjs
+      - name: Install independent PDF parser and rasterizer
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
       - name: Parse and render PDF with independent Poppler tools
         run: |
           command -v pdfinfo
