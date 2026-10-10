@@ -10,6 +10,8 @@ The mobile Lab keeps the animated canvas pinned while the research controls scro
 
 **Research workflow:** Author a graph → run a controlled 3-point or 9-draw experiment → **Audit current study** → generate the evidence-backed manuscript → **Export LaTeX research package**. Export contains `manuscript.tex`, `build-latex.sh`, `build-latex.ps1`, original shader GLSL, original framebuffer PNG figures, complete experimental JSON, methodology JSON, BibTeX, unsigned source-review packet, source-lineage inventory and SHA-256 manifest. Native TeX Live compilation generates an A4 PDF named `GLSL-{UniqueID}_{PDFSHA256}.pdf`; the final 64-digit hash is computed from the exact compiled PDF bytes.
 
+**Reproducible compiled-PDF handoff:** Run the packaged native TeX script (Bash or PowerShell). It writes the final content-hash-named PDF and `build-receipt.json`, recording the TeX engine/version, input SHA-256 digests, manuscript ID and PDF digest. Preserve those files and the TeX log with the source ZIP. The nine-draw manuscript includes all nine original framebuffer images, not only the three representative treatment frames. CI captures mobile/desktop application screenshots for comparison against the private, uncommitted visual contract.
+
 See [P10 academic release QA](docs/ACADEMIC_RELEASE_QA.md) for the nine-phase research quality gates and [P9 independent replication protocol](docs/P9_REPLICATION_PROTOCOL.md) for the experimental-unit design. The historical P1–P7 implementation notes below describe their original release state; this section is the current research-path contract.
 
 ## Run
