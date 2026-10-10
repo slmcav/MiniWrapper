@@ -105,8 +105,9 @@ test('P4 manuscript export bundles exact study, audit, figures, references and s
   assert.ok(zip.includes(Buffer.from('manuscript.html')));
   assert.ok(zip.includes(Buffer.from('references.bib')));
   assert.ok(zip.includes(Buffer.from('shader.glsl')));
+  assert.ok(zip.includes(Buffer.from('source-lineage.json')));
   assert.ok(zip.includes(Buffer.from('figures/frame-03.png')));
-  assert.equal(product.manifest.fileInventory.length,10);
+  assert.equal(product.manifest.fileInventory.length,11);
   assert.ok(product.manifest.fileInventory.every(x=>/^[a-f0-9]{64}$/.test(x.sha256)));
   assert.equal(product.manifest.verification.academicManuscriptUnlocked,false);
   assert.doesNotMatch(renderManuscriptHTML(manuscript,{embedImages:false}),/data:image\/png;base64,/);
@@ -187,12 +188,13 @@ test('P6 imported manuscript ZIP reproduces every image, PDF, source, citation, 
   const proof=await verifyManuscriptZip(product.zip,{subtle});
   assert.equal(proof.schema,BUNDLE_VERIFICATION_SCHEMA);
   assert.equal(proof.verdict,'PASS');
+  assert.match(proof.sourceSnapshotCommit,/^[a-f0-9]{40}$/);
   assert.equal(proof.studySha256,session.sha256);
   assert.equal(proof.manuscriptSha256,draft.record.sha256);
   assert.equal(proof.archiveSha256,Buffer.from(await subtle.digest('SHA-256',product.zip)).toString('hex'));
   assert.equal(proof.observedGpuDraws,3);
   assert.equal(proof.sourceFiguresVerified,3);
-  assert.equal(proof.inventoryEntries,10);
+  assert.equal(proof.inventoryEntries,11);
   assert.equal(proof.manuscriptReviewCompleted,false);
   assert.equal(proof.publicationAuthorized,false);
 });
