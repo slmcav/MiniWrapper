@@ -1,7 +1,7 @@
 // Evidence-gated publication-style research draft. No peer-review or publication claim.
 import {assembleManuscript,verifyManuscript} from './manuscript-engine.mjs';
 import {renderManuscriptHTML,exportManuscriptBundle} from './manuscript-render.mjs';
-import {createDirectPdf} from './research-pdf.mjs';
+import {renderLaTeXManuscript} from './manuscript-latex.mjs';
 import {prepareEditorialPacket,verifyEditorialPacket} from './scholarly-review.mjs';
 const $=id=>document.getElementById(id);
 let draft=null,markup='',busy=false;
@@ -43,7 +43,7 @@ $('generatePaper').addEventListener('click',async()=>{
       '\n'+draft.record.observedDraws+' verified GPU observations; '+
       draft.references.length+' source-scoped citations; '+draft.figures.length+
       ' full-resolution figures in evidence bundle.\nStatus: UNREVIEWED RESEARCH DRAFT';
-    label('Evidence-grounded technical manuscript assembled. Publication/peer-review status remains unverified.');
+    label('Technical manuscript assembled from verified GPU observations.');
   }catch(e){
     invalidate();label('Manuscript generation blocked: '+String(e.message||e),true);
   }finally{busy=false;controls();}
@@ -66,7 +66,7 @@ $('paperExportZip').addEventListener('click',async()=>{
     const product=await exportManuscriptBundle(draft);
     save('glsl-research-manuscript-'+draft.record.sha256.slice(0,12)+'.zip',
       product.zip,'application/zip');
-    label('Downloaded research ZIP: manuscript, GLSL, hashed figures, data, methodology and BibTeX.');
+    label('Research package exported with LaTeX source, original figures, evidence data and PDF build commands.');
   }catch(e){label('Manuscript bundle export rejected: '+String(e.message||e),true);}
   finally{busy=false;controls();}
 });
@@ -75,13 +75,11 @@ $('paperDirectPdf').addEventListener('click',async()=>{
   if(!draft||busy)return;
   busy=true;controls();
   try{
-    const pdf=await createDirectPdf(draft);
-    if(pdf.length<600||!new TextDecoder().decode(pdf.subarray(0,9)).startsWith('%PDF-1.4'))
-      throw new Error('PDF header preflight failed');
-    save('glsl-research-draft-'+draft.record.sha256.slice(0,12)+'.pdf',
-      pdf,'application/pdf');
-    label('Downloaded A4 PDF with verified source evidence and embedded GPU figures. Human page-layout review remains required.');
-  }catch(error){label('Direct PDF export blocked: '+String(error.message||error),true);}
+    const tex=await renderLaTeXManuscript(draft);
+    save('GLSL-'+draft.record.sha256.slice(0,32)+'.tex',
+      tex,'application/x-tex;charset=utf-8');
+    label('LaTeX manuscript source downloaded. The complete research ZIP includes figures and one-command PDF builds.');
+  }catch(error){label('LaTeX export failed: '+String(error.message||error),true);}
   finally{busy=false;controls();}
 });
 $('paperReviewPacket').addEventListener('click',async()=>{
@@ -92,7 +90,7 @@ $('paperReviewPacket').addEventListener('click',async()=>{
     await verifyEditorialPacket(packet,draft);
     save('glsl-review-packet-'+draft.record.sha256.slice(0,12)+'.json',
       JSON.stringify(packet,null,2)+'\n','application/json;charset=utf-8');
-    label('Exported an unsigned review checklist. It does not certify peer review or publication.');
+    label('Source review checklist exported.');
   }catch(error){label('Review packet export blocked: '+String(error.message||error),true);}
   finally{busy=false;controls();}
 });
