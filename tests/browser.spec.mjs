@@ -414,7 +414,7 @@ test('P4 complete real WebGL sweep produces a hash-verified limited methodology 
   expect(audit.report.release.academicManuscriptUnlocked).toBe(false);
   expect(audit.report.measurements.observedGpuDraws).toBe(3);
   expect(audit.references.some(r=>r.id==='jeremias-quilez2013')).toBe(false);
-  await expect(page.locator('#generatePaper')).toBeDisabled();
+  await expect(page.locator('#generatePaper')).toBeEnabled();
 });
 
 test('P4 verified GPU experiment unlocks research draft with styled HTML and evidence ZIP',async({page})=>{
@@ -627,4 +627,31 @@ test('Academic UX structural audit: phone and desktop have no horizontal overflo
   expect(metrics.stageWidth).toBeGreaterThan(200);
   expect(metrics.canvasWidth).toBeGreaterThan(200);
  }
+});
+
+
+test('Approved mobile interaction: pinned canvas and operable bottom drawer with swipeable modes',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/glsl-lab.html');
+ await expect(page.locator('#drawerToggle')).toBeVisible();
+ await page.evaluate(()=>window.scrollTo(0,750));
+ const canvas=await page.locator('#glcanvas').evaluate(el=>({
+  top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom
+ }));
+ expect(canvas.top).toBeGreaterThanOrEqual(0);
+ expect(canvas.bottom).toBeLessThanOrEqual(844);
+ await page.locator('#drawerToggle').click();
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','true');
+ const placement=await page.locator('#labControls').evaluate(el=>getComputedStyle(el).position);
+ expect(placement).toBe('fixed');
+ await expect(page.locator('#panePlay')).toBeVisible();
+ await page.locator('#labControls').evaluate(panel=>{
+   const from=new Touch({identifier:1,target:panel,clientX:260,clientY:580});
+   const to=new Touch({identifier:1,target:panel,clientX:100,clientY:580});
+   panel.dispatchEvent(new TouchEvent('touchstart',{touches:[from],changedTouches:[from],bubbles:true}));
+   panel.dispatchEvent(new TouchEvent('touchend',{touches:[],changedTouches:[to],bubbles:true}));
+ });
+ await expect(page.locator('#paneBuild')).toBeVisible();
+ await page.keyboard.press('Escape');
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','false');
 });
