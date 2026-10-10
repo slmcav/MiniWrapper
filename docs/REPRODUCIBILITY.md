@@ -54,3 +54,9 @@ Reproduce against the source snapshot identified in the archive, or obtain an ex
 ## Independently attributable reviewer notes
 
 The mobile research workspace includes an optional, supplementary `glsl-lab/source-review-dossier/1` export for a human reader's citation-specific assessment. It requires the original unsigned review packet and records the manuscript/study/audit hashes, individual cited work, claim, source URL, page/section locator, assessment, rationale and self-declared reviewer name. A subsequent import checks content consistency against the original unsigned packet. **These notes are not included in the canonical research ZIP**, so external review cannot silently overwrite the frozen manuscript, PDF or source evidence. A PASS on the supplemental dossier cannot authenticate reader identity or authorize publication. The primary-source scope limits are documented in `docs/SOURCE_CLAIM_CROSSWALK.md`.
+
+## P7 source-crosswalk provenance
+
+A supplemental `glsl-lab/source-claim-crosswalk/1` JSON file is generated only after the original `editorial-review-packet/1` and a linked `source-review-dossier/1` pass integrity verification. It preserves the original manuscript, review-packet and dossier hashes, citation-by-citation coverage, claim-specific assessment classes and competing user-declared readings. The source URL cannot be substituted for another HTTPS document. The crosswalk is deterministic apart from its separately recorded creation time and can be rebuilt from its exact dossier.
+
+The **publicationAuthorized** and **independentHumanVerification** fields remain false. A crosswalk showing agreement among several reader-declared notes cannot substitute for checking the actual source pages, independently establishing reader identity, reproducing an experiment, or receiving editorial authorization. The crosswalk never rewrites the manuscript ZIP.
