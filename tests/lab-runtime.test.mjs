@@ -30,7 +30,7 @@ function buildLab() {
     getUniformLocation:(p,k)=>k,uniform1f:(k,v)=>{uniforms[k]=v;},uniform2f(){},viewport(){},useProgram(){},drawArrays(){draws++;}
   };
   el('glcanvas').getContext=()=>gl;
-  const doc={hidden:false,getElementById:el,querySelectorAll:s=>s==='input[data-key]'?sliders:[],body:{appendChild(){}},createElement:el};
+  const doc={hidden:false,getElementById:el,querySelectorAll:s=>s==='input[data-key]'?sliders:[],body:{appendChild(){}},createElement:el,addEventListener(){}};
   const win=new El('window');win.devicePixelRatio=1;
   vm.runInNewContext(js,{document:doc,window:win,devicePixelRatio:1,performance:{now:()=>now},
     requestAnimationFrame:fn=>(queue.push(fn),queue.length),cancelAnimationFrame(){},setTimeout(){},
