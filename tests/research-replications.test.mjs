@@ -19,7 +19,7 @@ async function make(id,offset=0,phase=0,platformData=platform()){
     const rgba=Uint8Array.from({length:4*3*4},(_,index)=>index%4===3?255:(index+slot.levelIndex*12+slot.block+offset)%256);
     const receipt=await createBuildReceipt({
       shaderBody:'o.rgb=vec3(.5);',expandedShader:'#version 300 es\nvoid main(){o.rgb=vec3(.5);}',
-      demoId:'original',attribution:'@YoheiNishitsuji',
+      demoId:'research_fixture',attribution:'Synthetic QA fixture',
       checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
       viewport:{width:4,height:3},
       parameters:{...protocol.sweep.baseline,zoom:protocol.sweep.levels[slot.levelIndex]},
