@@ -1,11 +1,33 @@
 // Academic LaTeX source is generated exclusively from the frozen study and its evidence.
 import {verifyManuscript} from './manuscript-engine.mjs';
 export const LATEX_SCHEMA='glsl-lab/latex-source/1';
-const esc=value=>String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g,'')
- .replace(/[\u2010-\u2015\u2212]/g,'-').replace(/[^\x20-\x7E]/g,'?')
- .replace(/[\\{}%$&#_^~]/g,c=>({'\\':'\\textbackslash{}','{':'\\{','}':'\\}',
+// Preserve researcher and bibliographic names exactly. Never silently replace a glyph.
+const TEX_ESCAPE=Object.freeze({
+ '\\':'\\textbackslash{}','{':'\\{','}':'\\}',
  '%':'\\%','$':'\\$','&':'\\&','#':'\\#','_':'\\_',
- '^':'\\textasciicircum{}','~':'\\textasciitilde{}'})[c]);
+ '^':'\\textasciicircum{}','~':'\\textasciitilde{}'
+});
+const MATH_SYMBOLS=Object.freeze({
+ 'π':'\\ensuremath{\\pi}','μ':'\\ensuremath{\\mu}',
+ 'α':'\\ensuremath{\\alpha}','β':'\\ensuremath{\\beta}',
+ 'γ':'\\ensuremath{\\gamma}','Δ':'\\ensuremath{\\Delta}',
+ 'σ':'\\ensuremath{\\sigma}','λ':'\\ensuremath{\\lambda}',
+ 'θ':'\\ensuremath{\\theta}','±':'\\ensuremath{\\pm}',
+ '×':'\\ensuremath{\\times}','≤':'\\ensuremath{\\leq}',
+ '≥':'\\ensuremath{\\geq}','∞':'\\ensuremath{\\infty}'
+});
+export function escapeLaTeXText(value){
+ let output='';
+ for(const ch of String(value)){
+  if(TEX_ESCAPE[ch]){output+=TEX_ESCAPE[ch];continue;}
+  if(MATH_SYMBOLS[ch]){output+=MATH_SYMBOLS[ch];continue;}
+  if(!/^[\x20-\x7e\u00a1-\u024f\u2013-\u2014\u2018-\u201d]$/u.test(ch))
+   throw new TypeError('Unsupported LaTeX character U+'+ch.codePointAt(0).toString(16).toUpperCase());
+  output+=ch;
+ }
+ return output;
+}
+const esc=escapeLaTeXText;
 const fixed=n=>Number(n).toFixed(3);
 export async function renderLaTeXManuscript(bundle,subtle=globalThis.crypto?.subtle){
  await verifyManuscript(bundle,subtle);
