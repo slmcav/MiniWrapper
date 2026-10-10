@@ -155,4 +155,8 @@ window.glslLabBuilder={
   }
 };
 render();
-status('Starter graph ready. Add an operation or tap Build & preview.');
+// The Lab starts from a user-editable typed graph, never a supplied gallery shader.
+try{
+ bridge.compileGraph(history.graph,emitGLSL(history.graph));
+ status('Editable research graph ready. Change an operation or start a controlled capture.');
+}catch(error){status('Graph compilation failed: '+String(error.message||error),true);}
