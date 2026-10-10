@@ -561,11 +561,11 @@ test('P9 mobile findings are read-only and list 13 research gaps, not approvals'
  const status=page.locator('#p8EvidenceStatus');
  await expect(status).toHaveAttribute('data-evidence-state','ready',{timeout:15000});
  await expect(page.locator('#p8EvidenceRows details')).toHaveCount(13);
- await expect(status).toContainText('NOT ESTABLISHED');
+ await expect(status).toContainText('critical requirements prioritized');
  await page.locator('[data-claim-id="P8-C05"] summary').click();
  await expect(page.locator('[data-claim-id="P8-C05"]')).toHaveAttribute('open','');
  await expect(page.locator('[data-claim-id="P8-C05"]')).toContainText('Independently sampled experimental units');
- await expect(page.locator('[data-claim-id="P8-C05"]')).toContainText('Human approval: NONE');
+ await expect(page.locator('[data-claim-id="P8-C05"]')).toContainText('methodological evidence gap identified');
  await expect(page.locator('#sourceReviewAdd')).toBeDisabled();
  await expect(page.locator('#sourceCrosswalkExport')).toBeDisabled();
  const width=await page.evaluate(()=>document.documentElement.scrollWidth);
@@ -577,7 +577,7 @@ test('P9 mobile research panel fails closed when its pinned register is substitu
  await page.goto('/glsl-lab.html');
  await expect(page.locator('#p8EvidenceStatus')).toHaveAttribute('data-evidence-state','error',{timeout:15000});
  await expect(page.locator('#p8EvidenceRows details')).toHaveCount(0);
- await expect(page.locator('#p8EvidenceStatus')).toContainText('Scientific approval remains unestablished');
+ await expect(page.locator('#p8EvidenceStatus')).toContainText('Research findings were not loaded');
 });
 
 
