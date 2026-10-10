@@ -63,7 +63,18 @@ function render(){
     input.dataset.graphParam=spec.name;
     input.addEventListener('input',()=>{
       const val=Number(input.value);number.textContent=String(val);
-      try{change(setOperationParameter(history.graph,node.id,spec.name,val),'Updated '+spec.name);}catch(error){status(String(error.message||error),true);}
+      try{
+        // Keep the mobile thumb active while dragging. Commit one undo step on release.
+        const draft=setOperationParameter(history.graph,node.id,spec.name,val);
+        $('builderCode').value=emitGLSL(draft);
+        bridge.invalidate();
+        status('Editing '+spec.name+'. Release the slider to commit.');
+      }catch(error){status(String(error.message||error),true);}
+    });
+    input.addEventListener('change',()=>{
+      try{change(setOperationParameter(history.graph,node.id,spec.name,Number(input.value)),
+        'Updated '+spec.name+'. Build to preview.');}
+      catch(error){status(String(error.message||error),true);}
     });
     field.append(label,number,input);fields.appendChild(field);
   }
