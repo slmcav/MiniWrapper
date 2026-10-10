@@ -108,7 +108,7 @@ export function canonicalShader(source){
   if(typeof source!=='string')throw new TypeError('Shader source must be text');
   // Normalization catches trivial paste, whitespace and comment variations.
   // This signature filter is not a copyright or semantic similarity classifier.
-  return source.replace(/\\/\*[\\s\\S]*?\\*\\/|\\/\\/[^\\n]*/g,'').replace(/\\s+/g,'');
+  return source.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g,'').replace(/\s+/g,'');
 }
 export function identifyExampleShader(source){
   const normalized=canonicalShader(source);
