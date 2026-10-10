@@ -73,6 +73,8 @@ $('repeatRun').addEventListener('click',async()=>{
     const result=await observe();await verifyReplicatedSession(result);
     const matching=prior?await compareReplicatedSessions(prior,result):null;
     study=result;comparison=matching;show();
+    window.glslLabLatestExperiment=result;
+    window.dispatchEvent(new Event('glsl-lab-study-ready'));
     msg(matching?'Nine-frame study verified and separate-session comparison calculated.':
       'Nine frames verified. Export the archive before reloading.');
   }catch(e){msg('Study rejected: '+String(e.message||e),true);}
