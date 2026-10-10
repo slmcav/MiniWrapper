@@ -1,1 +1,251 @@
-The requested file reference is not currently visible. Use files.search or files.list to rediscover the file, then retry with a returned ref_id or file_id.
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>MiniWrapper — Browser GLSL shader runner</title>
+  <style>
+    :root { font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #e4e9ef; background: #0b1016; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; }
+    main { display: grid; grid-template-rows: auto auto minmax(320px, 1fr); min-height: 100vh; }
+    header { padding: 14px clamp(16px, 3vw, 28px) 8px; }
+    h1 { font-size: 1.25rem; margin: 0; letter-spacing: .02em; }
+    header p { margin: 4px 0 0; color: #aebbc8; }
+    section { padding: 12px clamp(16px, 3vw, 28px) 14px; border-block: 1px solid #283342; background: #131b25; }
+    label { display: inline-block; font-weight: 600; margin-bottom: 6px; }
+    textarea { display: block; width: 100%; height: 135px; resize: vertical; padding: 11px 12px; color: #e8f2fd; background: #080d13; border: 1px solid #3d5164; border-radius: 6px; font: 12.5px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 2; }
+    textarea:focus, button:focus-visible, select:focus-visible { outline: 2px solid #6cceba; outline-offset: 2px; }
+    .toolbar { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; margin-top: 11px; }
+    button, select { border-radius: 6px; padding: 8px 13px; border: 1px solid #425366; font: inherit; color: #ecf5fa; background: #263240; }
+    button { cursor: pointer; }
+    button.primary { background: #167861; border-color: #24967d; font-weight: 650; }
+    button:hover { filter: brightness(1.17); }
+    .toolbar label { margin: 0 0 0 4px; font-weight: 400; color: #c4d0db; }
+    #status { margin-top: 9px; min-height: 20px; font-family: ui-monospace, monospace; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; color: #90d7b6; }
+    #status.error { color: #ff9d9d; }
+    .viewport { min-height: 320px; position: relative; }
+    canvas { display: block; width: 100%; height: 100%; min-height: 320px; background: #030408; }
+    .hint { position: absolute; right: 13px; bottom: 11px; pointer-events: none; color: #a8b8c8; background: #0b1016b8; border-radius: 4px; padding: 4px 7px; font-size: 11px; }
+    @media (max-width: 600px) { textarea { height: 175px; } main { grid-template-rows: auto auto minmax(300px, 1fr); } .viewport { min-height: 300px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>MiniWrapper</h1>
+    <p>Run compact GLSL fragment-shader snippets directly in a WebGL2 browser.</p>
+  </header>
+  <section aria-label="Shader editor">
+    <label for="code">Fragment shader body</label>
+    <textarea id="code" spellcheck="false" aria-describedby="status"></textarea>
+    <div class="toolbar">
+      <button id="render" class="primary" type="button">Render (Ctrl/⌘ + Enter)</button>
+      <button id="pause" type="button">Pause</button>
+      <button id="reset" type="button">Reset time</button>
+      <label for="scale">Resolution</label>
+      <select id="scale" aria-label="Rendering resolution">
+        <option value="0.5">50%</option>
+        <option value="0.75" selected>75%</option>
+        <option value="1">100%</option>
+      </select>
+    </div>
+    <div id="status" role="status" aria-live="polite"></div>
+  </section>
+  <div class="viewport">
+    <canvas id="glcanvas" aria-label="Live fragment shader output"></canvas>
+    <span class="hint">WebGL2 · time in seconds</span>
+  </div>
+</main>
+<script>
+'use strict';
+
+// Exact snippet supplied for MiniWrapper, retained in the editor without rewriting.
+const DEFAULT_SNIPPET = 'float i,e,R,s;vec3 q,p,d=vec3(FC.xy/r*.4-vec2(.2,-.8),1);for(q.zy--;i++<70.;){o.rgb+=hsv(.59,R,min(e*s-.15,1.)/40.);s=4.;p=q+=d*e*R*.3;p=vec3(log(R=length(p*1.3)),exp2(-p.z/R),atan(p.y,p.x)*s-t*.3);for(e=--p.y;s<1e3;s+=s)e+=sin(dot(cos(p*s),sin(p.xyx*s+t*.9)))/s*.5;}';
+
+const codeEl = document.getElementById('code');
+const statusEl = document.getElementById('status');
+const canvas = document.getElementById('glcanvas');
+const pauseButton = document.getElementById('pause');
+const scaleEl = document.getElementById('scale');
+codeEl.value = DEFAULT_SNIPPET;
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+
+function status(message, isError = false) {
+  statusEl.textContent = message;
+  statusEl.classList.toggle('error', isError);
+}
+
+if (!gl) {
+  status('WebGL2 is not available. Enable hardware acceleration or use a browser/device with WebGL2 support.', true);
+  for (const id of ['render', 'pause', 'reset']) document.getElementById(id).disabled = true;
+} else {
+  const vertexSource = `#version 300 es
+    precision highp float;
+    layout(location = 0) in vec2 a_pos;
+    void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+  `;
+
+  // The host provides ShaderToy-like aliases: FC, r, t, o, and hsv().
+  // Only the known uninitialized declarations are seeded; all shader equations stay intact.
+  function seedUninitializedLocals(source) {
+    return source
+      .replace(/\bfloat\s+i\s*,\s*e\s*,\s*R\s*,\s*s\s*;/, 'float i=0.,e=1.,R=1.,s=4.;')
+      .replace(/\bvec3\s+q\s*,\s*p\s*,\s*d\s*=/, 'vec3 q=vec3(0.),p=vec3(0.),d=');
+  }
+
+  function fragmentSource(body) {
+    return `#version 300 es
+precision highp float;
+uniform vec2 r;
+uniform float t;
+out vec4 o;
+vec3 hsv(float h, float s, float v) {
+  vec4 K = vec4(1., 2./3., 1./3., 3.);
+  vec3 p = abs(fract(vec3(h) + K.xyz) * 6. - K.www);
+  return v * mix(K.xxx, clamp(p - K.xxx, 0., 1.), s);
+}
+void main() {
+  vec2 FC = gl_FragCoord.xy;
+  o = vec4(0., 0., 0., 1.);
+  ${seedUninitializedLocals(body)}
+}
+`;
+  }
+
+  function makeShader(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const message = gl.getShaderInfoLog(shader) || 'Unknown GLSL compilation error';
+      gl.deleteShader(shader);
+      throw new Error(message);
+    }
+    return shader;
+  }
+
+  const vertexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.bindVertexArray(null);
+
+  let program = null;
+  let uniforms = null;
+  let raf = 0;
+  let timeStart = performance.now();
+  let pausedAt = 0;
+  let paused = false;
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2) * Number(scaleEl.value);
+    const width = Math.max(1, Math.round(canvas.clientWidth * dpr));
+    const height = Math.max(1, Math.round(canvas.clientHeight * dpr));
+    if (width !== canvas.width || height !== canvas.height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    gl.viewport(0, 0, width, height);
+  }
+
+  function frame(now) {
+    raf = 0;
+    if (!program) return;
+    resize();
+    gl.useProgram(program);
+    gl.bindVertexArray(vao);
+    gl.uniform2f(uniforms.r, canvas.width, canvas.height);
+    gl.uniform1f(uniforms.t, paused ? pausedAt : (now - timeStart) / 1000);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    if (!paused && !document.hidden) raf = requestAnimationFrame(frame);
+  }
+
+  function requestFrame() {
+    if (!raf && program) raf = requestAnimationFrame(frame);
+  }
+
+  function compile() {
+    let vertex;
+    let fragment;
+    let nextProgram;
+    try {
+      vertex = makeShader(gl.VERTEX_SHADER, vertexSource);
+      fragment = makeShader(gl.FRAGMENT_SHADER, fragmentSource(codeEl.value));
+      nextProgram = gl.createProgram();
+      gl.attachShader(nextProgram, vertex);
+      gl.attachShader(nextProgram, fragment);
+      gl.linkProgram(nextProgram);
+      if (!gl.getProgramParameter(nextProgram, gl.LINK_STATUS)) {
+        throw new Error(gl.getProgramInfoLog(nextProgram) || 'GLSL program linking failed');
+      }
+      if (program) gl.deleteProgram(program);
+      program = nextProgram;
+      uniforms = { r: gl.getUniformLocation(program, 'r'), t: gl.getUniformLocation(program, 't') };
+      nextProgram = null;
+      timeStart = performance.now();
+      pausedAt = 0;
+      paused = false;
+      pauseButton.textContent = 'Pause';
+      status('Shader compiled. Rendering at ' + Math.round(Number(scaleEl.value) * 100) + '% resolution.');
+      requestFrame();
+    } catch (error) {
+      status(String(error.message || error), true);
+    } finally {
+      if (vertex) gl.deleteShader(vertex);
+      if (fragment) gl.deleteShader(fragment);
+      if (nextProgram) gl.deleteProgram(nextProgram);
+    }
+  }
+
+  document.getElementById('render').addEventListener('click', compile);
+  codeEl.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+      event.preventDefault();
+      compile();
+    }
+  });
+  pauseButton.addEventListener('click', () => {
+    if (!program) return;
+    if (!paused) {
+      pausedAt = (performance.now() - timeStart) / 1000;
+      paused = true;
+      pauseButton.textContent = 'Resume';
+      status('Paused at t = ' + pausedAt.toFixed(2) + ' s.');
+      requestFrame();
+    } else {
+      timeStart = performance.now() - pausedAt * 1000;
+      paused = false;
+      pauseButton.textContent = 'Pause';
+      status('Rendering.');
+      requestFrame();
+    }
+  });
+  document.getElementById('reset').addEventListener('click', () => {
+    timeStart = performance.now();
+    pausedAt = 0;
+    status('Time reset.');
+    requestFrame();
+  });
+  scaleEl.addEventListener('change', () => {
+    status('Resolution: ' + Math.round(Number(scaleEl.value) * 100) + '%.');
+    requestFrame();
+  });
+  window.addEventListener('resize', requestFrame);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) requestFrame(); });
+  canvas.addEventListener('webglcontextlost', event => {
+    event.preventDefault();
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    status('WebGL context lost. Reload this page to restore rendering.', true);
+  });
+
+  compile();
+}
+</script>
+</body>
+</html>
