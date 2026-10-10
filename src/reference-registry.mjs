@@ -28,7 +28,7 @@ export const REFERENCES=Object.freeze([
     authors:['Jerome Sacks','William J. Welch','Toby J. Mitchell','Henry P. Wynn'],year:1989,
     title:'Design and Analysis of Computer Experiments',venue:'Statistical Science, 4(4), 409–423',
     doi:'10.1214/ss/1177012413',url:'https://doi.org/10.1214/ss/1177012413',
-    metadataSource:'https://projecteuclid.org/journals/statistical-science/volume-4/issue-4/Design-and-Analysis-of-Computer-Experiments/10.1214/ss/1177012413.full',
+    metadataSource:'https://doi.org/10.1214/ss/1177012413',
     scope:['experiment_design'],note:'Methodological context; does not authorize inferential statistics from three or nine serial frames',
     checkedAt:REFERENCE_REVIEW_DATE
   }),
