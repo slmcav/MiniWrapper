@@ -109,7 +109,7 @@ $('sourceReviewImport').addEventListener('change',async e=>{
   const report=await createClaimCrosswalk(packet,candidate);
   notes=candidate.assessments.map(x=>({...x}));dossier=candidate;crosswalk=report;render();showCrosswalk();
   say('Dossier content verified: '+result.assessmentCount+' reviewer-declared entries, no independent authentication.');
- }catch(error){say('Dossier rejected: '+String(error.message||error),true);}
+ }catch(error){notes=[];dossier=null;crosswalk=null;render();showCrosswalk();say('Dossier rejected: '+String(error.message||error),true);}
  finally{busy=false;e.target.value='';controls();}
 });
 controls();render();showCrosswalk();say('Import a frozen unsigned review packet to begin source-specific research notes.');
