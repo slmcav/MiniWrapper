@@ -103,3 +103,11 @@ A controlled three-frame action collects three distinct draw submissions with un
 Remaining P3 science gates include deliberately controlled parameter sweeps, explicitly reported graphics platform/software precision, repeatability under independent sessions, variance/uncertainty treatment appropriate to the design, and independent source/citation verification. P4 academic-paper generation is still disabled; it must not treat these descriptive comparisons as hypothesis-test significance or novelty.
 
 The GPU readback bridge now attaches a real UTC timestamp at synchronous pixel acquisition and the incrementing successful draw identifier. These fields are carried into each figure record and the series manifest; controlled series verifies strictly increasing draw IDs and nondecreasing shader time. Timestamps do not include deferred PNG processing time.
+
+## P3 fixed-shader-time treatment capture milestone
+
+The versioned research-experiments module specifies five baseline controls, one render-affecting varied parameter, a positive step, three fixed treatment values and constant GLSL time. Capture records preserve every RGBA8 pixel, original shader/graph, per-treatment uniforms, frame dimensions, timestamps, GPU draw IDs, lossless PNG hashes and verified build receipts.
+
+The portable archive includes full pixel bytes; the importer replays hashing, sampled metrics and lossless figure reconstruction before accepting it. Cross-session comparisons align only equal protocol settings and matching source, graph, viewport and runtime labels. CPU compilation wall-time is excluded from shader identity because it is not stable between browser sessions.
+
+The analysis remains descriptive: one observed GPU draw per condition, no randomized order, no within-treatment replicates, no calibrated GPU runtime measurement and no evidence of independent hardware. Future P3 work must introduce repeated and randomized/counterbalanced trials, device metadata, experimental uncertainty and manifest versioning before stronger causal or statistical claims.
