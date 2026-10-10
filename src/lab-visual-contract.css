@@ -16,7 +16,10 @@ body.contract-dashboard {
   border-bottom:1px solid #294457;
   background:#07131bd9;
 }
-.contract-heading {display:flex;align-items:center;gap:12px}
+.contract-heading {display:grid;grid-template-columns:35px minmax(0,max-content);grid-template-rows:auto auto;column-gap:12px;align-items:center}
+.contract-heading .contract-mark {grid-column:1;grid-row:1 / span 2}
+.contract-heading h1 {grid-column:2;grid-row:1;white-space:nowrap;line-height:1.2}
+.contract-heading p {grid-column:2;grid-row:2;max-width:270px;line-height:1.35}
 .contract-mark {width:35px;height:35px;flex:none;display:block}
 .contract-heading h1 {font-size:1.5rem;letter-spacing:.01em}
 .contract-headline {max-width:490px;margin-left:auto;text-align:right}
@@ -177,6 +180,9 @@ body.contract-dashboard {
 @media(max-width:820px){
  .contract-dashboard .brand {padding:10px 13px}
  .contract-dashboard .contract-mark {width:24px;height:24px}
+ .contract-heading {grid-template-columns:24px minmax(0,1fr);column-gap:10px}
+ .contract-heading h1 {font-size:1.12rem}
+ .contract-heading p {font-size:.74rem;max-width:235px}
  .contract-dashboard .stage-head {background:#122635}
  .contract-dashboard .stage-foot .state {color:#46dbba}
  .contract-dashboard .drawer-handle {background:#19b99c;color:#06232d;font-weight:700}
