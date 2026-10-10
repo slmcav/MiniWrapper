@@ -26,7 +26,7 @@ const sidebar=node('aside','contract-sidebar');sidebar.setAttribute('aria-label'
 sidebar.append(node('h2',null,'PROJECTS'));
 const projectList=node('div','contract-project-list');sidebar.append(projectList);
 const separator=node('div','contract-divider');sidebar.append(separator);
-const nav=node('nav','contract-nav');sidebar.append(nav);
+const nav=node('nav','contract-nav');nav.setAttribute('aria-label','Project navigation');sidebar.append(nav);
 function scrollToNode(id){$(id)?.scrollIntoView({behavior:'smooth',block:'center'});}
 function action(name,callback){const b=node('button',null,name);b.type='button';b.addEventListener('click',callback);nav.append(b);}
 const science=node('details','contract-science');science.id='contractScience';
