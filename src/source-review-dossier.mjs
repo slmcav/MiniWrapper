@@ -63,6 +63,8 @@ function checkEntry(v,cited){
   const u=new URL(v.sourceUrl);
   fail(u.protocol==='https:'&&!!u.hostname&&!u.username&&!u.password,
     'Invalid source URL');
+  fail(v.sourceUrl===cited.get(v.referenceId),
+    'Review source URL must match the manuscript citation, not an unrelated external address');
   fail(UTC(v.checkedAt),'An explicit UTC evidence-reading time is required');
 }
 export async function createSourceReviewDossier(packet,entries,{
@@ -72,7 +74,7 @@ export async function createSourceReviewDossier(packet,entries,{
   await checkPacket(packet,subtle);
   fail(Array.isArray(entries)&&entries.length>0&&entries.length<=60,
     '1 to 60 explicit reviewer source assessments required');
-  const cited=new Set(packet.bibliography.filter(p=>p.applicableToManuscript).map(p=>p.id));
+  const cited=new Map(packet.bibliography.filter(p=>p.applicableToManuscript).map(p=>[p.id,p.url]));
   const seen=new Set();
   for(const entry of entries){
     checkEntry(entry,cited);
