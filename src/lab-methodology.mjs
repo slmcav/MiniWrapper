@@ -37,29 +37,49 @@ $('auditBibtex').addEventListener('click',()=>{
     state('Exported sources with verified metadata and applicable claim scopes. Pending entries excluded.');
   }catch(e){state('Bibliography export rejected: '+String(e.message||e),true);}
 });
+async function verifyAndDisplay(candidate){
+  const result=await auditMethodology(candidate);
+  await verifyMethodologyAudit(result,candidate);
+  const b=bibliographyForAudit(result);
+  study=candidate;audit=result;
+  $('auditResults').textContent=[
+    'Original experiment SHA-256: '+result.experimentSha256,
+    'Methodology report SHA-256: '+result.sha256,
+    'Observed GPU draws: '+result.measurements.observedGpuDraws,
+    'Draws per treatment: '+result.measurements.observedDrawsPerTreatment,
+    'Bibliographic basis: '+b.references.length+' applicable metadata-checked sources',
+    ...result.findings.map(x=>x.code+' ['+x.status+']: '+x.detail),
+    'Academic manuscript gate: LOCKED',
+    ...result.release.reasons.map(x=>'- '+x)
+  ].join('\n');
+  $('auditExport').disabled=false;
+  notify();
+  state('Experiment and methodology findings independently recomputed from archived bytes. No publication authorization granted.');
+}
+$('auditCurrentStudy').addEventListener('click',async()=>{
+  if(busy||!window.glslLabLatestExperiment)return;
+  busy=true;$('auditCurrentStudy').disabled=true;
+  state('Verifying the current GPU study and its source evidence.');
+  try{
+    await verifyAndDisplay(window.glslLabLatestExperiment);
+    state('Study audit complete. Generate the manuscript from the verified evidence.');
+  }catch(error){
+    audit=null;study=null;$('auditExport').disabled=true;notify();
+    state('Audit rejected: '+String(error.message||error),true);
+  }finally{
+    busy=false;$('auditCurrentStudy').disabled=!window.glslLabLatestExperiment;
+  }
+});
+window.addEventListener('glsl-lab-study-ready',()=>{
+ $('auditCurrentStudy').disabled=false;
+});
 $('auditStudyImport').addEventListener('change',async event=>{
   if(busy)return;const file=event.target.files?.[0];if(!file)return;
   busy=true;$('auditExport').disabled=true;state('Verifying source hashes and recomputing study metrics.');
   try{
     if(file.size>28000000)throw new Error('Research study JSON exceeds 28 MB');
     const candidate=JSON.parse(await file.text());
-    const result=await auditMethodology(candidate);
-    await verifyMethodologyAudit(result,candidate);
-    const b=bibliographyForAudit(result);
-    study=candidate;audit=result;
-    $('auditResults').textContent=[
-      'Original experiment SHA-256: '+result.experimentSha256,
-      'Methodology report SHA-256: '+result.sha256,
-      'Observed GPU draws: '+result.measurements.observedGpuDraws,
-      'Draws per treatment: '+result.measurements.observedDrawsPerTreatment,
-      'Bibliographic basis: '+b.references.length+' applicable metadata-checked sources',
-      ...result.findings.map(x=>x.code+' ['+x.status+']: '+x.detail),
-      'Academic manuscript gate: LOCKED',
-      ...result.release.reasons.map(x=>'- '+x)
-    ].join('\n');
-    $('auditExport').disabled=false;
-    notify();
-    state('Experiment and methodology findings independently recomputed from archived bytes. No publication authorization granted.');
+    await verifyAndDisplay(candidate);
   }catch(e){
     audit=null;study=null;$('auditExport').disabled=true;
     notify();
