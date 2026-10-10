@@ -15,18 +15,16 @@ test('The exact browser dependency tree is frozen by integrity-checked npm lockf
  assert.equal(lock.name,pkg.name);
  assert.deepEqual(lock.packages[''].devDependencies,pkg.devDependencies);
  assert.deepEqual(Object.keys(lock.packages).sort(),[
-  '','node_modules/@playwright/test','node_modules/fsevents',
-  'node_modules/playwright','node_modules/playwright-core'
+  '','node_modules/@playwright/test','node_modules/playwright','node_modules/playwright-core'
  ].sort());
  for(const [name,data] of Object.entries(lock.packages)){
   if(name==='')continue;
   assert.match(data.integrity,/^sha512-[A-Za-z0-9+/]+={0,2}$/);
   assert.equal(data.resolved,'https://registry.npmjs.org/'+
-    (name==='node_modules/@playwright/test'?'@playwright/test/-/test-1.55.0.tgz':
-    name==='node_modules/fsevents'?'fsevents/-/fsevents-2.3.2.tgz':
-    name==='node_modules/playwright'?'playwright/-/playwright-1.55.0.tgz':
-    'playwright-core/-/playwright-core-1.55.0.tgz'));
-  if(name!=='node_modules/fsevents')assert.equal(data.version,'1.55.0');
+    (name==='node_modules/@playwright/test'?'@playwright/test/-/test-1.64.0.tgz':
+    name==='node_modules/playwright'?'playwright/-/playwright-1.64.0.tgz':
+    'playwright-core/-/playwright-core-1.64.0.tgz'));
+  assert.equal(data.version,'1.64.0');
  }
 });
 
