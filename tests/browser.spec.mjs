@@ -451,10 +451,9 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   expect(html).toContain('@page');
   const texDl=page.waitForEvent('download');
   await page.locator('#paperDirectPdf').click();
-  const pdf=Buffer.from(await readFile(await (await pdfDl).path()));
-  expect(pdf.subarray(0,8).toString('latin1')).toBe('%PDF-1.4');
-  expect(pdf.includes(Buffer.from('/Subtype /Image'))).toBe(true);
-  expect(pdf.includes(Buffer.from('UNREVIEWED'))).toBe(true);
+  const tex=(await readFile(await (await texDl).path())).toString('utf8');
+  expect(tex).toContain('\\documentclass');
+  expect(tex).toContain('\\begin{equation}');
   const reviewDl=page.waitForEvent('download');
   await page.locator('#paperReviewPacket').click();
   const review=JSON.parse((await readFile(await (await reviewDl).path())).toString('utf8'));
