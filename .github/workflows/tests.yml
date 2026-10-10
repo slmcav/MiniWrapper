@@ -49,7 +49,7 @@ jobs:
           grep -q 'UNREVIEWED' test-results/pdf-render/extracted.txt
           grep -q 'References' test-results/pdf-render/extracted.txt
           grep -q 'Appendix A' test-results/pdf-render/extracted.txt
-          pdftoppm -f 1 -l 2 -scale-to 1100 -png test-results/pdf-render/shader-study.pdf test-results/pdf-render/page >/dev/null
+          pdftoppm -scale-to 1100 -png test-results/pdf-render/shader-study.pdf test-results/pdf-render/page >/dev/null
           test -s test-results/pdf-render/page-1.png
           test -s test-results/pdf-render/page-2.png
       - uses: actions/upload-artifact@v4
