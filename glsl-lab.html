@@ -48,6 +48,10 @@
     .research-panel canvas { width:192px; height:144px; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; border:1px solid #3c586d; background:#0b1521; }
     .research-panel .research-warning { color:#dbbc88; font-size:.77rem; }
     .research-panel [data-error="true"] { color:#ffb3ac; }
+    .figure-panel { margin-top:12px; padding:11px; border:1px solid #476174; border-radius:11px; background:#13212f; }
+    .figure-panel h3 { margin:0 0 6px; font-size:.96rem; }
+    .figure-panel .figure-readout { white-space:pre-wrap; color:#b2e4dc; font:12px/1.5 ui-monospace,monospace; }
+    .figure-panel .build-buttons { margin:9px 0; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
     .tabs { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
@@ -163,6 +167,20 @@
         <canvas id="researchSampleCanvas" width="32" height="24" aria-label="Latest sampled shader frame"></canvas>
         <p id="researchMetrics" class="metric">No measured pixels yet.</p>
         <p class="research-warning">These are measurements of sampled 8-bit RGBA pixels, not whole-frame statistics, performance benchmarks, or evidence of research novelty. The colored preview is reconstructed from the exact archived sample.</p>
+        <div class="figure-panel" aria-label="Full-resolution research figures">
+          <h3>Full-resolution figures &amp; repeated frames</h3>
+          <p>Capture lossless RGBA8 figures, or observe three consecutive GPU draws with unchanged settings. Download an integrity-linked ZIP with PNG files, build receipts, sampled evidence, and comparisons.</p>
+          <div class="build-buttons">
+            <button id="figureCapture" type="button" disabled>Capture full frame</button>
+            <button id="figureSeries" type="button" disabled>Capture 3-frame series</button>
+            <button id="figureExport" type="button" disabled>Export figure ZIP</button>
+            <button id="figureClear" type="button" disabled>Clear session figures</button>
+          </div>
+          <p id="figureStatus" role="status" aria-live="polite">Waiting for validated WebGL2 output.</p>
+          <p id="figureCount">No full-resolution figures in session.</p>
+          <p id="figureComparison" class="figure-readout">Comparison available after a controlled series.</p>
+          <p class="research-warning">Full-resolution figure pixels are held in memory until export, not preserved through reload. A three-frame comparison describes only those observed frames; it is not a GPU performance benchmark or significance test.</p>
+        </div>
       </section>
     </section>
     <section class="panel" aria-label="GLSL Lab controls">
@@ -335,13 +353,15 @@ const gl=canvas.getContext('webgl2',{antialias:false,alpha:false,preserveDrawing
 let program=null, loc={}, animationId=0, lastStamp=0, elapsed=0, running=true, current='original';
 let activeBody=DEMOS.original, activeAttribution='@YoheiNishitsuji', activeGraph=null;
 let activeTab='play';
-let expandedSource='', compileCpuMs=null, compiledOK=false, validFrame=null;
+let expandedSource='', compileCpuMs=null, compiledOK=false, validFrame=null, frameNumber=0;
 const frameListeners=new Set();
 function broadcastBuildState(valid){for(const listener of frameListeners)listener(valid);}
 function invalidateBuild(){const had=validFrame!==null;validFrame=null;if(had)broadcastBuildState(false);}
 window.glslLabBridge={
   onValidationChange(listener){frameListeners.add(listener);listener(validFrame!==null);return ()=>frameListeners.delete(listener);},
   capture(){if(!validFrame)throw new Error('No successfully drawn frame to capture');return JSON.parse(JSON.stringify(validFrame));},
+  getFrameNumber(){return validFrame?frameNumber:-1;},
+  isPlaying(){return running&&!document.hidden;},
   readPixelsForResearch(){
     if(!compiledOK||!validFrame)throw new Error('Wait for a verified WebGL draw before capturing pixels');
     if(gl.isContextLost?.())throw new Error('GPU context is lost; no pixels captured');
@@ -354,7 +374,7 @@ window.glslLabBridge={
     gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
     const error=gl.getError();
     if(error!==gl.NO_ERROR){invalidateBuild();throw new Error('WebGL readPixels failed: '+error);}
-    return {observation:JSON.parse(JSON.stringify(validFrame)),pixels};
+    return {observation:JSON.parse(JSON.stringify(validFrame)),pixels,frameId:frameNumber};
   },
   invalidate(){invalidateBuild();},
   compileGraph(graph,body){compileSource('builder',body,'User-authored via GLSL Lab expression graph',graph);},
@@ -505,6 +525,7 @@ function draw(now) {
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     const code=gl.getError();
     if(code!==gl.NO_ERROR)throw new Error('WebGL drawing failed, error '+String(code));
+    frameNumber++;
     const fresh=validFrame===null;
     validFrame={
       shaderBody:activeBody,expandedShader:expandedSource,demoId:current,attribution:activeAttribution,
@@ -590,5 +611,6 @@ else{compile('original');requestDraw();}
 <script type="module" src="./src/graph-dag-ui.mjs"></script>
 <script type="module" src="./src/lab-projects.mjs"></script>
 <script type="module" src="./src/lab-research.mjs"></script>
+<script type="module" src="./src/lab-figures.mjs"></script>
 </body>
 </html>
