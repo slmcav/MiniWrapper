@@ -7,7 +7,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
 createServer(async(req,res)=>{
   try {
     const path=new URL(req.url,'http://localhost').pathname;
-    if(!/^\/(index\.html|glsl-lab\.html|src\/(expression-graph|graph-editor|graph-ui|graph-dag|graph-dag-ui|build-evidence|project-store|lab-projects|research-capture|lab-research|research-figures|lab-figures)\.mjs)$/.test(path)){
+    if(!/^\/(index\.html|glsl-lab\.html|src\/(expression-graph|graph-editor|graph-ui|graph-dag|graph-dag-ui|build-evidence|project-store|lab-projects|research-capture|lab-research|research-figures|lab-figures|research-experiments|lab-experiments)\.mjs)$/.test(path)){
       res.writeHead(404);res.end('Not found');return;
     }
     const file=resolve(base,path.slice(1));
