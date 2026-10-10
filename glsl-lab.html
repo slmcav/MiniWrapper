@@ -84,6 +84,11 @@
     .paper-draft-panel iframe { display:block; width:100%;height:530px;max-height:72vh; border:1px solid #56768b; background:white; border-radius:7px; }
     .paper-draft-panel .source-meta { color:#b7dcd5;font:12px/1.6 ui-monospace,monospace;overflow-wrap:anywhere; }
     .paper-draft-panel [data-error=true] { color:#ffb3b3; }
+    .bundle-verify-panel { margin-top:12px;padding:12px;border:1px solid #4f7380;border-radius:10px;background:#102331; }
+    .bundle-verify-panel h4 { margin:0 0 8px;font-size:.98rem;color:#d1ece7; }
+    .bundle-verify-panel input[type=file] { max-width:100%;width:100%; }
+    .bundle-verify-panel .verify-output { font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#beded4; }
+    .bundle-verify-panel [data-error=true] { color:#ffb3b3; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
     .tabs { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
@@ -300,6 +305,17 @@
             <p id="paperSource" class="source-meta">No evidence-grounded manuscript generated.</p>
             <iframe id="paperPreview" title="Read-only generated research manuscript preview" sandbox="allow-same-origin allow-modals" hidden></iframe>
             <p class="research-warning">Direct PDF export generates a true A4 PDF from the archived evidence without a print dialogue. Browser printing remains an alternative. Both are unreviewed research drafts; authorship, primary-source reading, figure-layout inspection and independent scientific review remain separate human tasks. Use the reviewer checklist for that handoff.</p>
+            <section class="bundle-verify-panel" aria-label="Independent research bundle verifier">
+              <h4>Verify an exported research bundle</h4>
+              <p>Import a previously exported manuscript ZIP, including from another browser session. The Lab reconstructs it from its original experiment, rebuilding the paper, PDF, images, source and review packet, then checks the entire archive byte-for-byte.</p>
+              <label for="manuscriptZipImport">Research manuscript ZIP (.zip)
+                <input id="manuscriptZipImport" type="file" accept=".zip,application/zip">
+              </label>
+              <p id="manuscriptZipStatus" role="status" aria-live="polite">No archive inspected.</p>
+              <p id="manuscriptZipResults" class="verify-output">An imported archive will be checked independently of the current editor state.</p>
+              <button id="manuscriptZipExportReceipt" type="button" disabled>Export verification receipt</button>
+              <p class="research-warning">A PASS establishes internal data and archive consistency only. It does not authenticate a researcher or reviewer or approve publication.</p>
+            </section>
           </section>
         </section>
       </section>
@@ -794,5 +810,6 @@ else{compile('original');requestDraw();}
 <script type="module" src="./src/lab-replications.mjs"></script>
 <script type="module" src="./src/lab-methodology.mjs"></script>
 <script type="module" src="./src/lab-manuscript.mjs"></script>
+<script type="module" src="./src/lab-bundle-verify.mjs"></script>
 </body>
 </html>
