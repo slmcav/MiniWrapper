@@ -43,6 +43,11 @@
     #projectStatus[data-error="true"] { color:#ffb3ac; }
     .research-panel { margin-top:13px; border-top:1px solid #354a5c; padding:12px; background:#101e28; }
     .research-panel h2 { margin:0 0 6px; font-size:1rem; color:#c3eadf; }
+    .workflow-guide { margin:12px 0; padding:12px; border:1px solid #466777; border-radius:13px; background:#122431; }
+    .workflow-guide h2 { margin:0 0 8px; font-size:1rem; }
+    .workflow-steps { display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px; }
+    .workflow-steps button { min-height:44px;text-align:center;white-space:normal; }
+    .workflow-guide p { margin:7px 0 0; font-size:.83rem;color:#bcd5dd; }
     .research-panel p { font-size:.82rem; color:#b6cbd7; }
     .research-panel .metric { font:12px/1.6 ui-monospace,monospace; white-space:pre-wrap; color:#cdece3; }
     .research-panel canvas { width:192px; height:144px; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; border:1px solid #3c586d; background:#0b1521; }
@@ -180,7 +185,7 @@
 </head>
 <body>
   <header class="brand">
-    <div><h1>GLSL Lab</h1><p>Touch the controls. See the mathematics change.</p></div>
+    <div><h1>GLSL Lab</h1><p>Author · Measure · Analyze · Publish research outputs</p></div>
     <a class="back" href="./index.html">← Classic shader editor</a>
   </header>
   <main class="layout">
@@ -207,6 +212,17 @@
         <p id="receiptInfo">Evidence not saved yet</p>
         <p class="muted">Generate a manuscript after exporting and auditing a controlled experiment.</p>
       </div>
+      <nav class="workflow-guide" aria-label="Five-stage research workflow">
+        <h2>Research workflow</h2>
+        <div class="workflow-steps">
+          <button type="button" id="workflowAuthor">1 · Author</button>
+          <button type="button" id="workflowStudy">2 · Experiment</button>
+          <button type="button" id="workflowAudit">3 · Audit</button>
+          <button type="button" id="workflowPaper">4 · Manuscript</button>
+          <button type="button" id="workflowLatex">5 · LaTeX export</button>
+        </div>
+        <p id="workflowStage" role="status" aria-live="polite">Create your shader in Build to begin.</p>
+      </nav>
       <section class="research-panel" aria-label="Reproducible shader research capture">
         <h2>Research capture</h2>
         <p>Measure actual GPU pixels with a repeatable center-point grid. Each capture is linked to its frozen shader build and can be recalculated from the archived sample bytes.</p>
@@ -218,7 +234,7 @@
         <p id="researchCount">No research captures stored</p>
         <canvas id="researchSampleCanvas" width="32" height="24" aria-label="Latest sampled shader frame"></canvas>
         <p id="researchMetrics" class="metric">No measured pixels yet.</p>
-        <p class="research-warning">These are measurements of sampled 8-bit RGBA pixels, not whole-frame statistics, performance benchmarks, or evidence of research novelty. The colored preview is reconstructed from the exact archived sample.</p>
+        
         <div class="figure-panel" aria-label="Full-resolution research figures">
           <h3>Full-resolution figures &amp; repeated frames</h3>
           <p>Capture lossless RGBA8 figures, or observe three consecutive GPU draws with unchanged settings. Download an integrity-linked ZIP with PNG files, build receipts, sampled evidence, and comparisons.</p>
@@ -231,7 +247,7 @@
           <p id="figureStatus" role="status" aria-live="polite">Waiting for validated WebGL2 output.</p>
           <p id="figureCount">No full-resolution figures in session.</p>
           <p id="figureComparison" class="figure-readout">Comparison available after a controlled series.</p>
-          <p class="research-warning">Full-resolution figure pixels are held in memory until export, not preserved through reload. A three-frame comparison describes only those observed frames; it is not a GPU performance benchmark or significance test.</p>
+          
         </div>
         <section class="sweep-panel" aria-label="Controlled experiments and cross-session comparisons">
           <h3>Controlled 3-point experiment</h3>
@@ -258,7 +274,7 @@
           <p id="sweepStatus" role="status" aria-live="polite">Waiting for a verified shader.</p>
           <p id="sweepSummary" class="out">No experiment recorded.</p>
           <p id="sweepComparison" class="out">Import another independently initiated session to compare the same protocol.</p>
-          <p class="research-warning">Three treatment levels are descriptive, not three independent experimental replications. Cross-session comparisons require the exact same protocol and shader and do not establish independence, significance or GPU performance.</p>
+          
         </section>
         <section class="replicate-panel" aria-label="Counterbalanced replicated observations">
           <h3>Counterbalanced repeat study</h3>
@@ -289,7 +305,7 @@
           <p id="repeatPlatform" class="study-out">Graphics platform capabilities not captured.</p>
           <p id="repeatSummary" class="study-out">No repeated observations yet.</p>
           <p id="repeatComparison" class="study-out">Import a separate compatible study to compare.</p>
-          <p class="research-warning">Three draws per treatment describe repeat variation, not three independent or randomized experiments. Graphics strings are browser-reported, not proof of identical GPU hardware. Full images remain in browser memory until exported. Nine-frame capture is limited to 180,000 pixels per frame.</p>
+          
         </section>
         <section class="audit-panel" aria-label="Bibliography and methodology readiness">
           <h3>Bibliography and methodology audit</h3>
@@ -300,15 +316,16 @@
             <button id="auditBibtex" type="button">Export vetted BibTeX</button>
             <button id="auditExport" type="button" disabled>Export methodology audit</button>
           </div>
-          <label for="auditStudyImport">Audit an exported 3-point or 9-frame experiment JSON
+          <button type="button" id="auditCurrentStudy" disabled>Audit current study</button>
+           <label for="auditStudyImport">Audit an exported 3-point or 9-frame experiment JSON
             <input id="auditStudyImport" type="file" accept=".json,application/json">
           </label>
           <p id="auditStatus" role="status" aria-live="polite">Select a complete experiment JSON to audit.</p>
           <p id="auditResults" class="audit-findings">No experiment audited. Academic manuscript remains locked.</p>
-          <p class="research-warning">Publisher/registry metadata checks are not external scientific review. Unsupported statistical inference, hardware independence, novelty and peer-reviewed publication claims remain blocked.</p>
+          
           <section class="source-review-panel" aria-label="Citation-by-citation researcher review notes">
             <h3>Source-level review workspace</h3>
-            <p>Import the <strong>unsigned reviewer checklist</strong> exported with a manuscript. Record a named reader's specific claim, primary-source locator and assessment. These are <strong>reviewer-declared observations</strong>, not independently authenticated reviews or publication approvals.</p>
+            <p>Import the manuscript review packet to record source-specific reading notes and passage references.</p>
             <label for="sourceReviewPacket">Import original unsigned review-packet.json
               <input id="sourceReviewPacket" type="file" accept=".json,application/json">
             </label>
@@ -348,40 +365,40 @@
             <h4>Claim coverage and unresolved readings</h4>
             <p id="sourceClaimCrosswalk" class="review-data">No claim-level source crosswalk yet.</p>
             <button id="sourceCrosswalkExport" type="button" disabled>Export claim-level crosswalk JSON</button>
-            <p class="research-warning">A hashed dossier only proves that its notes have not changed since export. Reader identity, source access, passage interpretation and independent scholarly review remain unverified. This workflow never unlocks academic publication.</p>
+            
             <section class="p8-methods" aria-label="Read-only P8 methodological evidence gaps">
               <h4>P8 — Independent methodology and primary-literature assessment</h4>
               <p>Source-grounded analytical findings, separate from the manuscript, the scientific archive and self-declared reader notes. A pinned research register identifies exactly which stronger claims need additional evidence.</p>
               <p id="p8EvidenceStatus" role="status" aria-live="polite" data-evidence-state="loading">Research findings are loading.</p>
               <div id="p8EvidenceRows" aria-label="Claim-specific evidence requirements"></div>
               <p><a href="./docs/P8_INDEPENDENT_METHODS.md">Read the primary-literature methods assessment</a> · <a href="./docs/P9_REPLICATION_PROTOCOL.md">Independent replication protocol</a></p>
-              <p class="research-warning">No field in this display certifies a reader, experimental replication, journal peer review, scientific novelty or publication authorization. Original manuscript receipts and unsigned review packets are unchanged.</p>
+              
             </section>
           </section>
           <section class="paper-draft-panel" aria-label="Generated research manuscript draft">
-            <h3>Research manuscript draft</h3>
-            <p>After a successful experiment audit, use <strong>Generate Research Draft</strong> above. The paper contains reproducible measurements, published reference metadata, mathematical definitions, exact GLSL, and figures from the archived framebuffer—not invented experimental claims.</p>
+            <h3>Research manuscript</h3>
+            <p>Generate the manuscript from a verified study. Export its LaTeX package with original figures, citations and source lineage.</p>
             <p id="paperStatus" role="status" aria-live="polite">Import and verify an experiment above to enable manuscript drafting.</p>
             <div class="build-buttons">
               <button id="paperDownloadHtml" type="button" disabled>Download print-ready HTML</button>
-              <button id="paperDirectPdf" type="button" disabled>Download PDF directly</button>
-              <button id="paperPrint" type="button" disabled>Print / Save as PDF</button>
+              <button id="paperDirectPdf" type="button" disabled>Download LaTeX source</button>
+              <button id="paperPrint" type="button" disabled>Print HTML preview</button>
               <button id="paperReviewPacket" type="button" disabled>Export reviewer checklist</button>
-              <button id="paperExportZip" type="button" disabled>Export complete research ZIP</button>
+              <button id="paperExportZip" type="button" disabled>Export LaTeX research package</button>
             </div>
             <p id="paperSource" class="source-meta">No evidence-grounded manuscript generated.</p>
             <iframe id="paperPreview" title="Read-only generated research manuscript preview" sandbox="allow-same-origin allow-modals" hidden></iframe>
-            <p class="research-warning">Direct PDF export generates a true A4 PDF from the archived evidence without a print dialogue. Browser printing remains an alternative. Both are unreviewed research drafts; authorship, primary-source reading, figure-layout inspection and independent scientific review remain separate human tasks. Use the reviewer checklist for that handoff.</p>
+            
             <section class="bundle-verify-panel" aria-label="Independent research bundle verifier">
               <h4>Verify an exported research bundle</h4>
-              <p>Import a previously exported manuscript ZIP, including from another browser session. The Lab reconstructs it from its original experiment, rebuilding the paper, PDF, images, source and review packet, then checks the entire archive byte-for-byte.</p>
+              <p>Re-import a research package to verify its study, source, LaTeX, images, bibliography and complete file inventory.</p>
               <label for="manuscriptZipImport">Research manuscript ZIP (.zip)
                 <input id="manuscriptZipImport" type="file" accept=".zip,application/zip">
               </label>
               <p id="manuscriptZipStatus" role="status" aria-live="polite">No archive inspected.</p>
               <p id="manuscriptZipResults" class="verify-output">An imported archive will be checked independently of the current editor state.</p>
               <button id="manuscriptZipExportReceipt" type="button" disabled>Export verification receipt</button>
-              <p class="research-warning">A PASS establishes internal data and archive consistency only. It does not authenticate a researcher or reviewer or approve publication.</p>
+              
             </section>
           </section>
         </section>
@@ -425,7 +442,7 @@
           <button class="accent" type="button" id="resetControls">Reset controls</button>
           <button type="button" id="openCode">Show the math</button>
         </div>
-        <div class="note">These are five safe visual controls across three existing demos. The other 14 demos, custom GLSL, and video recording remain in the <a href="./index.html">classic editor</a>.</div>
+        
       </div>
       <div class="pane" id="paneBuild" role="tabpanel" aria-labelledby="tabBuild" hidden>
         <button type="button" id="advancedToggle">Switch to Advanced Wiring</button>
@@ -461,7 +478,7 @@
         <p id="builderStatus" role="status" aria-live="polite"></p>
         <label class="field-label" for="builderCode">Generated GLSL</label>
         <textarea id="builderCode" class="codebox" readonly spellcheck="false"></textarea>
-        <div class="note">These blocks are a supported, typed subset of GLSL. An existing compact demo is not automatically converted into blocks. To archive a successful graph render, use Save validated build above.</div>
+        
         </div>
         <div id="advancedBuilder" hidden>
           <p class="dag-help">Swipe across the wiring canvas. Drag a card by its Move handle, or select one and use the arrow controls. To branch a shader, connect two matching values into a Blend or Add node using the dropdowns below.</p>
@@ -504,7 +521,7 @@
           <p id="dagStatus" role="status" aria-live="polite"></p>
           <label class="field-label" for="dagGenerated">Generated GLSL</label>
           <textarea id="dagGenerated" class="codebox" readonly spellcheck="false"></textarea>
-          <div class="note">Graph v2 supports typed branching and explicit input selection. Unused nodes block compilation until connected to Output. Saved projects retain node connections and positions.</div>
+          
         </div>
       </div>
       <div class="pane" id="paneCode" role="tabpanel" aria-labelledby="tabCode" hidden>
@@ -517,7 +534,7 @@
         </div>
         <p>Values you are currently sending to the GPU:</p>
         <div class="values" id="values"></div>
-        <div class="note">Zoom and rotation adjust the pixel coordinates (FC). Speed changes time (t). Color shift and brightness change the HSV helper. Slider changes update uniforms. Rebuilding the graph recompiles the shader.</div>
+        
       </div>
       <div class="pane" aria-label="Project and saved build management">
         <div class="project-box">
@@ -863,5 +880,6 @@ else{updateValues();}
 <script type="module" src="./src/lab-bundle-verify.mjs"></script>
 <script type="module" src="./src/lab-source-review.mjs"></script>
 <script type="module" src="./src/lab-p8-methods.mjs"></script>
+<script type="module" src="./src/lab-workflow-guide.mjs"></script>
 </body>
 </html>
