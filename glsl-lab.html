@@ -89,6 +89,14 @@
     .bundle-verify-panel input[type=file] { max-width:100%;width:100%; }
     .bundle-verify-panel .verify-output { font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#beded4; }
     .bundle-verify-panel [data-error=true] { color:#ffb3b3; }
+    .source-review-panel { margin-top:14px; padding:13px; background:#132632; border:1px solid #4b7582; border-radius:12px; }
+    .source-review-panel h3 { margin:0 0 7px; font-size:1rem; color:#cfe7df; }
+    .source-review-panel .review-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:9px; }
+    .source-review-panel label { display:grid;gap:5px;font-size:.81rem; }
+    .source-review-panel input,.source-review-panel textarea,.source-review-panel select { width:100%;min-height:40px;padding:9px;border-radius:7px;border:1px solid #527885;background:#0a1c27;color:#e8f6fa; }
+    .source-review-panel textarea { min-height:86px;resize:vertical; }
+    .source-review-panel .review-data { white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,monospace;color:#bcd9d5; }
+    .source-review-panel [data-error=true] { color:#ffb8b0; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
     .tabs { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
@@ -291,6 +299,47 @@
           <p id="auditStatus" role="status" aria-live="polite">Select a complete experiment JSON to audit.</p>
           <p id="auditResults" class="audit-findings">No experiment audited. Academic manuscript remains locked.</p>
           <p class="research-warning">Publisher/registry metadata checks are not external scientific review. Unsupported statistical inference, hardware independence, novelty and peer-reviewed publication claims remain blocked.</p>
+          <section class="source-review-panel" aria-label="Citation-by-citation researcher review notes">
+            <h3>Source-level review workspace</h3>
+            <p>Import the <strong>unsigned reviewer checklist</strong> exported with a manuscript. Record a named reader's specific claim, primary-source locator and assessment. These are <strong>reviewer-declared observations</strong>, not independently authenticated reviews or publication approvals.</p>
+            <label for="sourceReviewPacket">Import original unsigned review-packet.json
+              <input id="sourceReviewPacket" type="file" accept=".json,application/json">
+            </label>
+            <p id="sourceReviewStatus" role="status" aria-live="polite">No manuscript review packet imported.</p>
+            <div class="review-fields">
+              <label for="sourceReviewCitation">Cited source
+                <select id="sourceReviewCitation" disabled></select>
+              </label>
+              <label for="sourceReviewReader">Reader's declared name
+                <input id="sourceReviewReader" type="text" placeholder="Name supplied by reader" disabled>
+              </label>
+              <label for="sourceReviewDisposition">Assessment
+                <select id="sourceReviewDisposition" disabled>
+                  <option value="supports_limited_claim">Supports a bounded claim</option>
+                  <option value="requires_revision">Requires revision</option>
+                  <option value="contradicts_claim">Contradicts the claim</option>
+                </select>
+              </label>
+              <label for="sourceReviewLocator">Source section, page or passage locator
+                <input id="sourceReviewLocator" type="text" placeholder="e.g., section 4.3.2" disabled>
+              </label>
+            </div>
+            <label for="sourceReviewClaim">Exact manuscript claim under examination
+              <textarea id="sourceReviewClaim" rows="2" placeholder="State the specific bounded claim, not the entire manuscript" disabled></textarea>
+            </label>
+            <label for="sourceReviewNote">Reader's assessment and evidence rationale (minimum 20 characters)
+              <textarea id="sourceReviewNote" rows="3" placeholder="Explain what the specified source actually supports or fails to support" disabled></textarea>
+            </label>
+            <div class="build-buttons">
+              <button id="sourceReviewAdd" type="button" disabled>Add assessment record</button>
+              <button id="sourceReviewExport" type="button" disabled>Export unsigned source-review dossier</button>
+            </div>
+            <label for="sourceReviewImport">Re-import a source-review dossier for integrity checks
+              <input id="sourceReviewImport" type="file" accept=".json,application/json" disabled>
+            </label>
+            <p id="sourceReviewSummary" class="review-data">No source-reading assessments recorded.</p>
+            <p class="research-warning">A hashed dossier only proves that its notes have not changed since export. Reader identity, source access, passage interpretation and independent scholarly review remain unverified. This workflow never unlocks academic publication.</p>
+          </section>
           <section class="paper-draft-panel" aria-label="Generated research manuscript draft">
             <h3>Research manuscript draft</h3>
             <p>After a successful experiment audit, use <strong>Generate Research Draft</strong> above. The paper contains reproducible measurements, published reference metadata, mathematical definitions, exact GLSL, and figures from the archived framebuffer—not invented experimental claims.</p>
@@ -811,5 +860,6 @@ else{compile('original');requestDraw();}
 <script type="module" src="./src/lab-methodology.mjs"></script>
 <script type="module" src="./src/lab-manuscript.mjs"></script>
 <script type="module" src="./src/lab-bundle-verify.mjs"></script>
+<script type="module" src="./src/lab-source-review.mjs"></script>
 </body>
 </html>
