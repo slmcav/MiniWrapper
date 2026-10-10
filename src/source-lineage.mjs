@@ -3,7 +3,7 @@
 // The matching-file regression gate must be updated whenever the generator changes.
 export const SOURCE_LINEAGE_SCHEMA='glsl-lab/source-lineage/1';
 export const PINNED_REPOSITORY='slmcav/MiniWrapper';
-export const SOURCE_SNAPSHOT_COMMIT='aaf13f6439005a67eef336e1ce6c19ae996b7edd';
+export const SOURCE_SNAPSHOT_COMMIT='a4e07b2ef023ccfbde587d3f03284cce4ae463bf';
 export const PINNED_SOURCE_BLOBS=Object.freeze([
   {
     "path": "glsl-lab.html",
@@ -138,8 +138,8 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
     "path": "src/lab-drawer.mjs",
     "gitBlobSha1": "a20bacc06f8a5d7f9d3e8fdf6c5aa7a76ecab1ff"
   },
-  { "path": "src/lab-visual-contract.css", "gitBlobSha1": "07595588e7acd14f4b231062e3f11ae7ef85727d" },
-  { "path": "src/lab-visual-contract.mjs", "gitBlobSha1": "aaf249b3739a900f9d7129a103f1b98ba03c8c76" }
+  { "path": "src/lab-visual-contract.css", "gitBlobSha1": "9be9a7453a165a3c11a05f29daa22b07d082f256" },
+  { "path": "src/lab-visual-contract.mjs", "gitBlobSha1": "12c290ae1a51deaa8eafecd726aeb7424eaa11b0" }
 ].map(record=>Object.freeze(record)));
 export function exportSourceLineage(){
   return {schema:SOURCE_LINEAGE_SCHEMA,repository:PINNED_REPOSITORY,
