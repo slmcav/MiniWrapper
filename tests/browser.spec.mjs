@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {readFile} from 'node:fs/promises';
+import {readFile,mkdir} from 'node:fs/promises';
 
 test('mobile navigation: classic editor opens Lab without losing presets',async({page})=>{
   await page.goto('/index.html');
@@ -655,4 +655,28 @@ test('Approved mobile interaction: pinned canvas and operable bottom drawer with
  await expect(page.locator('#paneBuild')).toBeVisible();
  await page.keyboard.press('Escape');
  await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','false');
+});
+
+test('Academic visual contract evidence: fixed mobile and desktop app captures without reference asset',async({page})=>{
+ const folder='test-results/visual-audit';
+ await mkdir(folder,{recursive:true});
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/glsl-lab.html');
+ await expect(page.locator('#glcanvas')).toBeVisible();
+ await page.screenshot({path:folder+'/mobile-390.png',animations:'disabled'});
+ await page.locator('#drawerToggle').click();
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','true');
+ await page.screenshot({path:folder+'/mobile-drawer-390.png',animations:'disabled'});
+ await page.locator('#drawerToggle').click();
+ await page.setViewportSize({width:1280,height:800});
+ await page.screenshot({path:folder+'/desktop-1280.png',animations:'disabled'});
+ const geometry=await page.evaluate(()=>({
+  width:document.documentElement.scrollWidth,
+  viewport:window.innerWidth,
+  stage:document.querySelector('.stage').getBoundingClientRect().width,
+  panel:document.querySelector('.panel').getBoundingClientRect().width
+ }));
+ expect(geometry.width).toBeLessThanOrEqual(geometry.viewport+1);
+ expect(geometry.stage).toBeGreaterThan(400);
+ expect(geometry.panel).toBeGreaterThan(290);
 });
