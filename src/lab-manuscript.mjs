@@ -38,7 +38,6 @@ $('generatePaper').addEventListener('click',async()=>{
     await verifyManuscript(prepared);
     const html=renderManuscriptHTML(prepared,{embedImages:true});
     draft=prepared;markup=html;
-    window.dispatchEvent(new Event('glsl-lab-manuscript-ready'));
     $('paperPreview').srcdoc=html;$('paperPreview').hidden=false;
     $('paperSource').textContent='Manuscript SHA-256: '+draft.record.sha256+
       '\n'+draft.record.observedDraws+' verified GPU observations; '+
@@ -47,7 +46,7 @@ $('generatePaper').addEventListener('click',async()=>{
     label('Technical manuscript assembled from verified GPU observations.');
   }catch(e){
     invalidate();label('Manuscript generation blocked: '+String(e.message||e),true);
-  }finally{busy=false;controls();}
+  }finally{busy=false;controls();if(draft)window.dispatchEvent(new Event('glsl-lab-manuscript-ready'));}
 });
 $('paperDownloadHtml').addEventListener('click',async()=>{
   if(!draft||busy)return;
