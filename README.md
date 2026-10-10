@@ -210,7 +210,7 @@ This verification can be repeated on another computer without network access, bu
 The P6 independent ZIP verifier includes an exact `archiveSha256` in its verification receipt, visibly and through the offline CLI. This is the digest of the supplied ZIP byte stream, distinct from the study SHA-256, manuscript SHA-256, and the per-file inventory. Keep the corresponding Git checkout to reproduce source-dependent rendering. It is not a signature or publication approval.
 
 
-Every new research ZIP contains `source-lineage.json`, which records the exact producer-source snapshot and the Git blob IDs of 20 critical application/generator/verifier files. The independent archive checker refuses lineage that does not match its release, while fast CI fails if any pinned source file changes without updating the snapshot. Use the recorded Git snapshot when independently reproducing an older study. This protects against silent cross-version bibliography and PDF-layout drift without suggesting that code content hashes authenticate the origin of GPU pixels.
+Every new research ZIP contains `source-lineage.json`, which records the exact producer-source snapshot and the Git blob IDs of 21 critical application/generator/verifier files. The independent archive checker refuses lineage that does not match its release, while fast CI fails if any pinned source file changes without updating the snapshot. Use the recorded Git snapshot when independently reproducing an older study. This protects against silent cross-version bibliography and PDF-layout drift without suggesting that code content hashes authenticate the origin of GPU pixels.
 
 ### P7 citation-by-citation review notes
 
