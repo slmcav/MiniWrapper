@@ -19,6 +19,9 @@ test('successful build generates a hashed, validated v1 receipt',async()=>{
   assert.equal(receipt.sha256.length,64);
   assert.equal(receipt.evidenceClass,'observed-compile-link-draw');
   assert.ok(Object.isFrozen(receipt));
+  assert.ok(Object.isFrozen(receipt.parameters));
+  assert.ok(Object.isFrozen(receipt.shader));
+  assert.ok(Object.isFrozen(receipt.checks));
   assert.equal(validateBuildReceipt(receipt),true);
   assert.equal(await verifyBuildReceipt(receipt,subtle),true);
 });
