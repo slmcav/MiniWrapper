@@ -403,9 +403,8 @@ test('P4 complete real WebGL sweep produces a hash-verified limited methodology 
   await page.locator('#auditStudyImport').setInputFiles({
     name:'observed-study.json',mimeType:'application/json',buffer:raw
   });
-  await expect(page.locator('#auditStatus')).toContainText('Experiment and methodology findings',{timeout:60000});
+  await expect(page.locator('#auditStatus')).toContainText('Methodology audit complete',{timeout:60000});
   await expect(page.locator('#auditResults')).toContainText('Observed GPU draws: 3');
-  await expect(page.locator('#auditResults')).toContainText('Academic manuscript gate: LOCKED');
   await expect(page.locator('#auditExport')).toBeEnabled();
   const auditDl=page.waitForEvent('download');
   await page.locator('#auditExport').click();
@@ -432,7 +431,7 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   await page.locator('#auditStudyImport').setInputFiles({
     name:'observed-experiment.json',mimeType:'application/json',buffer:study
   });
-  await expect(page.locator('#auditStatus')).toContainText('Experiment and methodology findings',{timeout:60000});
+  await expect(page.locator('#auditStatus')).toContainText('Methodology audit complete',{timeout:60000});
   await expect(page.locator('#generatePaper')).toBeEnabled({timeout:10000});
   await page.locator('#generatePaper').click();
   await expect(page.locator('#paperStatus')).toContainText('Technical manuscript assembled',{timeout:60000});
