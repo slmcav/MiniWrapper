@@ -18,7 +18,7 @@ $('manuscriptZipImport').addEventListener('change',async e=>{
   busy=true;receipt=null;
   $('manuscriptZipImport').disabled=true;
   $('manuscriptZipExportReceipt').disabled=true;
-  status('Reconstructing original study, figures, PDF, citations and ZIP byte inventory.');
+  status('Reconstructing original study, figures, LaTeX, citations and ZIP byte inventory.');
   try{
     if(file.size>48*1024*1024)throw new Error('Research ZIP is larger than 48 MiB');
     const result=await verifyManuscriptZip(await file.arrayBuffer());
@@ -33,16 +33,16 @@ $('manuscriptZipImport').addEventListener('change',async e=>{
       'Methodology SHA-256: '+result.auditSha256,
       'Verified data files: '+result.inventoryEntries,
       'Reproduced source PNGs: '+result.sourceFiguresVerified,
-      'PDF reproduced: '+result.pdfVerified,
+      'LaTeX source reproduced: '+result.latexSourceVerified,
       'Bibliography and unsigned review packet: '+result.bibliographyAndReviewPacketVerified,
-      'Publication authorized: NO',
+      
       result.meaning
     ].join('\n');
     $('manuscriptZipExportReceipt').disabled=false;
     status('PASS: complete archived research bundle independently reconstructed.');
   }catch(error){
     receipt=null;
-    $('manuscriptZipResults').textContent='FAIL: archive not independently verified. Manuscript publication status is unchanged.';
+    $('manuscriptZipResults').textContent='Archive integrity check failed.';
     status('Research bundle rejected: '+String(error.message||error),true);
   }finally{
     busy=false;e.target.value='';$('manuscriptZipImport').disabled=false;
@@ -52,6 +52,6 @@ $('manuscriptZipExportReceipt').addEventListener('click',()=>{
   if(!receipt||busy)return;
   download('glsl-research-verification-'+receipt.manuscriptSha256.slice(0,12)+'.json',
     JSON.stringify(receipt,null,2)+'\n');
-  status('Downloaded machine-verification receipt; this is not a researcher identity signature.');
+  status('Source verification receipt exported.');
 });
 status('Import a previously exported research ZIP to verify its complete evidence independently.');
