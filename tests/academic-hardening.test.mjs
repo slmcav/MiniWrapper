@@ -55,3 +55,33 @@ test('PDF file ID is deterministic for one manuscript and SHA is computed from a
  await assert.rejects(()=>pdfFilename(sha,new Uint8Array([1,2,3]),subtle),/PDF byte stream/);
  assert.throws(()=>assertPdfFilename('manuscript.pdf'),/PDF filename/);
 });
+
+
+test('Academic Lab HTML is structurally unique and exposes no gallery demo presets',async()=>{
+ const html=await readFile(new URL('../glsl-lab.html',import.meta.url),'utf8');
+ const ids=[...html.matchAll(/\bid="([a-zA-Z0-9_-]+)"/g)].map(m=>m[1]);
+ assert.equal(ids.length,new Set(ids).size,'Duplicate interactive element ID');
+ assert.ok(ids.includes('auditCurrentStudy'));
+ assert.ok(ids.includes('workflowAuthor'));
+ assert.ok(ids.includes('paperDirectPdf'));
+ assert.ok(!html.includes('const DEMOS ='),'Original demo source leaked into researcher-facing Lab');
+ assert.ok(!html.includes('id="demo"'),'Gallery selector must not be available in the Lab');
+ assert.ok(!html.includes('Download PDF directly'),'Legacy JS PDF must not be the academic pathway');
+ const begin=html.indexOf('<script>\n'),end=html.indexOf('</script>',begin);
+ assert.ok(begin>=0&&end>begin);
+ const {spawnSync}=await import('node:child_process');
+ const check=spawnSync(process.execPath,['--check'],{
+  input:html.slice(begin+9,end),encoding:'utf8'
+ });
+ assert.equal(check.status,0,check.stderr);
+});
+test('Academic modules and test server maintain syntactically valid JavaScript',async()=>{
+ const {readdir} = await import('node:fs/promises');
+ const {spawnSync}=await import('node:child_process');
+ const list=await readdir(new URL('../src/',import.meta.url));
+ for(const path of list.filter(x=>x.endsWith('.mjs'))){
+  const file=new URL('../src/'+path,import.meta.url);
+  const check=spawnSync(process.execPath,['--check',file.pathname],{encoding:'utf8'});
+  assert.equal(check.status,0,path+': '+check.stderr);
+ }
+});
