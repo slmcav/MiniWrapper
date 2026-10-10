@@ -608,7 +608,7 @@ test('Master/PhD/postdoc journey: author, experiment, audit, manuscript and TeX 
  expect(archive.includes(Buffer.from('shader.glsl'))).toBe(true);
  expect(archive.includes(Buffer.from('build-latex.sh'))).toBe(true);
  expect(archive.includes(Buffer.from('build-latex.ps1'))).toBe(true);
- expect(archive.includes(Buffer.from('manuscript.pdf'))).toBe(false);
+ expect(archive.includes(Buffer.from('manuscript.tex'))).toBe(true);
 });
 test('Academic UX structural audit: phone and desktop have no horizontal overflow or gallery controls',async({page})=>{
  for(const width of [360,390,1280]){
