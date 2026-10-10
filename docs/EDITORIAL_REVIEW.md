@@ -27,3 +27,9 @@ The independent CI PDF job generates a synthetic fixture, runs `pdfinfo` and `pd
 ## Source review and manuscript publication gates remaining
 
 The manuscript remains an **unreviewed descriptive draft** until a qualified human has verified author rights, manuscript-level relevance and full-text source passages, independent experimental claims and their assumptions, page-by-page exported PDF fidelity, original figure provenance, and intended publication requirements. A content hash detects changes; it does not authenticate an experimenter or reviewer. The approved visual product comp is not stored in GitHub.
+
+## P7 externally declared source-reading notes
+
+An unsigned manuscript editor packet can be imported into the mobile source-review workspace. Each independently entered record requires a citation from that specific manuscript, a bounded claim, named reader (self-declared), source passage locator, source URL, observed timestamp, supporting/contradicting/revision disposition and rationale. Only source IDs originally cited by that manuscript are available; claims about independent peer review, rights and publication remain false regardless of record count. Review notes are explicitly **separate from the frozen manuscript bundle**. Neither a hash nor a reviewer-typed name authenticates an individual's identity or verifies that they accessed the full cited document.
+
+The signed-off requirements still include external reviewer identity, documentary passage evidence, relevant independent methodological analysis, original study replication where necessary, and venue-specific editorial inspection. See `docs/SOURCE_CLAIM_CROSSWALK.md` for the supported level of the current published-source evidence.
