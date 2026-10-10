@@ -181,8 +181,8 @@ function fragmentSource(body) {
     'a.x*a.y*k-a.z*s,c+a.y*a.y*k,a.z*a.y*k+a.x*s,' +
     'a.x*a.z*k+a.y*s,a.y*a.z*k-a.x*s,c+a.z*a.z*k);\n}\n' +
     'void main(){\nvec2 point=(gl_FragCoord.xy-r*.5)/uZoom;\n' +
-    'float c=cos(uAngle),s=sin(uAngle);\n' +
-    'vec2 FC=mat2(c,s,-s,c)*point+r*.5;\n' +
+    'float viewCos=cos(uAngle),viewSin=sin(uAngle);\n' +
+    'vec2 FC=mat2(viewCos,viewSin,-viewSin,viewCos)*point+r*.5;\n' +
     'o=vec4(0.,0.,0.,1.);\n' + replaceSeeds(body) + '\n}';
 }
 function makeShader(type,source) {
