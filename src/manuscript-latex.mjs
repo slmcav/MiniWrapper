@@ -42,7 +42,7 @@ export async function renderLaTeXManuscript(bundle,subtle=globalThis.crypto?.sub
   '\\usepackage{amsmath,booktabs,graphicx,hyperref,listings}',
   '\\hypersetup{colorlinks=true,allcolors=blue}',
   '\\lstset{basicstyle=\\ttfamily\\footnotesize,breaklines=true,columns=fullflexible,frame=single}',
-  '\\title{'+esc(r.title)+'}','\\author{GLSL Lab Research Study}','\\date{}',
+  '\\title{'+esc(r.title)+'}','\\author{}','\\date{}',
   '\\begin{document}','\\maketitle','\\begin{abstract}',
   'This study records '+r.observedDraws+' WebGL2 framebuffer observations for '+
    esc(r.parameter)+' across '+r.levels.map(fixed).join(', ')+
