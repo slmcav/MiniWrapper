@@ -18,7 +18,7 @@ function dl(name,content,type){
 }
 const summary=bibliographicReadiness();
 $('referenceStatus').textContent=summary.verifiedCount+' sources in the reference registry; '+
-  summary.pendingIds.length+' source records awaiting reconciliation.';
+  summary.pendingIds.length+' source '+(summary.pendingIds.length===1?'record':'records')+' awaiting reconciliation.';
 for(const ref of REFERENCES){
   const outer=document.createElement('div');outer.className='audit-source';
   const strong=document.createElement('strong');strong.textContent=ref.title+' ('+ref.year+')';
