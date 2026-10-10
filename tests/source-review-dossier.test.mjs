@@ -80,6 +80,7 @@ test('P7 duplicate records and unsafe URLs are rejected before export',async()=>
  await assert.rejects(()=>createSourceReviewDossier(p,[a,a],{subtle}),/Duplicate reviewer evidence/);
  await assert.rejects(()=>createSourceReviewDossier(p,[annotation({sourceUrl:'javascript:alert(1)'})],{subtle}),/must use HTTPS/);
  await assert.rejects(()=>createSourceReviewDossier(p,[annotation({sourceUrl:'https://u:p@example.org/'})],{subtle}),/Invalid source URL/);
+ await assert.rejects(()=>createSourceReviewDossier(p,[annotation({sourceUrl:'https://example.org/other.pdf'})],{subtle}),/must match the manuscript citation/);
 });
 test('P7 changed reviewer dispositions, timestamps or experiment linkage fail integrity checks',async()=>{
  const p=await packet(),d=await createSourceReviewDossier(p,[annotation()],{subtle,clock:when});
