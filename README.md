@@ -112,3 +112,11 @@ Phase P0: restored the Chromium shader build and CI tests.
 Phase P1 foundation: [src/build-evidence.mjs](src/build-evidence.mjs) defines strict, reproducible, SHA-256-identified build receipts with positive compile/link/draw/error requirements. It is implemented and tested but is **not yet wired to the live Lab button**.
 
 The approved visual concept remains **outside GitHub** and must never enter commits, generated assets, documentation, workflow artifacts or releases. Only independently authored textual acceptance criteria are stored in the repository.
+
+
+### P1 live project/build features
+
+GLSL Lab now exposes **Save validated build**, **Export last build JSON**, and a **My projects** panel (save, load, export and import). The build button stays disabled until the active shader has successfully compiled, linked, submitted a draw and passed a WebGL error check. Changing a slider or demo invalidates the previous capture until another frame succeeds. Saved build evidence contains original and compiled source, original attribution, dimensions, exact current control values, shader time, a measured CPU compilation duration, a UTC capture time and a SHA-256 digest. This is a local-browser project and evidence store, not a cloud account or scientific publishing service.
+
+The paper button is intentionally disabled pending P3 measured research data and P4 bibliography/format verification. Browser storage may be cleared by the operating system; **export JSON to preserve copies**. Importing projects creates a new local identity and does not claim that their referenced build hashes are already present or verified. Receipt imports are not yet supported. Project data is stored only on the current browser origin; switching phones or clearing site data does not synchronize it.
+

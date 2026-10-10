@@ -7,3 +7,7 @@ Receipt v1 will include schema version, exact shader source and expanded source,
 Future paper output consumes the frozen receipt, not mutable editor state. Paper claims carry evidence class: observed, computed, verified-citation, researcher-supplied, hypothesis or missing. Missing values remain clearly marked missing. A reproducible technical report is possible from one shader build; statistical or research-novelty claims require independent study evidence. Generated text remains a research draft for author review.
 
 Paper bundle target: HTML, PDF, BibTeX, build receipt JSON, exact GLSL, captured figure files and integrity manifest. Cite only verified relevant sources and preserve figure/caption provenance. No fake author names, affiliations, measurements, or peer-review declarations.
+
+## Browser integration checkpoint
+
+The Save validated build action is enabled only after the current WebGL program's vertex/fragment compilation, linking, draw submission and gl.getError()==gl.NO_ERROR have been observed. A slider edit, shader switch, reset, failed draw or context loss invalidates the capture. The receipt is produced with src/build-evidence.mjs, verified again, and stored locally under the sha256 key; the JSON can then be exported. These observations do not include unmeasured shader quality or claims of originality.

@@ -68,3 +68,7 @@ All gates record PASS, FAIL or NOT_TESTED. A skipped GPU test cannot count as PA
 - Journal of Computer Graphics Techniques, author guidelines: https://jcgt.org/write.html
 
 These references have useful bibliographic metadata. A manuscript must cite only the works whose ideas or specification actually support its claims. No appearance-based inference that a particular source algorithm was used.
+
+## P1 checkpoint — connected implementation
+
+Browser Lab now captures validated WebGL shader states through an in-page bridge and saves content-hashed build receipts locally via src/lab-projects.mjs and src/project-store.mjs. Project JSON roundtrips, receipt SHA validation, tamper rejection and negative GPU paths have new tests. Cloud storage, multi-project workspace navigation, frame images and research metrics are still future P1/P3 work. Paper creation remains disabled until evidence and citation gates are implemented. This checkpoint is not a P1 completion claim.
