@@ -399,6 +399,7 @@ function draw(now) {
     const fresh=validFrame===null;
     validFrame={
       shaderBody:activeBody,expandedShader:expandedSource,demoId:current,attribution:activeAttribution,
+      ...(current==='builder'&&activeGraph?{graph:JSON.parse(JSON.stringify(activeGraph))}:{}),
       checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
       viewport:{width:canvas.width,height:canvas.height},parameters:{...settings},
       shaderTimeSeconds:elapsed,compileCpuMs
