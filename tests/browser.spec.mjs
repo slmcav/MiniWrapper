@@ -468,6 +468,41 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   expect(review.publicationAuthorized).toBe(false);
   expect(review.criteria.length).toBeGreaterThanOrEqual(10);
   expect(review.criteria.every(item=>item.status==='pending')).toBe(true);
+  await page.locator('#sourceReviewPacket').setInputFiles({
+    name:'original-review-packet.json',mimeType:'application/json',
+    buffer:Buffer.from(JSON.stringify(review))
+  });
+  await expect(page.locator('#sourceReviewStatus')).toContainText('unsigned packet verified',{timeout:15000});
+  await expect(page.locator('#sourceReviewAdd')).toBeEnabled();
+  await page.locator('#sourceReviewCitation').selectOption('khronos-webgl2');
+  await page.locator('#sourceReviewReader').fill('Example Human Reader');
+  await page.locator('#sourceReviewDisposition').selectOption('supports_limited_claim');
+  await page.locator('#sourceReviewLocator').fill('Reading back pixels, WebGL2 specification');
+  await page.locator('#sourceReviewClaim').fill('The WebGL2 interface exposes framebuffer readPixels operations.');
+  await page.locator('#sourceReviewNote').fill('The API specification defines readPixels behavior but does not certify platform equivalence.');
+  await page.locator('#sourceReviewAdd').click();
+  await expect(page.locator('#sourceReviewStatus')).toContainText('reviewer identity remain unverified');
+  await expect(page.locator('#sourceReviewExport')).toBeEnabled();
+  const dossierDl=page.waitForEvent('download');
+  await page.locator('#sourceReviewExport').click();
+  const dossier=JSON.parse((await readFile(await (await dossierDl).path())).toString('utf8'));
+  expect(dossier.schema).toBe('glsl-lab/source-review-dossier/1');
+  expect(dossier.assessmentCount).toBe(1);
+  expect(dossier.publicationAuthorized).toBe(false);
+  expect(dossier.assessments[0].referenceId).toBe('khronos-webgl2');
+  await page.locator('#sourceReviewImport').setInputFiles({
+    name:'reviewer-dossier.json',mimeType:'application/json',
+    buffer:Buffer.from(JSON.stringify(dossier))
+  });
+  await expect(page.locator('#sourceReviewStatus')).toContainText('Dossier content verified');
+  const tamperedDossier=structuredClone(dossier);
+  tamperedDossier.assessments[0].assessment='contradicts_claim';
+  await page.locator('#sourceReviewImport').setInputFiles({
+    name:'altered-review.json',mimeType:'application/json',
+    buffer:Buffer.from(JSON.stringify(tamperedDossier))
+  });
+  await expect(page.locator('#sourceReviewStatus')).toContainText('Dossier rejected');
+  await expect(page.frameLocator('#paperPreview').locator('.status')).toContainText('UNREVIEWED');
   const zipDl=page.waitForEvent('download');
   await page.locator('#paperExportZip').click();
   const zip=Buffer.from(await readFile(await (await zipDl).path()));
