@@ -284,3 +284,46 @@ test('P3 controlled three-draw series measures frame differences and exports lin
   await page.locator('#figureClear').click();
   await expect(page.locator('#figureCount')).toContainText('0 full-resolution figure');
 });
+
+test('P3 mobile GPU controlled sweep archives pixels and compares imported second session',async({page})=>{
+  test.setTimeout(120000);
+  await page.goto('/glsl-lab.html');
+  const available=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+  test.skip(!available,'A real WebGL2 framebuffer is required for parameter experiments');
+  await expect(page.locator('#sweepRun')).toBeEnabled({timeout:30000});
+  await page.locator('#sweepRun').click();
+  await expect(page.locator('#sweepStatus')).toContainText('Experiment verified',{timeout:60000});
+  await expect(page.locator('#sweepSummary')).toContainText('0.8 / 1 / 1.2');
+  const firstDownload=page.waitForEvent('download');
+  await page.locator('#sweepExportJson').click();
+  const file=await firstDownload;
+  expect(file.suggestedFilename()).toMatch(/^glsl-experiment-[\w-]+\.json$/);
+  const first=JSON.parse((await readFile(await file.path())).toString('utf8'));
+  expect(first.schema).toBe('glsl-lab/sweep-session/1');
+  expect(first.trials).toHaveLength(3);
+  expect(first.trials[0].receipt.shaderTimeSeconds).toBe(2);
+  expect(first.trials.map(t=>t.receipt.parameters.zoom)).toEqual([.8,1,1.2]);
+  await page.locator('#sweepRun').click();
+  await expect(page.locator('#sweepStatus')).toContainText('Experiment verified',{timeout:60000});
+  await page.locator('#sweepImport').setInputFiles({
+    name:'earlier-session.json',mimeType:'application/json',
+    buffer:Buffer.from(JSON.stringify(first))
+  });
+  await expect(page.locator('#sweepStatus')).toContainText('comparison',{timeout:60000});
+  await expect(page.locator('#sweepComparison')).toContainText('Separate-session descriptive comparison');
+  await expect(page.locator('#sweepComparison')).toContainText('Level 3');
+  const zipWait=page.waitForEvent('download');
+  await page.locator('#sweepExportZip').click();
+  const zipped=Buffer.from(await readFile(await (await zipWait).path()));
+  expect(zipped.readUInt32LE(0)).toBe(0x04034b50);
+  expect(zipped.includes(Buffer.from('figures/treatment-3.png'))).toBe(true);
+  await expect(page.locator('#generatePaper')).toBeDisabled();
+});
+test('P3 invalid parameter sweep is rejected without creating a research archive',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  await expect(page.locator('#sweepRun')).toBeEnabled({timeout:30000});
+  await page.locator('#sweepStep').fill('99');
+  await page.locator('#sweepRun').click();
+  await expect(page.locator('#sweepStatus')).toContainText('Experiment rejected');
+  await expect(page.locator('#sweepExportJson')).toBeDisabled();
+});
