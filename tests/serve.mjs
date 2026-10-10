@@ -3,11 +3,11 @@ import { readFile } from 'node:fs/promises';
 import { resolve, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const base=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8'};
 createServer(async(req,res)=>{
   try {
     const path=new URL(req.url,'http://localhost').pathname;
-    if(!/^\/(index\.html|glsl-lab\.html|src\/(expression-graph|graph-editor|graph-ui|graph-dag|graph-dag-ui|build-evidence|project-store|lab-projects|research-capture|lab-research|research-figures|lab-figures|research-experiments|lab-experiments|research-replications|lab-replications|reference-registry|methodology-audit|lab-methodology|manuscript-engine|manuscript-render|lab-manuscript|research-pdf|scholarly-review|manuscript-verify|lab-bundle-verify|source-lineage|source-review-dossier|lab-source-review|source-claim-crosswalk)\.mjs)$/.test(path)){
+    if(!/^\/(index\.html|glsl-lab\.html|src\/(expression-graph|graph-editor|graph-ui|graph-dag|graph-dag-ui|build-evidence|project-store|lab-projects|research-capture|lab-research|research-figures|lab-figures|research-experiments|lab-experiments|research-replications|lab-replications|reference-registry|methodology-audit|lab-methodology|manuscript-engine|manuscript-render|lab-manuscript|research-pdf|scholarly-review|manuscript-verify|lab-bundle-verify|source-lineage|source-review-dossier|lab-source-review|source-claim-crosswalk|p8-methods-evidence|lab-p8-methods)\.mjs|docs\/P8_EVIDENCE_REGISTER\.json)$/.test(path)){
       res.writeHead(404);res.end('Not found');return;
     }
     const file=resolve(base,path.slice(1));
