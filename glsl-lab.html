@@ -185,7 +185,7 @@
   </header>
   <main class="layout">
     <section class="stage" aria-label="Live GPU shader preview">
-      <div class="stage-head"><strong id="stageTitle">Original field</strong><span class="chip">LIVE · WebGL2</span></div>
+      <div class="stage-head"><strong id="stageTitle">Research expression</strong><span class="chip">LIVE · WebGL2</span></div>
       <canvas id="glcanvas" aria-label="Live shader output"></canvas>
       <div class="stage-foot">
         <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -205,7 +205,7 @@
           <button id="generatePaper" type="button" disabled>Generate Research Draft</button>
         </div>
         <p id="receiptInfo">Evidence not saved yet</p>
-        <p class="muted">The evidence-grounded manuscript draft unlocks after importing and auditing a complete experiment. Academic publication approval remains locked.</p>
+        <p class="muted">Generate a manuscript after exporting and auditing a controlled experiment.</p>
       </div>
       <section class="research-panel" aria-label="Reproducible shader research capture">
         <h2>Research capture</h2>
@@ -394,14 +394,8 @@
         <button type="button" id="tabCode" role="tab" aria-selected="false" aria-controls="paneCode">Code</button>
       </div>
       <div class="pane" id="panePlay" role="tabpanel" aria-labelledby="tabPlay">
-        <label class="field-label" for="demo">Start with a visual</label>
-        <select id="demo" class="demo-choice">
-          <option value="original">Original field</option>
-          <option value="rotation">Rotating 3D fractal</option>
-          <option value="yohei">Log-polar bloom</option>
-        </select>
-        <div class="attribution">Original shader expressions by @YoheiNishitsuji</div>
-        <p>Move a slider. The image responds immediately. No coding needed.</p>
+        <h2>Live authored shader</h2>
+        <p>Your expression graph is rendered using WebGL2. Open <strong>Build</strong> to change the model, then return here to examine its response.</p>
         <div class="control">
           <div class="control-head"><label for="zoom">Shape size</label><output id="zoomValue" for="zoom">100%</output></div>
           <input id="zoom" data-key="zoom" type="range" min="0.5" max="2.5" step="0.05" value="1">
@@ -514,8 +508,8 @@
         </div>
       </div>
       <div class="pane" id="paneCode" role="tabpanel" aria-labelledby="tabCode" hidden>
-        <strong>The original expression</strong>
-        <p>This is the same compact GLSL used in MiniWrapper. The Lab wraps it with uniforms for your sliders.</p>
+        <strong>Compiled research expression</strong>
+        <p>Source generated from the current typed expression graph, with the exact compiled inputs displayed below.</p>
         <textarea id="code" class="codebox" readonly spellcheck="false"></textarea>
         <div class="actions">
           <button id="copyCode" type="button">Copy expression</button>
@@ -523,12 +517,12 @@
         </div>
         <p>Values you are currently sending to the GPU:</p>
         <div class="values" id="values"></div>
-        <div class="note">Zoom and rotation adjust the pixel coordinates (FC). Speed changes time (t). Color shift and brightness change the HSV helper. Slider movements update uniforms; only changing the demo compiles a new shader.</div>
+        <div class="note">Zoom and rotation adjust the pixel coordinates (FC). Speed changes time (t). Color shift and brightness change the HSV helper. Slider changes update uniforms. Rebuilding the graph recompiles the shader.</div>
       </div>
       <div class="pane" aria-label="Project and saved build management">
         <div class="project-box">
           <h2>My projects</h2>
-          <p>Save your chosen demo and settings in this browser. Export JSON to keep a portable copy.</p>
+          <p>Save the authored graph and its parameter settings. Export JSON for reproducible project handoff.</p>
           <label for="projectName">Project name</label>
           <input id="projectName" type="text" value="Untitled GLSL project" maxlength="80">
           <div class="actions">
@@ -544,18 +538,16 @@
       </div>
     </section>
   </main>
-  <footer>MiniWrapper · GLSL Lab (Play prototype) · Three demo expressions credited to @YoheiNishitsuji. No external libraries or server.</footer>
+  <footer>GLSL Lab · Reproducible computational graphics research.</footer>
 <script>
 'use strict';
-const DEMOS = {"original":"float i,e,R,s;vec3 q,p,d=vec3(FC.xy/r*.4-vec2(.2,-.8),1);for(q.zy--;i++<70.;){o.rgb+=hsv(.59,R,min(e*s-.15,1.)/40.);s=4.;p=q+=d*e*R*.3;p=vec3(log(R=length(p*1.3)),exp2(-p.z/R),atan(p.y,p.x)*s-t*.3);for(e=--p.y;s<1e3;s+=s)e+=sin(dot(cos(p*s),sin(p.xyx*s+t*.9)))/s*.5;}","rotation":"for(float i,g,e,s;++i<99.;o.rgb+=.01-hsv(.1,g*.016-e*.3,s/2e2)){vec3 p=vec3((FC.xy-.5*r)/r.y*5.+vec2(0,9),g)*rotate3D(-1.1-cos(t*.15)*.1,vec3(1,11.+sin(t)*.15,-1.5));s=2.;for(int i;i++<19;p=vec3(.08,4,-1)-abs(abs(p)*e-vec3(3,4,3)))s*=e=7.1/dot(p,p*.51);g+=p.y/s;s=log2(s)/exp(e);}","yohei":"float i,e,R,s;vec3 q,p,d=vec3((FC.xy-.5*r)/r.y,.8);for(q.z--;i++<99.;){o.rgb+=hsv(.1,-e,e/1.5e1);p=q+=d*max(e,.004)*R*.22;p=vec3(log2(R=length(p))-t*.3,e=asin(-p.z/R-.01)-.9,atan(p.x,p.y)*2.5-t*.3);for(s=2.;s<1e3/(i*.3);s+=s)e+=abs(dot(sin(p.yzx*s),cos(p.yzx*s)))/s;}"};
-const LABELS = { original:'Original field', rotation:'Rotating 3D fractal', yohei:'Log-polar bloom' };
 const defaults = { zoom:1, angle:0, speed:1, hue:0, brightness:1 };
 const settings = Object.assign({}, defaults);
 const $ = id => document.getElementById(id);
 const canvas=$('glcanvas');
 const gl=canvas.getContext('webgl2',{antialias:false,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
-let program=null, loc={}, animationId=0, lastStamp=0, elapsed=0, running=true, current='original';
-let activeBody=DEMOS.original, activeAttribution='@YoheiNishitsuji', activeGraph=null;
+let program=null, loc={}, animationId=0, lastStamp=0, elapsed=0, running=true, current='builder';
+let activeBody='', activeAttribution='Authored in GLSL Lab', activeGraph=null;
 let activeTab='play';
 let expandedSource='', compileCpuMs=null, compiledOK=false, validFrame=null, frameNumber=0;
 const frameListeners=new Set();
@@ -640,16 +632,14 @@ window.glslLabBridge={
   invalidate(){invalidateBuild();},
   compileGraph(graph,body){compileSource('builder',body,'User-authored via GLSL Lab expression graph',graph);},
   getProjectState(){
-    const isGraph=activeTab==='build'||current==='builder';
-    const result={demoId:isGraph?'builder':current,parameters:{...settings}};
-    if(isGraph) {
-      if(window.glslLabGraphMode==='advanced'&&window.glslLabAdvanced)result.graph=window.glslLabAdvanced.graph;
-      else if(window.glslLabBuilder)result.graph=window.glslLabBuilder.graph;
-    }
-    return result;
+    const graph=activeTab==='build'&&window.glslLabGraphMode==='advanced'&&window.glslLabAdvanced?
+      window.glslLabAdvanced.graph:activeTab==='build'&&window.glslLabBuilder?
+      window.glslLabBuilder.graph:activeGraph;
+    if(!graph)throw new Error('Author an expression graph before saving your project');
+    return {demoId:'builder',parameters:{...settings},graph:JSON.parse(JSON.stringify(graph))};
   },
   applyProject(saved){
-    if(saved.demoId!=='builder'&&!Object.prototype.hasOwnProperty.call(DEMOS,saved.demoId))throw new Error('Unsupported project shader');
+    if(saved.demoId!=='builder')throw new Error('Gallery presets are not research projects');
     for(const key of Object.keys(defaults)){
       if(typeof saved.parameters[key]!=='number'||!Number.isFinite(saved.parameters[key]))throw new Error('Invalid project parameter '+key);
     }
@@ -666,8 +656,6 @@ window.glslLabBridge={
         window.glslLabAdvanced?.selectMode('quick');
         window.glslLabBuilder.loadGraph(saved.graph);
       }
-    }else{
-      $('demo').value=saved.demoId;selectTab('play');compile(saved.demoId);
     }
   }
 };
@@ -730,7 +718,7 @@ function compileSource(name,body,attribution,graph=null) {
   let vert,frag,next;
   const cpuStart=performance.now();
   try {
-    if(name!=='builder'&&!Object.prototype.hasOwnProperty.call(DEMOS,name))throw new Error('Unknown shader demo');
+    if(name!=='builder')throw new Error('Only authored expression graphs may run in GLSL Lab');
     if(typeof body!=='string'||!body.trim())throw new Error('Generated GLSL is empty');
     const shaderText=fragmentSource(body);
     vert=makeShader(gl.VERTEX_SHADER,vertexSource);
@@ -748,17 +736,13 @@ function compileSource(name,body,attribution,graph=null) {
       angle:gl.getUniformLocation(program,'uAngle'),
       hue:gl.getUniformLocation(program,'uHue'),
       brightness:gl.getUniformLocation(program,'uBrightness')};
-    $('stageTitle').textContent=name==='builder'?'Visual expression':LABELS[name];
+    $('stageTitle').textContent='Research expression';
     $('code').value=body;
     elapsed=0;lastStamp=0;setStatus('Live');
     updateValues();
     requestDraw();
   } catch(e){compiledOK=false;invalidateBuild();setStatus('',String(e.message||e));}
   finally {if(vert)gl.deleteShader(vert);if(frag)gl.deleteShader(frag);if(next)gl.deleteProgram(next);}
-}
-function compile(name){
-  if(!Object.prototype.hasOwnProperty.call(DEMOS,name))throw new Error('Unknown shader demo');
-  compileSource(name,DEMOS[name],'@YoheiNishitsuji');
 }
 function sizeCanvas() {
   const rect=canvas.getBoundingClientRect();
@@ -815,7 +799,6 @@ for(const input of document.querySelectorAll('input[data-key]')){
     requestDraw();
   });
 }
-$('demo').addEventListener('change',event=>compile(event.target.value));
 $('resetControls').addEventListener('click',()=>{
   Object.assign(settings,defaults);
   invalidateBuild();
@@ -866,7 +849,7 @@ canvas.addEventListener('webglcontextlost',event=>{
   setStatus('','GPU context lost. Reload to restore the Lab.');
 });
 if(!gl){setStatus('','WebGL2 is unavailable in this browser. Try enabling GPU acceleration or a different device.');}
-else{compile('original');requestDraw();}
+else{updateValues();}
 </script>
 <script type="module" src="./src/graph-ui.mjs"></script>
 <script type="module" src="./src/graph-dag-ui.mjs"></script>
