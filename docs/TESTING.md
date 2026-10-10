@@ -31,3 +31,6 @@ G4 — Future expression builder: src/expression-graph.mjs is a tested, versione
 5. Extend graphs toward add/remove nodes, valid edges, undo/redo, import/export, and GLSL compilation from block graphs.
 
 For intentional edits to existing shader expressions, update the locked fingerprints with documented reasoning. Do not treat mocked runtime tests as real GPU evidence.
+
+G5 — Scholarly build receipt foundation: strict P1 compile/link/draw gating, content-addressed identifiers, tamper-detection and repeatable canonical serialization (see tests/build-evidence.test.mjs). The receipt module is not yet connected to the WebGL UI.
+G6 — Image custody: test that the approved off-repository visual design image/derivatives do not enter tracked project directories. The protected comp must not be packaged into any deployment or publication.

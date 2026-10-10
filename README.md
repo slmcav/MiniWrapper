@@ -103,3 +103,12 @@ On GitHub, the MiniWrapper quality gates workflow runs fast tests first on main 
 
 The preliminary graph module (src/expression-graph.mjs) supports five typed nodes: coordinates, rotate, radius, wave, and palette. It checks connections, types, cycles, parameter bounds, deterministic GLSL emission, and JSON round-trip integrity. This is a tested core contract for the future builder, **not yet a drag-and-drop UI**. See docs/TESTING.md for stage gates and the promotion sequence.
 
+
+## First-class application implementation
+
+The staged plan is documented in [docs/IMPLEMENTATION_PHASES.md](docs/IMPLEMENTATION_PHASES.md), with the academic manuscript evidence contract in [docs/PAPER_SCHEMA.md](docs/PAPER_SCHEMA.md). The currently verified WebGL UI is the starting point; planned modules must not be mistaken for shipped features.
+
+Phase P0: restored the Chromium shader build and CI tests.
+Phase P1 foundation: [src/build-evidence.mjs](src/build-evidence.mjs) defines strict, reproducible, SHA-256-identified build receipts with positive compile/link/draw/error requirements. It is implemented and tested but is **not yet wired to the live Lab button**.
+
+The approved visual concept remains **outside GitHub** and must never enter commits, generated assets, documentation, workflow artifacts or releases. Only independently authored textual acceptance criteria are stored in the repository.

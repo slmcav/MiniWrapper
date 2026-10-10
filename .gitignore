@@ -2,3 +2,8 @@ node_modules/
 playwright-report/
 test-results/
 .DS_Store
+# Off-repository visual design contract: never commit or package the approved image.
+**/glsl_lab_shader_research_dashboard.png
+**/a_wide_high_resolution_promotional_ui_mockup_da_1.png
+visual-contract/
+design-reference-image/
