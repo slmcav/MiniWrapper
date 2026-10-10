@@ -93,14 +93,14 @@ body.contract-dashboard {
   .contract-dashboard .brand .back {font-size:.78rem;white-space:nowrap}
   .contract-dashboard .layout.contract-layout {
     max-width:2000px;display:grid;gap:11px;
-    grid-template-columns:172px minmax(280px,1.02fr) minmax(360px,1.28fr) minmax(305px,.98fr);
+    grid-template-columns:172px minmax(280px,1fr) minmax(350px,1.25fr) minmax(330px,1.12fr);
     padding:12px 14px 24px;align-items:stretch
   }
   .contract-sidebar {display:block;grid-column:1;grid-row:1 / span 3;
     background:linear-gradient(180deg,#122535,#0b1722);border:1px solid #2c4b5e;
     border-radius:13px;padding:12px 10px;align-self:stretch;min-height:740px}
   .contract-dashboard .stage {grid-column:2;grid-row:1;display:flex;flex-direction:column;
-    min-height:462px;max-height:490px;overflow:hidden;border-radius:13px}
+    min-height:460px;max-height:478px;overflow:hidden;border-radius:13px}
   .contract-dashboard .stage-visual {position:static;box-shadow:none;border-radius:0}
   .contract-dashboard .stage-head {padding:8px 11px}
   .contract-dashboard .stage-head strong {font-size:.9rem}
@@ -112,7 +112,7 @@ body.contract-dashboard {
   .contract-dashboard .build-panel strong {font-size:.83rem}
   .contract-dashboard .build-panel button {min-height:33px;font-size:.77rem;padding:6px 9px}
   .contract-dashboard .build-panel #receiptInfo {font-size:.71rem;margin:4px 0}
-  .contract-dashboard .panel {grid-column:3;grid-row:1;min-height:462px;max-height:490px;
+  .contract-dashboard .panel {grid-column:3;grid-row:1;min-height:460px;max-height:478px;
     overflow-y:auto;overflow-x:hidden;border-radius:13px}
   .contract-dashboard .panel .tabs {display:none}
   .contract-dashboard #paneBuild[hidden] {display:block!important}
@@ -147,13 +147,13 @@ body.contract-dashboard {
   .contract-dashboard #paneBuild #builderCode {display:none}
   .contract-dashboard #paneBuild .graph-import {display:none}
   .contract-dashboard .dag-scroll {height:265px}
-  .contract-dashboard .contract-paper {display:block;grid-column:4;grid-row:1;
+  .contract-dashboard  .contract-paper {display:block;grid-column:4;grid-row:1 / span 2;
     background:#10212e;border:1px solid #345369;border-radius:13px;
-    max-height:490px;overflow:auto}
+    max-height:720px;min-height:660px;overflow:auto}
   .contract-dashboard .contract-paper .contract-paper-empty {display:flex}
   .contract-dashboard .contract-paper .contract-paper-empty[hidden] {display:none!important}
-  .contract-dashboard .contract-lower {display:grid;grid-column:2 / -1;grid-row:2;gap:11px;
-    grid-template-columns:1.15fr 1fr 1.03fr}
+  .contract-dashboard  .contract-lower {display:grid;grid-column:2 / 4;grid-row:2;gap:11px;
+    grid-template-columns:1.2fr .95fr 1.03fr}
   .contract-dashboard .contract-science {display:block;grid-column:2 / -1;grid-row:3}
   .contract-dashboard #contractCodePane #paneCode[hidden]{display:block!important}
   .contract-dashboard .workflow-guide {display:none;margin:4px 0 0;padding:7px 9px;border-radius:0}
@@ -165,7 +165,7 @@ body.contract-dashboard {
 }
 @media(min-width:1280px) and (max-width:1439px){
   .contract-dashboard .layout.contract-layout {
-    grid-template-columns:150px minmax(260px,1fr) minmax(315px,1.25fr) minmax(265px,.98fr);gap:8px;padding:9px 10px
+    grid-template-columns:150px minmax(260px,1fr) minmax(315px,1.25fr) minmax(290px,1.12fr);gap:8px;padding:9px 10px
   }
   .contract-dashboard #glcanvas {height:283px}
   .contract-sidebar {padding:9px 6px}
