@@ -1,5 +1,6 @@
 """Verify that the published PDF is compiled from LaTeX and visually inspectable."""
 import hashlib
+import json
 import re
 import subprocess
 import sys
@@ -38,6 +39,18 @@ def inspect(directory):
     assert match, "File name must contain UniqueID_fullSHA256"
     actual_hash = hashlib.sha256(pdf.read_bytes()).hexdigest()
     assert actual_hash == match.group(2), "PDF SHA256 does not match filename"
+    receipt = json.loads((directory / "build-receipt.json").read_text(encoding="utf-8-sig"))
+    assert receipt["schema"] == "glsl-lab/native-latex-build/1"
+    assert receipt["engine"] == "pdfLaTeX" and "pdfTeX" in receipt["compiler"]
+    assert receipt["uniqueId"] == match.group(1)
+    assert receipt["manuscriptSha256"].startswith(receipt["uniqueId"])
+    assert receipt["pdfFilename"] == pdf.name
+    assert receipt["pdfSha256"] == actual_hash
+    assert receipt["sourceDateEpoch"] > 0
+    for filename, key in (("manuscript.tex", "texSha256"), ("shader.glsl", "shaderSha256")):
+        actual = hashlib.sha256((directory / filename).read_bytes()).hexdigest()
+        assert receipt[key] == actual, "TeX build source hash mismatch: " + filename
+
     info = run("pdfinfo", str(pdf))
     assert "Pages:" in info, "Missing PDF page count"
     output = run("pdftotext", "-layout", str(pdf), "-")
@@ -60,6 +73,7 @@ def inspect(directory):
     log = (directory / "manuscript.log").read_text(encoding="utf-8", errors="replace")
     assert "Output written on manuscript.pdf" in log, "No native pdfLaTeX output log"
     assert "Missing character:" not in log, "Font/glyph substitution detected"
+    assert "Overfull \\hbox" not in log, "LaTeX line overflow detected"
     print("PASS LaTeX PDF:", pdf.name, "pages:", len(audit.pages),
           "text words:", sum(page["words"] for page in audit.pages),
           "image XObjects:", image_count, "sha256:", actual_hash)
