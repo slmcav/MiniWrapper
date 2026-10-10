@@ -77,7 +77,7 @@ The receipt reports reproducibility status, study/manuscript/audit SHA-256, figu
 
 ## Producer code lineage
 
-The complete manuscript bundle additionally includes `source-lineage.json`, an explicit Git snapshot and an inventory of 18 producing and verification source files identified by their Git blob SHA-1 object IDs. The source inventory is itself listed and SHA-256 hashed within the bundle file manifest. CI recomputes blob IDs from the literal bytes of each checked-out file and fails if source evolves without a corresponding revision of the pinned snapshot. A cross-release re-import must have matching source lineage. This describes generating code identity, **not** authorship or reviewer identity, and does not license claims beyond the research audit.
+The complete manuscript bundle additionally includes `source-lineage.json`, an explicit Git snapshot and an inventory of 20 producing and verification source files identified by their Git blob SHA-1 object IDs. The source inventory is itself listed and SHA-256 hashed within the bundle file manifest. CI recomputes blob IDs from the literal bytes of each checked-out file and fails if source evolves without a corresponding revision of the pinned snapshot. A cross-release re-import must have matching source lineage. This describes generating code identity, **not** authorship or reviewer identity, and does not license claims beyond the research audit.
 
 ## P7 external source-reading dossier
 

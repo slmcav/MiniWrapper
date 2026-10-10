@@ -45,7 +45,7 @@ A PASS receipt includes `archiveSha256`, the SHA-256 digest of the **original un
 
 ## Frozen source-lineage handoff
 
-Every newly exported manuscript ZIP now contains `source-lineage.json`, pinning **18 generator, renderer, validator, editor and package files** to their Git blob SHA-1 identifiers and an exact Git snapshot commit. This file is inventoried with a SHA-256 digest in the manuscript bundle. The imported-bundle verifier must match it to the installed release before regenerating the article; different releases must not silently claim to reproduce historical output.
+Every newly exported manuscript ZIP now contains `source-lineage.json`, pinning **20 generator, renderer, validator, editor and package files** to their Git blob SHA-1 identifiers and an exact Git snapshot commit. This file is inventoried with a SHA-256 digest in the manuscript bundle. The imported-bundle verifier must match it to the installed release before regenerating the article; different releases must not silently claim to reproduce historical output.
 
 The regression suite independently computes `SHA-1("blob " + byte_length + NUL + bytes)` for every pinned file and fails if the working tree differs from the freeze. This enforces explicit lineage updates when rendering, bibliography or evidence code changes. Git object IDs identify public code content; they are not signatures of the developer, experimenter or reviewer. The entire exported ZIP also has its own SHA-256 receipt, distinct from all file and scientific-study digests.
 
