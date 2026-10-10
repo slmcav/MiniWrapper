@@ -1,6 +1,7 @@
 // P3: three-point controlled shader sweeps, self-contained auditable archives,
 // and descriptive between-session comparisons. No inferential statistics.
 import {canonicalJson,sha256Hex,verifyBuildReceipt} from './build-evidence.mjs';
+import {assertResearchEligibleShader} from './research-source-policy.mjs';
 import {verifyResearchCapture} from './research-capture.mjs';
 import {createFigureEvidence,compareFullFrames,zipStored} from './research-figures.mjs';
 export const SWEEP_SCHEMA='glsl-lab/sweep-session/1';
@@ -55,6 +56,8 @@ async function auditCore(protocol,trials,subtle){
    const entry=trials[i];
    assert(plain(entry)&&plain(entry.receipt)&&plain(entry.capture)&&plain(entry.figure),'Incomplete trial archive');
    await verifyBuildReceipt(entry.receipt,subtle);
+   assertResearchEligibleShader({body:entry.receipt.shader.body,
+     identifier:entry.receipt.shader.identifier,attribution:entry.receipt.shader.attribution});
    await verifyResearchCapture(entry.capture,entry.receipt,subtle);
    assert(canonicalJson(entry.receipt.parameters)===canonicalJson(expectedSettings(protocol,i)),
      'Trial settings do not match preregistered sweep level '+i);
