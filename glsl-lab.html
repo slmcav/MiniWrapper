@@ -374,7 +374,8 @@ window.glslLabBridge={
     gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
     const error=gl.getError();
     if(error!==gl.NO_ERROR){invalidateBuild();throw new Error('WebGL readPixels failed: '+error);}
-    return {observation:JSON.parse(JSON.stringify(validFrame)),pixels,frameId:frameNumber};
+    return {observation:JSON.parse(JSON.stringify(validFrame)),pixels,frameId:frameNumber,
+      observedAt:new Date().toISOString()};
   },
   invalidate(){invalidateBuild();},
   compileGraph(graph,body){compileSource('builder',body,'User-authored via GLSL Lab expression graph',graph);},
