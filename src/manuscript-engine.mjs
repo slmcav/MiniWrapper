@@ -60,6 +60,8 @@ export async function assembleManuscript(study,{
     authorship:'Author and affiliation not supplied',
     studySha256:study.sha256,auditSha256:reviewed.sha256,
     sourceSchema:study.schema,sourceReceiptSha256:study.trials[0].receipt.sha256,
+    shaderIdentifier:study.trials[0].receipt.shader.identifier,
+    shaderAttribution:study.trials[0].receipt.shader.attribution,
     parameter:protocol.parameter,levels:protocol.levels,
     shaderTimeSeconds:protocol.shaderTimeSeconds,
     viewport:study.trials[0].receipt.viewport,
