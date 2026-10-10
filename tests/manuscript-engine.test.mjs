@@ -1,0 +1,127 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {webcrypto} from 'node:crypto';
+import {createBuildReceipt} from '../src/build-evidence.mjs';
+import {createResearchCapture} from '../src/research-capture.mjs';
+import {createFigureEvidence} from '../src/research-figures.mjs';
+import {createSweepProtocol,createSweepSession} from '../src/research-experiments.mjs';
+import {createReplicatedProtocol,createReplicatedSession} from '../src/research-replications.mjs';
+import {auditMethodology} from '../src/methodology-audit.mjs';
+import {assembleManuscript,verifyManuscript,manuscriptRows} from '../src/manuscript-engine.mjs';
+import {renderManuscriptHTML,exportManuscriptBundle} from '../src/manuscript-render.mjs';
+const subtle=webcrypto.subtle;
+globalThis.btoa??=s=>Buffer.from(s,'binary').toString('base64');
+globalThis.atob??=s=>Buffer.from(s,'base64').toString('binary');
+const baseline=()=>({zoom:1,angle:0,speed:1,hue:0,brightness:1});
+const clock=i=>()=>new Date(Date.UTC(2026,9,10,12,0,i)).toISOString();
+const platform=()=>({api:'WebGL2',webglVersion:'WebGL 2.0 synthetic fixture',
+  shadingLanguageVersion:'WebGL GLSL ES 3.00',vendor:'masked vendor',renderer:'masked renderer',
+  maxTextureSize:4096,maxRenderbufferSize:4096,maxVertexAttribs:16,
+  fragmentHighpPrecision:23,devicePixelRatio:1});
+async function observed(settings,i,shader='o.rgb = vec3(.5);'){
+  const pixels=Uint8Array.from({length:48},(_,x)=>x%4===3?255:(x+i*17)%256);
+  const receipt=await createBuildReceipt({
+    shaderBody:shader,expandedShader:'#version 300 es\nvoid main(){o.rgb=vec3(.5);}',
+    demoId:'original',attribution:'@YoheiNishitsuji',
+    checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
+    viewport:{width:4,height:3},parameters:settings,shaderTimeSeconds:2
+  },{subtle,clock:clock(i)});
+  const capture=await createResearchCapture(receipt,pixels,{subtle,clock:clock(i)});
+  const figure=await createFigureEvidence(receipt,capture,pixels,{subtle,
+    clock:clock(i),drawSequence:i+50});
+  return {...figure,receipt,capture};
+}
+async function fixture(replicated=false,shader='o.rgb = vec3(.5);'){
+  const protocol=replicated?
+    createReplicatedProtocol(baseline(),'zoom',.2,2,0):
+    createSweepProtocol(baseline(),'zoom',.2,2);
+  const sequence=replicated?protocol.sequence:[0,1,2].map(levelIndex=>({levelIndex}));
+  const values=replicated?protocol.sweep.levels:protocol.levels,figures=[];
+  for(let i=0;i<sequence.length;i++){
+    figures.push(await observed({...baseline(),zoom:values[sequence[i].levelIndex]},i,shader));
+  }
+  const session=replicated?
+    await createReplicatedSession(protocol,figures,platform(),{
+      sessionId:'draft_repeat_001',clock:clock(0),subtle}):
+    await createSweepSession(protocol,figures,{
+      sessionId:'draft_sweep_001',clock:clock(0),subtle});
+  const audit=await auditMethodology(session,{subtle,clock:clock(0)});
+  return {session,audit};
+}
+test('P4 manuscript draft uses only authenticated three-level measurements and source references',async()=>{
+  const {session,audit}=await fixture();
+  const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  assert.equal(draft.record.observedDraws,3);
+  assert.equal(draft.record.drawsPerTreatment,1);
+  assert.deepEqual(draft.record.levels,[.8,1,1.2]);
+  assert.deepEqual(draft.record.treatments.map(r=>r.n),[1,1,1]);
+  assert.ok(draft.record.treatments.every(r=>r.stdevLuma8===null));
+  assert.equal(draft.figures.length,3);
+  assert.deepEqual(draft.references.map(r=>r.id),
+    ['khronos-glsl-es300','khronos-webgl2','sacks1989']);
+  assert.equal(draft.record.release.academicManuscriptUnlocked,false);
+  assert.equal(await verifyManuscript(draft,subtle),true);
+});
+test('P4 print-ready article contains methods, equations, table, citations, figure and GLSL',async()=>{
+  const {session,audit}=await fixture();
+  const article=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const html=renderManuscriptHTML(article);
+  for(const phrase of ['Abstract','1. Introduction','2. Materials and methods',
+    '3. Results','4. Discussion','5. Limitations','6. Data and reproducibility',
+    'References','Appendix A','Y′ = 0.2126 R','Not estimated','@page',
+    'o.rgb = vec3(.5);','data:image/png;base64,','SHA-256'])
+    assert.ok(html.includes(phrase),phrase+' missing from article');
+  assert.ok(html.includes('UNREVIEWED'));
+  assert.ok(!html.includes('jeremias-quilez2013'));
+  assert.ok(!html.includes('lagae2010'));
+  assert.ok(!html.includes('<script>'));
+});
+test('P4 repeated study article reports n=3 and descriptive sample SD without inferential claims',async()=>{
+  const {session,audit}=await fixture(true);
+  const manuscript=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  assert.equal(manuscript.record.observedDraws,9);
+  assert.equal(manuscript.record.drawsPerTreatment,3);
+  assert.deepEqual(manuscript.record.treatments.map(r=>r.n),[3,3,3]);
+  assert.ok(manuscript.record.treatments.every(x=>x.stdevLuma8!==null));
+  const html=renderManuscriptHTML(manuscript);
+  assert.ok(html.includes('divisor n − 1 = 2'));
+  assert.ok(html.includes('not independently established'));
+  assert.equal(manuscript.figures.length,9);
+  assert.equal(await verifyManuscript(manuscript,subtle),true);
+});
+test('P4 manuscript export bundles exact study, audit, figures, references and source code',async()=>{
+  const {session,audit}=await fixture();
+  const manuscript=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const product=await exportManuscriptBundle(manuscript,{subtle});
+  const zip=Buffer.from(product.zip);
+  assert.equal(zip.readUInt32LE(0),0x04034b50);
+  assert.ok(zip.includes(Buffer.from('manuscript.html')));
+  assert.ok(zip.includes(Buffer.from('references.bib')));
+  assert.ok(zip.includes(Buffer.from('shader.glsl')));
+  assert.ok(zip.includes(Buffer.from('figures/frame-03.png')));
+  assert.equal(product.manifest.fileInventory.length,8);
+  assert.ok(product.manifest.fileInventory.every(x=>/^[a-f0-9]{64}$/.test(x.sha256)));
+  assert.equal(product.manifest.verification.academicManuscriptUnlocked,false);
+  assert.doesNotMatch(renderManuscriptHTML(manuscript,{embedImages:false}),/data:image\/png;base64,/);
+});
+test('P4 manuscript cannot disguise audit release blockers or altered observations',async()=>{
+  const {session,audit}=await fixture();
+  const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const forged=structuredClone(draft.record);
+  forged.release.academicManuscriptUnlocked=true;
+  const modified={...draft,record:forged};
+  assert.throws(()=>renderManuscriptHTML(modified),/Only an unreviewed/);
+  await assert.rejects(()=>verifyManuscript(modified,subtle),/do not reproduce/);
+  const damaged={...draft,figures:draft.figures.map(x=>({...x,png:new Uint8Array(x.png)}))};
+  damaged.figures[0].png[50]^=1;
+  await assert.rejects(()=>exportManuscriptBundle(damaged,{subtle}),/PNG bytes altered/);
+});
+test('P4 GLSL contents are HTML-escaped, not executable markup',async()=>{
+  const shader='o.rgb=vec3(1.); /* </pre><script>alert("x")</script> */';
+  const {session,audit}=await fixture(false,shader);
+  const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const html=renderManuscriptHTML(draft);
+  assert.ok(html.includes('&lt;script&gt;'));
+  assert.ok(!html.includes('<script>alert'));
+  assert.ok(html.includes('&lt;/pre&gt;'));
+});
