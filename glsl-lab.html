@@ -78,6 +78,12 @@
     .audit-panel .audit-source small { color:#b1c8d2; }
     .audit-panel .audit-findings { white-space:pre-wrap; overflow-wrap:anywhere; color:#bbdfd8; font:12px/1.55 ui-monospace,monospace; }
     .audit-panel [data-error=true] { color:#ffb2b2; }
+    .paper-draft-panel { margin-top:14px; padding:13px; background:#122331; border:1px solid #416c79; border-radius:12px; }
+    .paper-draft-panel h3 { margin:0 0 8px; font-size:1rem; color:#d0e6e2; }
+    .paper-draft-panel p { color:#bad0d7; font-size:.83rem; }
+    .paper-draft-panel iframe { display:block; width:100%;height:530px;max-height:72vh; border:1px solid #56768b; background:white; border-radius:7px; }
+    .paper-draft-panel .source-meta { color:#b7dcd5;font:12px/1.6 ui-monospace,monospace;overflow-wrap:anywhere; }
+    .paper-draft-panel [data-error=true] { color:#ffb3b3; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
     .tabs { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
@@ -176,10 +182,10 @@
         <div class="build-buttons">
           <button id="saveBuild" class="accent" type="button" disabled>Save validated build</button>
           <button id="exportBuild" type="button" disabled>Export last build JSON</button>
-          <button id="generatePaper" type="button" disabled>Generate Academic Paper</button>
+          <button id="generatePaper" type="button" disabled>Generate Research Draft</button>
         </div>
         <p id="receiptInfo">Evidence not saved yet</p>
-        <p class="muted">The paper generator unlocks after the research-evidence and reference gates are implemented.</p>
+        <p class="muted">The evidence-grounded manuscript draft unlocks after importing and auditing a complete experiment. Academic publication approval remains locked.</p>
       </div>
       <section class="research-panel" aria-label="Reproducible shader research capture">
         <h2>Research capture</h2>
@@ -280,6 +286,19 @@
           <p id="auditStatus" role="status" aria-live="polite">Select a complete experiment JSON to audit.</p>
           <p id="auditResults" class="audit-findings">No experiment audited. Academic manuscript remains locked.</p>
           <p class="research-warning">Publisher/registry metadata checks are not external scientific review. Unsupported statistical inference, hardware independence, novelty and peer-reviewed publication claims remain blocked.</p>
+          <section class="paper-draft-panel" aria-label="Generated research manuscript draft">
+            <h3>Research manuscript draft</h3>
+            <p>After a successful experiment audit, use <strong>Generate Research Draft</strong> above. The paper contains reproducible measurements, published reference metadata, mathematical definitions, exact GLSL, and figures from the archived framebuffer—not invented experimental claims.</p>
+            <p id="paperStatus" role="status" aria-live="polite">Import and verify an experiment above to enable manuscript drafting.</p>
+            <div class="build-buttons">
+              <button id="paperDownloadHtml" type="button" disabled>Download print-ready HTML</button>
+              <button id="paperPrint" type="button" disabled>Print / Save as PDF</button>
+              <button id="paperExportZip" type="button" disabled>Export complete research ZIP</button>
+            </div>
+            <p id="paperSource" class="source-meta">No evidence-grounded manuscript generated.</p>
+            <iframe id="paperPreview" title="Read-only generated research manuscript preview" sandbox="allow-same-origin allow-modals" hidden></iframe>
+            <p class="research-warning">This is an unreviewed research draft. Use your browser's print dialogue to save a PDF; HTML and the ZIP are generated directly from the archived study. Authorship, external scientific review, and publication clearance require independent human verification.</p>
+          </section>
         </section>
       </section>
     </section>
@@ -772,5 +791,6 @@ else{compile('original');requestDraw();}
 <script type="module" src="./src/lab-experiments.mjs"></script>
 <script type="module" src="./src/lab-replications.mjs"></script>
 <script type="module" src="./src/lab-methodology.mjs"></script>
+<script type="module" src="./src/lab-manuscript.mjs"></script>
 </body>
 </html>
