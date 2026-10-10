@@ -14,7 +14,7 @@ test('P6 frozen producer source blobs exactly match checked-out files',async()=>
     unique.add(item.path);
     const bytes=await readFile(join(process.cwd(),item.path));
     const digest=createHash('sha1')
-      .update(Buffer.from('blob '+bytes.length+'\\0','utf8'))
+      .update(Buffer.from('blob '+bytes.length+'\0','utf8'))
       .update(bytes).digest('hex');
     assert.equal(digest,item.gitBlobSha1,'Source changed without issuing a new lineage record: '+item.path);
   }
