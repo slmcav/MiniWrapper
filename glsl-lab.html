@@ -42,7 +42,7 @@
     #projectStatus { color:#a1d8c9; font-size:.81rem; min-height:18px; }
     #projectStatus[data-error="true"] { color:#ffb3ac; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
-    .tabs { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid #354a5c; }
+    .tabs { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
     .tabs button[aria-selected="true"] { background:#194d4a; color:#eafffa; box-shadow:inset 0 -3px 0 #77dbc5; }
     .pane { padding:15px; }
@@ -65,6 +65,22 @@
     #error { white-space:pre-wrap; overflow-wrap:anywhere; color:#ffa9a9; padding:8px 13px; font:12px/1.5 ui-monospace,monospace; }
     #error:empty { display:none; }
     .muted { color:#9bacba; font-size:.76rem; margin-top:9px; }
+    .builder-actions { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0; }
+    .builder-actions button { flex:1 1 auto; }
+    .graph-chain { background:#0b1723; padding:12px; border:1px solid #38556a; border-radius:13px; }
+    .graph-node { width:100%; display:grid; gap:3px; text-align:left; background:#1c3141; border:1px solid #476478; border-radius:10px; padding:12px; }
+    .graph-node strong { color:#e5f8fa; }
+    .graph-node span { font-size:.75rem; color:#b4cad7; overflow-wrap:anywhere; }
+    .graph-node.is-selected { border-color:#75dfcc; box-shadow:inset 0 0 0 1px #4fd4bd; background:#17433f; }
+    .graph-connector { margin:2px auto; color:#91afbe; text-align:center; font-size:.76rem; }
+    .graph-props { padding:12px; border-radius:12px; border:1px solid #36576a; margin-top:12px; background:#101d29; }
+    .graph-props h3 { margin:0; font-size:1rem; }
+    #nodeFields .control { display:grid; grid-template-columns:1fr auto; gap:5px; }
+    #nodeFields input { grid-column:1 / -1; }
+    #builderCode { min-height:150px; }
+    #builderStatus[data-error="true"] { color:#ffb3ac; }
+    .graph-import { display:inline-grid; gap:4px; font-size:.82rem; color:#b9d2dd; }
+    .graph-import input { max-width:100%; }
     footer { max-width:1400px; margin:auto; padding:0 18px 25px; color:#788999; font-size:.75rem; }
     @media(max-width:820px) {
       .brand { padding:10px 14px; }
@@ -112,7 +128,8 @@
     <section class="panel" aria-label="GLSL Lab controls">
       <div class="tabs" role="tablist" aria-label="Lab mode">
         <button type="button" id="tabPlay" role="tab" aria-selected="true" aria-controls="panePlay">Play</button>
-        <button type="button" id="tabCode" role="tab" aria-selected="false" aria-controls="paneCode">Understand · Code</button>
+        <button type="button" id="tabBuild" role="tab" aria-selected="false" aria-controls="paneBuild">Build</button>
+        <button type="button" id="tabCode" role="tab" aria-selected="false" aria-controls="paneCode">Code</button>
       </div>
       <div class="pane" id="panePlay" role="tabpanel" aria-labelledby="tabPlay">
         <label class="field-label" for="demo">Start with a visual</label>
@@ -169,6 +186,40 @@
         </div>
         <div class="note">These are five safe visual controls across three existing demos. The other 14 demos, custom GLSL, and video recording remain in the <a href="./index.html">classic editor</a>.</div>
       </div>
+      <div class="pane" id="paneBuild" role="tabpanel" aria-labelledby="tabBuild" hidden>
+        <strong>Build with visual operations</strong>
+        <p>Start with coordinates, add a Turn or Wave, and adjust each part. Connections are made automatically when their types match. Select an operation to edit it.</p>
+        <div class="builder-actions">
+          <button id="addTurn" type="button">+ Add Turn</button>
+          <button id="addWave" type="button">+ Add Wave</button>
+          <button id="builderUndo" type="button" disabled>Undo</button>
+          <button id="builderRedo" type="button" disabled>Redo</button>
+        </div>
+        <p id="graphCount" class="muted">5 connected operations</p>
+        <div id="graphChain" class="graph-chain" aria-label="Connected shader operations"></div>
+        <section class="graph-props" aria-label="Selected operation properties">
+          <h3 id="selectedOperation">Distance</h3>
+          <p id="operationDescription">Select a visual operation to see its controls.</p>
+          <div id="nodeFields"></div>
+          <div class="builder-actions">
+            <button id="moveNodeUp" type="button">Move up</button>
+            <button id="moveNodeDown" type="button">Move down</button>
+            <button id="removeNode" type="button">Remove</button>
+          </div>
+        </section>
+        <div class="builder-actions">
+          <button id="builderRender" type="button" class="accent">Build &amp; preview</button>
+          <button id="builderReset" type="button">Starter graph</button>
+          <button id="graphExport" type="button">Export graph JSON</button>
+        </div>
+        <label class="graph-import" for="graphImport">Import a saved graph
+          <input id="graphImport" type="file" accept=".json,application/json">
+        </label>
+        <p id="builderStatus" role="status" aria-live="polite"></p>
+        <label class="field-label" for="builderCode">Generated GLSL</label>
+        <textarea id="builderCode" class="codebox" readonly spellcheck="false"></textarea>
+        <div class="note">These blocks are a supported, typed subset of GLSL. An existing compact demo is not automatically converted into blocks. To archive a successful graph render, use Save validated build above.</div>
+      </div>
       <div class="pane" id="paneCode" role="tabpanel" aria-labelledby="tabCode" hidden>
         <strong>The original expression</strong>
         <p>This is the same compact GLSL used in MiniWrapper. The Lab wraps it with uniforms for your sliders.</p>
@@ -194,6 +245,8 @@ const $ = id => document.getElementById(id);
 const canvas=$('glcanvas');
 const gl=canvas.getContext('webgl2',{antialias:false,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
 let program=null, loc={}, animationId=0, lastStamp=0, elapsed=0, running=true, current='original';
+let activeBody=DEMOS.original, activeAttribution='@YoheiNishitsuji', activeGraph=null;
+let activeTab='play';
 let expandedSource='', compileCpuMs=null, compiledOK=false, validFrame=null;
 const frameListeners=new Set();
 function broadcastBuildState(valid){for(const listener of frameListeners)listener(valid);}
@@ -201,15 +254,29 @@ function invalidateBuild(){const had=validFrame!==null;validFrame=null;if(had)br
 window.glslLabBridge={
   onValidationChange(listener){frameListeners.add(listener);listener(validFrame!==null);return ()=>frameListeners.delete(listener);},
   capture(){if(!validFrame)throw new Error('No successfully drawn frame to capture');return JSON.parse(JSON.stringify(validFrame));},
-  getProjectState(){return {demoId:current,parameters:{...settings}};},
+  invalidate(){invalidateBuild();},
+  compileGraph(graph,body){compileSource('builder',body,'User-authored via GLSL Lab expression graph',graph);},
+  getProjectState(){
+    const isGraph=activeTab==='build'||current==='builder';
+    const result={demoId:isGraph?'builder':current,parameters:{...settings}};
+    if(isGraph&&window.glslLabBuilder)result.graph=window.glslLabBuilder.graph;
+    return result;
+  },
   applyProject(saved){
-    if(!DEMOS[saved.demoId])throw new Error('Unsupported project shader');
+    if(saved.demoId!=='builder'&&!Object.prototype.hasOwnProperty.call(DEMOS,saved.demoId))throw new Error('Unsupported project shader');
     for(const key of Object.keys(defaults)){
       if(typeof saved.parameters[key]!=='number'||!Number.isFinite(saved.parameters[key]))throw new Error('Invalid project parameter '+key);
     }
     Object.assign(settings,saved.parameters);
     for(const input of document.querySelectorAll('input[data-key]'))input.value=settings[input.dataset.key];
-    $('demo').value=saved.demoId;updateValues();compile(saved.demoId);
+    updateValues();
+    if(saved.demoId==='builder'){
+      if(!saved.graph||!window.glslLabBuilder)throw new Error('This project needs a valid expression graph');
+      selectTab('build');
+      window.glslLabBuilder.loadGraph(saved.graph);
+    }else{
+      $('demo').value=saved.demoId;selectTab('play');compile(saved.demoId);
+    }
   }
 };
 function setStatus(message,error) {
@@ -265,14 +332,15 @@ if(gl){
   gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
   gl.bindVertexArray(null);
 }
-function compile(name) {
+function compileSource(name,body,attribution,graph=null) {
   if(!gl)return;
   compiledOK=false;invalidateBuild();
   let vert,frag,next;
   const cpuStart=performance.now();
   try {
-    if(!Object.prototype.hasOwnProperty.call(DEMOS,name))throw new Error('Unknown shader demo');
-    const shaderText=fragmentSource(DEMOS[name]);
+    if(name!=='builder'&&!Object.prototype.hasOwnProperty.call(DEMOS,name))throw new Error('Unknown shader demo');
+    if(typeof body!=='string'||!body.trim())throw new Error('Generated GLSL is empty');
+    const shaderText=fragmentSource(body);
     vert=makeShader(gl.VERTEX_SHADER,vertexSource);
     frag=makeShader(gl.FRAGMENT_SHADER,shaderText);
     next=gl.createProgram();
@@ -281,18 +349,24 @@ function compile(name) {
       throw new Error(gl.getProgramInfoLog(next)||'Shader program link failed');
     if(program)gl.deleteProgram(program);
     program=next;next=null;current=name;expandedSource=shaderText;
+    activeBody=body;activeAttribution=attribution;activeGraph=graph?JSON.parse(JSON.stringify(graph)):null;
     compileCpuMs=Math.max(0,performance.now()-cpuStart);compiledOK=true;
     loc={r:gl.getUniformLocation(program,'r'),t:gl.getUniformLocation(program,'t'),
       zoom:gl.getUniformLocation(program,'uZoom'),
       angle:gl.getUniformLocation(program,'uAngle'),
       hue:gl.getUniformLocation(program,'uHue'),
       brightness:gl.getUniformLocation(program,'uBrightness')};
-    $('stageTitle').textContent=LABELS[name];$('code').value=DEMOS[name];
+    $('stageTitle').textContent=name==='builder'?'Visual expression':LABELS[name];
+    $('code').value=body;
     elapsed=0;lastStamp=0;setStatus('Live');
     updateValues();
     requestDraw();
   } catch(e){compiledOK=false;invalidateBuild();setStatus('',String(e.message||e));}
   finally {if(vert)gl.deleteShader(vert);if(frag)gl.deleteShader(frag);if(next)gl.deleteProgram(next);}
+}
+function compile(name){
+  if(!Object.prototype.hasOwnProperty.call(DEMOS,name))throw new Error('Unknown shader demo');
+  compileSource(name,DEMOS[name],'@YoheiNishitsuji');
 }
 function sizeCanvas() {
   const rect=canvas.getBoundingClientRect();
@@ -322,7 +396,7 @@ function draw(now) {
     if(code!==gl.NO_ERROR)throw new Error('WebGL drawing failed, error '+String(code));
     const fresh=validFrame===null;
     validFrame={
-      shaderBody:DEMOS[current],expandedShader:expandedSource,demoId:current,attribution:'@YoheiNishitsuji',
+      shaderBody:activeBody,expandedShader:expandedSource,demoId:current,attribution:activeAttribution,
       checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
       viewport:{width:canvas.width,height:canvas.height},parameters:{...settings},
       shaderTimeSeconds:elapsed,compileCpuMs
@@ -363,17 +437,21 @@ $('playPause').addEventListener('click',()=>{
 });
 $('restart').addEventListener('click',()=>{elapsed=0;lastStamp=0;invalidateBuild();updateValues();requestDraw();});
 function selectTab(tab){
-  const showCode=tab==='code';
-  $('panePlay').hidden=showCode;$('paneCode').hidden=!showCode;
-  $('tabPlay').setAttribute('aria-selected',String(!showCode));
-  $('tabCode').setAttribute('aria-selected',String(showCode));
+  if(!['play','build','code'].includes(tab))throw new Error('Unknown tab');
+  activeTab=tab;
+  for(const name of ['play','build','code']){
+    const cap=name[0].toUpperCase()+name.slice(1);
+    $('pane'+cap).hidden=name!==tab;
+    $('tab'+cap).setAttribute('aria-selected',String(name===tab));
+  }
   updateValues();
 }
 $('tabPlay').addEventListener('click',()=>selectTab('play'));
+$('tabBuild').addEventListener('click',()=>selectTab('build'));
 $('tabCode').addEventListener('click',()=>selectTab('code'));
 $('openCode').addEventListener('click',()=>selectTab('code'));
 $('copyCode').addEventListener('click',async()=>{
-  try { await navigator.clipboard.writeText(DEMOS[current]); $('copyCode').textContent='Copied'; }
+  try { await navigator.clipboard.writeText(activeBody); $('copyCode').textContent='Copied'; }
   catch(e){$('copyCode').textContent='Select and copy above';$('code').select();}
 });
 $('savePng').addEventListener('click',()=>{
@@ -396,6 +474,7 @@ canvas.addEventListener('webglcontextlost',event=>{
 if(!gl){setStatus('','WebGL2 is unavailable in this browser. Try enabling GPU acceleration or a different device.');}
 else{compile('original');requestDraw();}
 </script>
+<script type="module" src="./src/graph-ui.mjs"></script>
 <script type="module" src="./src/lab-projects.mjs"></script>
 </body>
 </html>
