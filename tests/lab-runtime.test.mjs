@@ -36,10 +36,14 @@ function buildLab() {
     requestAnimationFrame:fn=>(queue.push(fn),queue.length),cancelAnimationFrame(){},setTimeout(){},
     URL:{createObjectURL:()=>'',revokeObjectURL(){}},navigator:{clipboard:{writeText:async()=>{}}},
     Float32Array,console},{timeout:1000});
+  // External graph-ui module compiles a typed graph on initial load.
+  // Model that explicit module handoff in the isolated inline-runtime fixture.
+  win.glslLabBridge.compileGraph({version:1,nodes:[{id:'research-node'}],output:'research-node'},
+    'o.rgb=vec3(0.4,0.3,0.8);');
   return {el,uniforms,bridge:win.glslLabBridge,failGL(code){glError=code;},frame:()=>{now+=16;queue.shift()?.(now);},get compiled(){return compiled;},get draws(){return draws;}};
 }
-test('Lab initially compiles the first shader and draws a frame',()=>{
-  const l=buildLab();assert.equal(l.compiled,2);assert.match(l.el('code').value,/float i,e,R,s/);
+test('Lab compiles an authored graph through the external module and draws a frame',()=>{
+  const l=buildLab();assert.equal(l.compiled,2);assert.match(l.el('code').value,/o\.rgb=vec3/);
   l.frame();assert.ok(l.draws>0);
 });
 test('slider adjustments update uniforms without recompilation',()=>{
@@ -55,10 +59,10 @@ test('hue and brightness modify GPU uniforms, but not source expression',()=>{
   l.frame();assert.ok(Math.abs(l.uniforms.uHue-1/3)<1e-9);
   assert.equal(l.uniforms.uBrightness,1.5);assert.equal(l.el('code').value,source);
 });
-test('changing demo recompiles only when needed, reset restores defaults',()=>{
+test('recompilation requires an authored graph and reset restores uniform defaults',()=>{
   const l=buildLab(),before=l.compiled;
-  l.el('demo').value='rotation';l.el('demo').dispatch('change');
-  assert.equal(l.compiled,before+2);assert.match(l.el('code').value,/rotate3D/);
+  l.bridge.compileGraph({version:1,nodes:[{id:'another'}],output:'another'},'o.rgb=vec3(0.6);');
+  assert.equal(l.compiled,before+2);assert.match(l.el('code').value,/0.6/);
   l.el('zoom').value='2';l.el('zoom').dispatch('input');l.el('resetControls').click();
   l.frame();assert.equal(l.uniforms.uZoom,1);
 });
@@ -78,7 +82,7 @@ test('P1 bridge refuses a build before a verified frame draw',()=>{
   const verified=l.bridge.capture();
   assert.equal(verified.checks.frameDrawn,true);
   assert.equal(verified.checks.glError,0);
-  assert.equal(verified.demoId,'original');
+  assert.equal(verified.demoId,'builder');
   assert.equal(verified.shaderBody,l.el('code').value);
   assert.equal(verified.parameters.zoom,1);
 });
@@ -93,12 +97,13 @@ test('P1 nonzero GL error prevents all successful build snapshots',()=>{
   assert.throws(()=>l.bridge.capture(),/successfully drawn frame/);
   assert.match(l.el('error').textContent,/WebGL drawing failed/);
 });
-test('P1 project restoration validates source and creates new render evidence',()=>{
+test('P1 gallery project import is refused; authored graph changes invalidate old evidence',()=>{
   const l=buildLab();l.frame();const prior=l.bridge.capture();
-  l.bridge.applyProject({demoId:'rotation',parameters:{zoom:1.5,angle:30,speed:1,hue:60,brightness:1}});
+  assert.throws(()=>l.bridge.applyProject({demoId:'rotation',parameters:{zoom:1,angle:0,speed:1,hue:0,brightness:1}}),/Gallery presets/);
+  l.bridge.compileGraph({version:1,nodes:[{id:'new'}],output:'new'},'o.rgb=vec3(0.1,0.2,0.9);');
   assert.throws(()=>l.bridge.capture(),/successfully drawn frame/);
   l.frame();const frame=l.bridge.capture();
-  assert.equal(frame.demoId,'rotation');assert.equal(frame.parameters.zoom,1.5);
+  assert.equal(frame.demoId,'builder');
   assert.notEqual(frame.shaderBody,prior.shaderBody);
 });
 
