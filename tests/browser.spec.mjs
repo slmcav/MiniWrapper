@@ -481,6 +481,24 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   const manifest=JSON.parse(zip.toString('utf8',offset,offset+size));
   expect(manifest.verification.academicManuscriptUnlocked).toBe(false);
   expect(manifest.fileInventory.every(f=>/^[a-f0-9]{64}$/.test(f.sha256))).toBe(true);
+  await page.locator('#manuscriptZipImport').setInputFiles({
+    name:'manuscript-export.zip',mimeType:'application/zip',buffer:zip
+  });
+  await expect(page.locator('#manuscriptZipStatus')).toContainText('PASS',{timeout:60000});
+  await expect(page.locator('#manuscriptZipResults')).toContainText('PDF reproduced: true');
+  await expect(page.locator('#manuscriptZipResults')).toContainText('Publication authorized: NO');
+  const receiptDl=page.waitForEvent('download');
+  await page.locator('#manuscriptZipExportReceipt').click();
+  const importedReceipt=JSON.parse((await readFile(await (await receiptDl).path())).toString('utf8'));
+  expect(importedReceipt.verdict).toBe('PASS');
+  expect(importedReceipt.manuscriptReviewCompleted).toBe(false);
+  const corrupted=Buffer.from(zip);corrupted[120]^=1;
+  await page.locator('#manuscriptZipImport').setInputFiles({
+    name:'tampered.zip',mimeType:'application/zip',buffer:corrupted
+  });
+  await expect(page.locator('#manuscriptZipStatus')).toContainText('rejected',{timeout:10000});
+  await expect(page.locator('#manuscriptZipExportReceipt')).toBeDisabled();
+
 });
 test('P4 manuscript release gate closes again when a subsequent audit fails',async({page})=>{
   await page.goto('/glsl-lab.html');
