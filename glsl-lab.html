@@ -27,6 +27,20 @@
     .stage-foot { padding:8px 12px; display:flex; align-items:center; flex-wrap:wrap; gap:8px; justify-content:space-between; }
     .stage-foot button { min-height:36px; padding:6px 12px; font-size:.83rem; }
     .stage-foot .state { font-size:.79rem; color:#c0cedc; }
+    .build-panel { padding:12px; border-top:1px solid #354a5c; background:#101e28; }
+    .build-panel strong { color:#b0e5d9; display:block; margin-bottom:5px; }
+    .build-panel p { color:#a9c0ce; font-size:.84rem; margin:3px 0 10px; }
+    .build-buttons { display:flex; gap:7px; flex-wrap:wrap; }
+    .build-buttons button { font-size:.85rem; }
+    button:disabled { opacity:.48; cursor:not-allowed; }
+    .project-box { margin-top:17px; padding:13px; background:#101b28; border:1px solid #334a5d; border-radius:12px; }
+    .project-box h2 { font-size:1rem; margin:0 0 6px; }
+    .project-box label { display:block; margin:10px 0 4px; }
+    .project-box input[type="text"], .project-box select { background:#08121b; color:#ecf5fc; border:1px solid #496074; border-radius:9px; padding:10px; width:100%; min-height:42px; }
+    .project-box .actions button { min-height:40px; }
+    .project-box input[type="file"] { max-width:100%; }
+    #projectStatus { color:#a1d8c9; font-size:.81rem; min-height:18px; }
+    #projectStatus[data-error="true"] { color:#ffb3ac; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
     .tabs { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
@@ -83,6 +97,17 @@
         <span class="state" id="state" role="status" aria-live="polite">Starting…</span>
       </div>
       <div id="error" role="alert"></div>
+      <div class="build-panel" aria-label="Validated build actions">
+        <strong>Build &amp; research</strong>
+        <p id="buildState" role="status" aria-live="polite">Waiting for validated WebGL2 rendering.</p>
+        <div class="build-buttons">
+          <button id="saveBuild" class="accent" type="button" disabled>Save validated build</button>
+          <button id="exportBuild" type="button" disabled>Export last build JSON</button>
+          <button id="generatePaper" type="button" disabled>Generate Academic Paper</button>
+        </div>
+        <p id="receiptInfo">Evidence not saved yet</p>
+        <p class="muted">The paper generator unlocks after the research-evidence and reference gates are implemented.</p>
+      </div>
     </section>
     <section class="panel" aria-label="GLSL Lab controls">
       <div class="tabs" role="tablist" aria-label="Lab mode">
@@ -127,6 +152,21 @@
           <button class="accent" type="button" id="resetControls">Reset controls</button>
           <button type="button" id="openCode">Show the math</button>
         </div>
+        <div class="project-box">
+          <h2>My projects</h2>
+          <p>Save your chosen demo and settings in this browser. Export JSON to keep a portable copy.</p>
+          <label for="projectName">Project name</label>
+          <input id="projectName" type="text" value="Untitled GLSL project" maxlength="80">
+          <div class="actions">
+            <button class="accent" id="saveProject" type="button">Save project</button>
+            <button id="exportProject" type="button">Export project JSON</button>
+          </div>
+          <label for="projectPicker">Load a saved project</label>
+          <select id="projectPicker"><option value="">Select saved project</option></select>
+          <label for="importProject">Import project JSON</label>
+          <input id="importProject" type="file" accept=".json,application/json">
+          <p id="projectStatus" role="status" aria-live="polite">Checking browser storage…</p>
+        </div>
         <div class="note">These are five safe visual controls across three existing demos. The other 14 demos, custom GLSL, and video recording remain in the <a href="./index.html">classic editor</a>.</div>
       </div>
       <div class="pane" id="paneCode" role="tabpanel" aria-labelledby="tabCode" hidden>
@@ -154,6 +194,24 @@ const $ = id => document.getElementById(id);
 const canvas=$('glcanvas');
 const gl=canvas.getContext('webgl2',{antialias:false,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
 let program=null, loc={}, animationId=0, lastStamp=0, elapsed=0, running=true, current='original';
+let expandedSource='', compileCpuMs=null, compiledOK=false, validFrame=null;
+const frameListeners=new Set();
+function broadcastBuildState(valid){for(const listener of frameListeners)listener(valid);}
+function invalidateBuild(){const had=validFrame!==null;validFrame=null;if(had)broadcastBuildState(false);}
+window.glslLabBridge={
+  onValidationChange(listener){frameListeners.add(listener);listener(validFrame!==null);return ()=>frameListeners.delete(listener);},
+  capture(){if(!validFrame)throw new Error('No successfully drawn frame to capture');return JSON.parse(JSON.stringify(validFrame));},
+  getProjectState(){return {demoId:current,parameters:{...settings}};},
+  applyProject(saved){
+    if(!DEMOS[saved.demoId])throw new Error('Unsupported project shader');
+    for(const key of Object.keys(defaults)){
+      if(typeof saved.parameters[key]!=='number'||!Number.isFinite(saved.parameters[key]))throw new Error('Invalid project parameter '+key);
+    }
+    Object.assign(settings,saved.parameters);
+    for(const input of document.querySelectorAll('input[data-key]'))input.value=settings[input.dataset.key];
+    $('demo').value=saved.demoId;updateValues();compile(saved.demoId);
+  }
+};
 function setStatus(message,error) {
   $('state').textContent=error?'Error':message;
   $('error').textContent=error||'';
@@ -209,16 +267,21 @@ if(gl){
 }
 function compile(name) {
   if(!gl)return;
+  compiledOK=false;invalidateBuild();
   let vert,frag,next;
+  const cpuStart=performance.now();
   try {
+    if(!Object.prototype.hasOwnProperty.call(DEMOS,name))throw new Error('Unknown shader demo');
+    const shaderText=fragmentSource(DEMOS[name]);
     vert=makeShader(gl.VERTEX_SHADER,vertexSource);
-    frag=makeShader(gl.FRAGMENT_SHADER,fragmentSource(DEMOS[name]));
+    frag=makeShader(gl.FRAGMENT_SHADER,shaderText);
     next=gl.createProgram();
     gl.attachShader(next,vert);gl.attachShader(next,frag);gl.linkProgram(next);
     if(!gl.getProgramParameter(next,gl.LINK_STATUS))
       throw new Error(gl.getProgramInfoLog(next)||'Shader program link failed');
     if(program)gl.deleteProgram(program);
-    program=next;next=null;current=name;
+    program=next;next=null;current=name;expandedSource=shaderText;
+    compileCpuMs=Math.max(0,performance.now()-cpuStart);compiledOK=true;
     loc={r:gl.getUniformLocation(program,'r'),t:gl.getUniformLocation(program,'t'),
       zoom:gl.getUniformLocation(program,'uZoom'),
       angle:gl.getUniformLocation(program,'uAngle'),
@@ -228,7 +291,7 @@ function compile(name) {
     elapsed=0;lastStamp=0;setStatus('Live');
     updateValues();
     requestDraw();
-  } catch(e){setStatus('',String(e.message||e));}
+  } catch(e){compiledOK=false;invalidateBuild();setStatus('',String(e.message||e));}
   finally {if(vert)gl.deleteShader(vert);if(frag)gl.deleteShader(frag);if(next)gl.deleteProgram(next);}
 }
 function sizeCanvas() {
@@ -252,7 +315,20 @@ function draw(now) {
   gl.uniform1f(loc.angle,settings.angle*Math.PI/180);
   gl.uniform1f(loc.hue,settings.hue/360);
   gl.uniform1f(loc.brightness,settings.brightness);
-  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  if(!compiledOK)return;
+  try {
+    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    const code=gl.getError();
+    if(code!==gl.NO_ERROR)throw new Error('WebGL drawing failed, error '+String(code));
+    const fresh=validFrame===null;
+    validFrame={
+      shaderBody:DEMOS[current],expandedShader:expandedSource,demoId:current,attribution:'@YoheiNishitsuji',
+      checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
+      viewport:{width:canvas.width,height:canvas.height},parameters:{...settings},
+      shaderTimeSeconds:elapsed,compileCpuMs
+    };
+    if(fresh)broadcastBuildState(true);
+  }catch(e){compiledOK=false;invalidateBuild();setStatus('',String(e.message||e));return;}
   if(running && !document.hidden)animationId=requestAnimationFrame(draw);
 }
 function requestDraw(){if(!animationId&&gl&&program&&!document.hidden)animationId=requestAnimationFrame(draw);}
@@ -267,13 +343,14 @@ function updateValues(){
 for(const input of document.querySelectorAll('input[data-key]')){
   input.addEventListener('input',()=>{
     settings[input.dataset.key]=Number(input.value);
-    updateValues();
+    invalidateBuild();updateValues();
     requestDraw();
   });
 }
 $('demo').addEventListener('change',event=>compile(event.target.value));
 $('resetControls').addEventListener('click',()=>{
   Object.assign(settings,defaults);
+  invalidateBuild();
   for(const input of document.querySelectorAll('input[data-key]'))input.value=settings[input.dataset.key];
   updateValues();requestDraw();
 });
@@ -284,7 +361,7 @@ $('playPause').addEventListener('click',()=>{
   setStatus(running?'Live':'Paused');
   requestDraw();
 });
-$('restart').addEventListener('click',()=>{elapsed=0;lastStamp=0;updateValues();requestDraw();});
+$('restart').addEventListener('click',()=>{elapsed=0;lastStamp=0;invalidateBuild();updateValues();requestDraw();});
 function selectTab(tab){
   const showCode=tab==='code';
   $('panePlay').hidden=showCode;$('paneCode').hidden=!showCode;
@@ -313,10 +390,12 @@ window.addEventListener('resize',requestDraw);
 document.addEventListener('visibilitychange',()=>{lastStamp=0;if(!document.hidden)requestDraw();});
 canvas.addEventListener('webglcontextlost',event=>{
   event.preventDefault();if(animationId)cancelAnimationFrame(animationId);animationId=0;
+  compiledOK=false;invalidateBuild();
   setStatus('','GPU context lost. Reload to restore the Lab.');
 });
 if(!gl){setStatus('','WebGL2 is unavailable in this browser. Try enabling GPU acceleration or a different device.');}
 else{compile('original');requestDraw();}
 </script>
+<script type="module" src="./src/lab-projects.mjs"></script>
 </body>
 </html>
