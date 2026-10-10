@@ -3,11 +3,11 @@ import { readFile } from 'node:fs/promises';
 import { resolve, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const base=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.json':'application/json; charset=utf-8','.css':'text/css; charset=utf-8'};
 createServer(async(req,res)=>{
   try {
     const path=new URL(req.url,'http://localhost').pathname;
-    if(!/^\/(index\.html|glsl-lab\.html|src\/[a-z0-9-]+\.mjs|docs\/P8_EVIDENCE_REGISTER\.json)$/.test(path)){
+    if(!/^\/(index\.html|glsl-lab\.html|src\/[a-z0-9-]+\.(mjs|css)|docs\/P8_EVIDENCE_REGISTER\.json)$/.test(path)){
       res.writeHead(404);res.end('Not found');return;
     }
     const file=resolve(base,path.slice(1));
