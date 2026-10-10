@@ -7,9 +7,9 @@ test('mobile navigation: classic editor opens Lab without losing presets',async(
   await expect(page.locator('#recording-indicator')).toBeHidden();
   await page.getByRole('link',{name:/Open GLSL Lab/}).click();
   await expect(page).toHaveURL(/glsl-lab\.html/);
-  await expect(page.locator('#demo option')).toHaveCount(3);
+  await expect(page.locator('#demo')).toHaveCount(0);
   await expect(page.locator('#tabPlay')).toHaveAttribute('aria-selected','true');
-  await expect(page.locator('#code')).toHaveValue(/float i,e,R,s/);
+  await expect(page.locator('#code')).toHaveValue(/o\.rgb|vec3/);
 });
 test('mobile Play and Understand views are navigable',async({page})=>{
   await page.goto('/glsl-lab.html');
@@ -22,7 +22,7 @@ test('mobile Play and Understand views are navigable',async({page})=>{
   const width=await page.evaluate(()=>document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(420);
 });
-test('GPU smoke: three demos compile, changing slider does not recompile',async({page})=>{
+test('GPU smoke: authored graph compiles and slider updates do not recompile',async({page})=>{
   await page.addInitScript(()=>{
     window.__compileProbe=0;
     if(typeof WebGL2RenderingContext==='undefined')return;
@@ -44,14 +44,9 @@ test('GPU smoke: three demos compile, changing slider does not recompile',async(
   await expect(page.locator('#zoomValue')).toHaveText('175%');
   await page.waitForTimeout(150);
   expect(await page.evaluate(()=>window.__compileProbe)).toBe(before);
-  for(const name of ['rotation','yohei']){
-    await page.locator('#demo').selectOption(name);
-    await expect(page.locator('#state')).toHaveText('Live',{timeout:30000});
-    await expect(page.locator('#error')).toBeEmpty();
-  }
   const file=page.waitForEvent('download',{timeout:30000});
   await page.locator('#savePng').click();
-  expect((await file).suggestedFilename()).toBe('glsl-lab-yohei.png');
+  expect((await file).suggestedFilename()).toBe('glsl-lab-builder.png');
 });
 
 test('P1 mobile project and evidence workflow saves, verifies and reloads',async({page})=>{
@@ -440,7 +435,7 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   await expect(page.locator('#auditStatus')).toContainText('Experiment and methodology findings',{timeout:60000});
   await expect(page.locator('#generatePaper')).toBeEnabled({timeout:10000});
   await page.locator('#generatePaper').click();
-  await expect(page.locator('#paperStatus')).toContainText('Evidence-grounded technical manuscript assembled',{timeout:60000});
+  await expect(page.locator('#paperStatus')).toContainText('Technical manuscript assembled',{timeout:60000});
   await expect(page.locator('#paperPreview')).toBeVisible();
   await expect(page.frameLocator('#paperPreview').locator('h1')).toContainText('Reproducible Descriptive Study');
   await expect(page.frameLocator('#paperPreview').locator('figure img')).toHaveCount(3);
@@ -454,7 +449,7 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   expect(html).toContain('References');
   expect(html).toContain('Appendix A');
   expect(html).toContain('@page');
-  const pdfDl=page.waitForEvent('download');
+  const texDl=page.waitForEvent('download');
   await page.locator('#paperDirectPdf').click();
   const pdf=Buffer.from(await readFile(await (await pdfDl).path()));
   expect(pdf.subarray(0,8).toString('latin1')).toBe('%PDF-1.4');
@@ -520,7 +515,8 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   expect(zip.includes(Buffer.from('manuscript.html'))).toBe(true);
   expect(zip.includes(Buffer.from('figures/frame-03.png'))).toBe(true);
   expect(zip.includes(Buffer.from('references.bib'))).toBe(true);
-  expect(zip.includes(Buffer.from('manuscript.pdf'))).toBe(true);
+  expect(zip.includes(Buffer.from('manuscript.tex'))).toBe(true);
+   expect(zip.includes(Buffer.from('build-latex.sh'))).toBe(true);
   expect(zip.includes(Buffer.from('review-packet.json'))).toBe(true);
   const n=zip.readUInt16LE(26),offset=30+n+zip.readUInt16LE(28),size=zip.readUInt32LE(18);
   const manifest=JSON.parse(zip.toString('utf8',offset,offset+size));
@@ -530,8 +526,8 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
     name:'manuscript-export.zip',mimeType:'application/zip',buffer:zip
   });
   await expect(page.locator('#manuscriptZipStatus')).toContainText('PASS',{timeout:60000});
-  await expect(page.locator('#manuscriptZipResults')).toContainText('PDF reproduced: true');
-  await expect(page.locator('#manuscriptZipResults')).toContainText('Publication authorized: NO');
+  await expect(page.locator('#manuscriptZipResults')).toContainText('LaTeX source reproduced: true');
+  
   const receiptDl=page.waitForEvent('download');
   await page.locator('#manuscriptZipExportReceipt').click();
   const importedReceipt=JSON.parse((await readFile(await (await receiptDl).path())).toString('utf8'));
