@@ -3,21 +3,21 @@ const $=id=>document.getElementById(id);
 function visit(id){const item=$(id);if(!item)throw new Error('Research step missing: '+id);
  item.scrollIntoView({behavior:'smooth',block:'start'});item.focus?.({preventScroll:true});}
 $('workflowAuthor').addEventListener('click',()=>{
- $('tabBuild').click();visit('builderRender');
+ window.glslLabDrawer?.open();$('tabBuild').click();visit('builderRender');
 });
-$('workflowStudy').addEventListener('click',()=>visit('sweepRun'));
+$('workflowStudy').addEventListener('click',()=>{window.glslLabDrawer?.close();visit('sweepRun');});
 $('workflowAudit').addEventListener('click',()=>{
- const btn=$('auditCurrentStudy');
+ window.glslLabDrawer?.close();const btn=$('auditCurrentStudy');
  if(!btn.disabled)btn.click();
  visit('auditCurrentStudy');
 });
 $('workflowPaper').addEventListener('click',()=>{
- const btn=$('generatePaper');
+ window.glslLabDrawer?.close();const btn=$('generatePaper');
  if(!btn.disabled)btn.click();
  visit('generatePaper');
 });
 $('workflowLatex').addEventListener('click',()=>{
- const btn=$('paperExportZip');
+ window.glslLabDrawer?.close();const btn=$('paperExportZip');
  if(!btn.disabled)btn.click();
  visit('paperExportZip');
 });
