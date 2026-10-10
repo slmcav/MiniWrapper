@@ -153,7 +153,7 @@ body.contract-dashboard {
     grid-template-columns:1.15fr 1fr 1.03fr}
   .contract-dashboard .contract-science {display:block;grid-column:2 / -1;grid-row:3}
   .contract-dashboard #contractCodePane #paneCode[hidden]{display:block!important}
-  .contract-dashboard .workflow-guide {margin:4px 0 0;padding:7px 9px;border-radius:0}
+  .contract-dashboard .workflow-guide {display:none;margin:4px 0 0;padding:7px 9px;border-radius:0}
   .contract-dashboard .workflow-guide h2 {display:none}
   .contract-dashboard .workflow-steps {grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
   .contract-dashboard .workflow-steps button {min-height:30px;padding:4px;font-size:.71rem}
