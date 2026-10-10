@@ -21,9 +21,9 @@ function buildLab() {
     const n=el(k);n.dataset.key=k;n.value=({zoom:1,angle:0,speed:1,hue:0,brightness:1})[k];return n;
   });
   el('paneCode').hidden=true;
-  let compiled=0,draws=0,now=1000;
+  let compiled=0,draws=0,now=1000,glError=0;
   const uniforms={};
-  const gl={VERTEX_SHADER:35633,FRAGMENT_SHADER:35632,COMPILE_STATUS:35713,LINK_STATUS:35714,ARRAY_BUFFER:34962,STATIC_DRAW:35044,FLOAT:5126,TRIANGLE_STRIP:5,
+  const gl={VERTEX_SHADER:35633,FRAGMENT_SHADER:35632,COMPILE_STATUS:35713,LINK_STATUS:35714,ARRAY_BUFFER:34962,STATIC_DRAW:35044,FLOAT:5126,TRIANGLE_STRIP:5,NO_ERROR:0,getError(){return glError;},
     createBuffer:()=>({}),bindBuffer(){},bufferData(){},createVertexArray:()=>({}),bindVertexArray(){},enableVertexAttribArray(){},vertexAttribPointer(){},
     createShader:()=>({}),shaderSource(){},compileShader(){compiled++;},getShaderParameter:()=>true,deleteShader(){},
     createProgram:()=>({}),attachShader(){},linkProgram(){},getProgramParameter:()=>true,deleteProgram(){},
@@ -36,7 +36,7 @@ function buildLab() {
     requestAnimationFrame:fn=>(queue.push(fn),queue.length),cancelAnimationFrame(){},setTimeout(){},
     URL:{createObjectURL:()=>'',revokeObjectURL(){}},navigator:{clipboard:{writeText:async()=>{}}},
     Float32Array,console},{timeout:1000});
-  return {el,uniforms,frame:()=>{now+=16;queue.shift()?.(now);},get compiled(){return compiled;},get draws(){return draws;}};
+  return {el,uniforms,bridge:win.glslLabBridge,failGL(code){glError=code;},frame:()=>{now+=16;queue.shift()?.(now);},get compiled(){return compiled;},get draws(){return draws;}};
 }
 test('Lab initially compiles the first shader and draws a frame',()=>{
   const l=buildLab();assert.equal(l.compiled,2);assert.match(l.el('code').value,/float i,e,R,s/);
@@ -69,4 +69,35 @@ test('Play, Code, Pause and Restart remain connected',()=>{
   l.el('playPause').click();assert.equal(l.el('playPause').textContent,'Play');
   l.el('playPause').click();assert.equal(l.el('playPause').textContent,'Pause');
   l.el('restart').click();assert.match(l.el('values').textContent,/t = 0\.00 seconds/);
+});
+
+test('P1 bridge refuses a build before a verified frame draw',()=>{
+  const l=buildLab();
+  assert.throws(()=>l.bridge.capture(),/successfully drawn frame/);
+  l.frame();
+  const verified=l.bridge.capture();
+  assert.equal(verified.checks.frameDrawn,true);
+  assert.equal(verified.checks.glError,0);
+  assert.equal(verified.demoId,'original');
+  assert.equal(verified.shaderBody,l.el('code').value);
+  assert.equal(verified.parameters.zoom,1);
+});
+test('P1 slider edits invalidate prior draw until next successful frame',()=>{
+  const l=buildLab();l.frame();assert.ok(l.bridge.capture());
+  const zoom=l.el('zoom');zoom.value='2';zoom.dispatch('input');
+  assert.throws(()=>l.bridge.capture(),/successfully drawn frame/);
+  l.frame();assert.equal(l.bridge.capture().parameters.zoom,2);
+});
+test('P1 nonzero GL error prevents all successful build snapshots',()=>{
+  const l=buildLab();l.failGL(1282);l.frame();
+  assert.throws(()=>l.bridge.capture(),/successfully drawn frame/);
+  assert.match(l.el('error').textContent,/WebGL drawing failed/);
+});
+test('P1 project restoration validates source and creates new render evidence',()=>{
+  const l=buildLab();l.frame();const prior=l.bridge.capture();
+  l.bridge.applyProject({demoId:'rotation',parameters:{zoom:1.5,angle:30,speed:1,hue:60,brightness:1}});
+  assert.throws(()=>l.bridge.capture(),/successfully drawn frame/);
+  l.frame();const frame=l.bridge.capture();
+  assert.equal(frame.demoId,'rotation');assert.equal(frame.parameters.zoom,1.5);
+  assert.notEqual(frame.shaderBody,prior.shaderBody);
 });
