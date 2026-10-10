@@ -41,6 +41,13 @@
     .project-box input[type="file"] { max-width:100%; }
     #projectStatus { color:#a1d8c9; font-size:.81rem; min-height:18px; }
     #projectStatus[data-error="true"] { color:#ffb3ac; }
+    .research-panel { margin-top:13px; border-top:1px solid #354a5c; padding:12px; background:#101e28; }
+    .research-panel h2 { margin:0 0 6px; font-size:1rem; color:#c3eadf; }
+    .research-panel p { font-size:.82rem; color:#b6cbd7; }
+    .research-panel .metric { font:12px/1.6 ui-monospace,monospace; white-space:pre-wrap; color:#cdece3; }
+    .research-panel canvas { width:192px; height:144px; max-width:100%; aspect-ratio:4/3; image-rendering:pixelated; border:1px solid #3c586d; background:#0b1521; }
+    .research-panel .research-warning { color:#dbbc88; font-size:.77rem; }
+    .research-panel [data-error="true"] { color:#ffb3ac; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
     .tabs { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
@@ -144,6 +151,19 @@
         <p id="receiptInfo">Evidence not saved yet</p>
         <p class="muted">The paper generator unlocks after the research-evidence and reference gates are implemented.</p>
       </div>
+      <section class="research-panel" aria-label="Reproducible shader research capture">
+        <h2>Research capture</h2>
+        <p>Measure actual GPU pixels with a repeatable center-point grid. Each capture is linked to its frozen shader build and can be recalculated from the archived sample bytes.</p>
+        <div class="build-buttons">
+          <button id="researchCapture" type="button" disabled>Capture sampled frame</button>
+          <button id="researchExport" type="button" disabled>Export research JSON</button>
+        </div>
+        <p id="researchStatus" role="status" aria-live="polite">Waiting for validated shader output.</p>
+        <p id="researchCount">No research captures stored</p>
+        <canvas id="researchSampleCanvas" width="32" height="24" aria-label="Latest sampled shader frame"></canvas>
+        <p id="researchMetrics" class="metric">No measured pixels yet.</p>
+        <p class="research-warning">These are measurements of sampled 8-bit RGBA pixels, not whole-frame statistics, performance benchmarks, or evidence of research novelty. The colored preview is reconstructed from the exact archived sample.</p>
+      </section>
     </section>
     <section class="panel" aria-label="GLSL Lab controls">
       <div class="tabs" role="tablist" aria-label="Lab mode">
@@ -322,6 +342,20 @@ function invalidateBuild(){const had=validFrame!==null;validFrame=null;if(had)br
 window.glslLabBridge={
   onValidationChange(listener){frameListeners.add(listener);listener(validFrame!==null);return ()=>frameListeners.delete(listener);},
   capture(){if(!validFrame)throw new Error('No successfully drawn frame to capture');return JSON.parse(JSON.stringify(validFrame));},
+  readPixelsForResearch(){
+    if(!compiledOK||!validFrame)throw new Error('Wait for a verified WebGL draw before capturing pixels');
+    if(gl.isContextLost?.())throw new Error('GPU context is lost; no pixels captured');
+    const width=canvas.width,height=canvas.height;
+    if(validFrame.viewport.width!==width||validFrame.viewport.height!==height)
+      throw new Error('Framebuffer changed since the verified draw');
+    if(width<1||height<1||width*height>2097152)
+      throw new Error('Framebuffer exceeds the safe 2-million-pixel capture limit');
+    const pixels=new Uint8Array(width*height*4);
+    gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+    const error=gl.getError();
+    if(error!==gl.NO_ERROR){invalidateBuild();throw new Error('WebGL readPixels failed: '+error);}
+    return {observation:JSON.parse(JSON.stringify(validFrame)),pixels};
+  },
   invalidate(){invalidateBuild();},
   compileGraph(graph,body){compileSource('builder',body,'User-authored via GLSL Lab expression graph',graph);},
   getProjectState(){
@@ -555,5 +589,6 @@ else{compile('original');requestDraw();}
 <script type="module" src="./src/graph-ui.mjs"></script>
 <script type="module" src="./src/graph-dag-ui.mjs"></script>
 <script type="module" src="./src/lab-projects.mjs"></script>
+<script type="module" src="./src/lab-research.mjs"></script>
 </body>
 </html>
