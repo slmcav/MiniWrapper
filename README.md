@@ -2,6 +2,16 @@
 
 A **single-file browser wrapper** for compact GLSL fragment-shader expressions. Open `index.html` in a browser with **WebGL2** enabled; the supplied demos are preloaded in the selector and render automatically. No build system, external libraries, accounts, or server are required.
 
+## GLSL Lab (mobile-first Play prototype)
+
+[Open GLSL Lab](glsl-lab.html) from the button at the top of the classic editor, or open [the dedicated page](glsl-lab.html) directly. The Lab is a separate static HTML page so the 17-demo classic editor and its video recording remain unchanged.
+
+The **Play** panel currently supports three source demos (Original field, Rotating 3D fractal, Log-polar bloom), all credited to **@YoheiNishitsuji**. Its five real-time controls are Shape size (zoom), Turn the view (orientation), Movement speed (time), Color shift (HSV hue), and Brightness (HSV value). The controls update WebGL2 uniforms without recompiling the shader; changing the selected demo compiles that demo once.
+
+The preview stays visible while scrolling on small screens. **Understand · Code** shows the unchanged compact GLSL expression and the currently applied parameter values. Pause, restart, reset controls, copy expression, and Save PNG are available. This is an intentionally limited **Play prototype**, not a claim that arbitrary GLSL can be automatically converted into draggable blocks. The other 14 demos, custom shader authoring, and native video export remain in the classic editor.
+
+This page uses plain HTML/CSS/JavaScript with no build step or dependency. GitHub Pages serves it at `/MiniWrapper/glsl-lab.html`.
+
 ## Run
 
 1. Open [`index.html`](index.html) directly in a current desktop or mobile browser with WebGL2 support.
@@ -74,6 +84,7 @@ The user-visible textbox retains the original compact expressions. Only these kn
 ## Files
 
 - `index.html` — fully standalone editor, GLSL compiler, WebGL2 canvas, animation loop, demo selector, and export controls.
+- `glsl-lab.html` — mobile-first Play/Understand workspace with three original demos, five live GPU controls, and PNG export.
 - `README.md` — usage and explanation of the supplied functions.
 
 ## Browser compatibility and performance
