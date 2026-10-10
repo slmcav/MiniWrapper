@@ -76,10 +76,13 @@ class Article{
   }
   heading(value,level=1){
     const size=level===1?13.8:11.3;
-    this.ensure(40);this.y-=level===1?15:8;
-    this.current.commands.push('0.16 0.29 0.38 RG 0.6 w '+M+' '+(this.y-8).toFixed(2)+
-      ' m '+(A4[0]-M)+' '+(this.y-8).toFixed(2)+' l S');
-    this.text(value,{size,font:'bold',leading:1.3});this.y-=5;
+    this.ensure(47);this.y-=level===1?15:8;
+    this.text(value,{size,font:'bold',leading:1.3});
+    // Rules belong BELOW the glyph bounds, never through the heading baseline.
+    const ruleY=this.y-5;
+    this.current.commands.push('0.66 0.76 0.82 RG 0.45 w '+M+' '+ruleY.toFixed(2)+
+      ' m '+(A4[0]-M)+' '+ruleY.toFixed(2)+' l S');
+    this.y-=13;
   }
   paragraph(value){this.text(value,{size:10.2});this.y-=5;}
   rule(){this.ensure(18);this.current.commands.push('0.71 0.78 0.82 RG 0.6 w '+M+' '+this.y.toFixed(2)+' m '+
