@@ -2,6 +2,7 @@
 // This module never invents a successful build. Only validated evidence can enter the receipt store.
 import { verifyBuildReceipt, canonicalJson } from './build-evidence.mjs';
 import { validateGraph } from './expression-graph.mjs';
+import { inspectDAG } from './graph-dag.mjs';
 export const PROJECT_SCHEMA='glsl-lab/project/1';
 export const PROJECT_STORAGE_KEY='glsl-lab:projects:v1';
 export const RECEIPT_STORAGE_KEY='glsl-lab:receipts:v1';
@@ -29,7 +30,9 @@ export function createProject({name='Untitled project',demoId='original',paramet
     buildIds:clone(buildIds),createdAt:createdAt||now,updatedAt:now};
   if(demoId==='builder'){
     insist(record(graph),'Builder project requires a typed expression graph');
-    validateGraph(graph);
+    if(graph.version===1)validateGraph(graph);
+    else if(graph.version===2)inspectDAG(graph);
+    else insist(false,'Unsupported graph version');
     project.graph=clone(graph);
   }else insist(graph===undefined,'Demo projects cannot contain an expression graph');
   validateProject(project);
@@ -43,7 +46,11 @@ export function validateProject(project){
   insist(typeof project.id==='string'&&/^[a-zA-Z0-9_-]{8,64}$/.test(project.id),'Invalid project ID');
   insist(typeof project.name==='string'&&project.name.trim().length>0&&project.name.length<=80,'Project name must be 1 to 80 characters');
   insist(ids.has(project.demoId),'Unsupported Lab demo ID');
-  if(project.demoId==='builder')validateGraph(project.graph);
+  if(project.demoId==='builder'){
+    if(project.graph?.version===1)validateGraph(project.graph);
+    else if(project.graph?.version===2)inspectDAG(project.graph);
+    else insist(false,'Unsupported graph version');
+  }
   parameters(project.parameters);
   insist(utc(project.createdAt)&&utc(project.updatedAt),'UTC timestamps required');
   insist(Array.isArray(project.buildIds)&&project.buildIds.length<=80&&new Set(project.buildIds).size===project.buildIds.length
