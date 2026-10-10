@@ -31,18 +31,23 @@ async function checkPacket(packet,subtle){
   fail(Array.isArray(packet.bibliography)&&packet.bibliography.length===REFERENCES.length,
     'Editorial source list incomplete');
   const lookup=new Map(REFERENCES.map(r=>[r.id,r]));
-  const seen=new Set();
+  const seen=new Set();let citedCount=0;
   for(const p of packet.bibliography){
     const source=lookup.get(p.id);
     fail(source&&!seen.has(p.id)&&p.title===source.title&&p.year===source.year&&
       p.url===source.url&&p.metadataSource===source.metadataSource&&
       p.metadataStatus===source.status&&
-      p.applicableToManuscript===['khronos-glsl-es300','khronos-webgl2','sacks1989'].includes(p.id)&&
+      typeof p.applicableToManuscript==='boolean'&&
+      (!p.applicableToManuscript||source.status==='metadata_verified')&&
       p.primaryFullTextReviewed===false&&p.supportingPassagesReviewed===false&&
       p.humanSourceReviewer===null&&p.reviewStatus==='pending',
       'Original bibliography cannot be silently altered or approved');
     seen.add(p.id);
+    if(p.applicableToManuscript)citedCount++;
   }
+  // Source selection is manuscript-specific. This checksum establishes internal consistency,
+  // not that the imported packet matches the manuscript's genuine citation set.
+  fail(citedCount>0,'Unsigned packet must have at least one cited verified source');
   return true;
 }
 export async function verifyUnsignedEditorialPacket(packet,subtle=globalThis.crypto?.subtle){
