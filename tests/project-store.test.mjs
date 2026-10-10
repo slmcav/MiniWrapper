@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto,randomUUID} from 'node:crypto';
+import {createStarterGraph,validateGraph} from '../src/expression-graph.mjs';
 import {createBuildReceipt} from '../src/build-evidence.mjs';
 import {PROJECT_SCHEMA,createProject,validateProject,listProjects,saveProject,
   importProject,exportProject,listReceipts,saveReceipt,findReceipt} from '../src/project-store.mjs';
@@ -90,4 +91,25 @@ test('P1 corrupted stored receipts fail closed, not silently deleted',async()=>{
   s.setItem('glsl-lab:receipts:v1',JSON.stringify(altered));
   await assert.rejects(()=>listReceipts(s,subtle),/hash mismatch/);
   assert.ok(s.getItem('glsl-lab:receipts:v1'));
+});
+
+test('P2 typed graph projects persist, load and import with new identity',()=>{
+  const s=storage();
+  const graph=createStarterGraph();
+  const project=create({demoId:'builder',graph});
+  saveProject(project,s);
+  const restored=listProjects(s)[0];
+  assert.equal(restored.demoId,'builder');
+  assert.deepEqual(restored.graph,graph);
+  validateGraph(restored.graph);
+  const imported=importProject(exportProject(project),{storage:s,clock:now,randomUUID:uuid});
+  assert.notEqual(imported.id,project.id);
+  assert.deepEqual(imported.graph,graph);
+  assert.deepEqual(imported.buildIds,[]);
+});
+test('P2 reject builder projects with invalid or missing graphs',()=>{
+  assert.throws(()=>create({demoId:'builder'}),/graph/);
+  const invalid=createStarterGraph();invalid.nodes[1].input='missing';
+  assert.throws(()=>create({demoId:'builder',graph:invalid}),/Missing node/);
+  assert.throws(()=>create({demoId:'original',graph:createStarterGraph()}),/cannot contain/);
 });
