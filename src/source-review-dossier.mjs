@@ -45,6 +45,9 @@ async function checkPacket(packet,subtle){
   }
   return true;
 }
+export async function verifyUnsignedEditorialPacket(packet,subtle=globalThis.crypto?.subtle){
+  return checkPacket(packet,subtle);
+}
 function checkEntry(v,cited){
   fail(exact(v,fields),'Unexpected source review fields');
   fail(typeof v.entryId==='string'&&/^[0-9a-z_-]{8,80}$/i.test(v.entryId),
