@@ -54,8 +54,11 @@ export async function createFigureEvidence(receipt,capture,rgba,options={}){
   const selected=sampleGrid(rgba,width,height);
   need(eqBytes(selected.rgba,decodeResearchPixels(capture)),'Figure pixels do not reproduce linked sample');
   const png=encodeLosslessPng(rgba,width,height);
+  const drawSequence=options.drawSequence;
+  if(drawSequence!==undefined)need(Number.isSafeInteger(drawSequence)&&drawSequence>0,'Observed draw sequence must be a positive integer');
   const content={
     schema:FIGURE_SCHEMA,receiptSha256:receipt.sha256,captureSha256:capture.sha256,
+    ...(drawSequence!==undefined?{drawSequence}:{}),
     width,height,format:'image/png',encoding:'png-rgba8-lossless-store-v1',
     origin:'WebGL bottom-left; PNG top-left',
     frameTimeSeconds:receipt.shaderTimeSeconds,
@@ -72,7 +75,9 @@ export async function verifyFigureEvidence(figure,receipt,capture,subtle=globalT
   need(figure&&figure.record&&figure.png instanceof Uint8Array&&figure.rgba instanceof Uint8Array,'Figure pixel and PNG data required');
   const {record,png,rgba}=figure;
   need(record.schema===FIGURE_SCHEMA&&record.receiptSha256===receipt.sha256&&record.captureSha256===capture.sha256,'Figure provenance mismatch');
-  const rebuilt=await createFigureEvidence(receipt,capture,rgba,{subtle,clock:()=>record.capturedAt});
+  const rebuilt=await createFigureEvidence(receipt,capture,rgba,{
+    subtle,clock:()=>record.capturedAt,...(record.drawSequence===undefined?{}:{drawSequence:record.drawSequence})
+  });
   need(canonicalJson(rebuilt.record)===canonicalJson(record),'Figure metrics or hash mismatch');
   need(eqBytes(rebuilt.png,png),'Figure PNG bytes were modified');
   return true;
@@ -111,6 +116,10 @@ export async function createFrameSeries(figures,options={}){
       'Shader, graph, settings or viewport changed during series');
   }
   for(let i=1;i<records.length;i++){
+    if(records[i-1].drawSequence!==undefined||records[i].drawSequence!==undefined){
+      need(Number.isSafeInteger(records[i-1].drawSequence)&&Number.isSafeInteger(records[i].drawSequence)&&
+        records[i].drawSequence>records[i-1].drawSequence,'Series must use distinct, ordered GPU draw submissions');
+    }
     need(Date.parse(records[i].capturedAt)>=Date.parse(records[i-1].capturedAt),
       'Figure observations must be ordered by capture time');
     need(records[i].frameTimeSeconds>=records[i-1].frameTimeSeconds,
@@ -121,7 +130,8 @@ export async function createFrameSeries(figures,options={}){
     pairs.push({from:i-1,to:i,elapsedShaderSeconds:Math.round((records[i].frameTimeSeconds-records[i-1].frameTimeSeconds)*1e6)/1e6,
       ...compareFullFrames(figures[i-1].rgba,figures[i].rgba)});
   }
-  const body={schema:SERIES_SCHEMA,frames:records.map(r=>({figureSha256:r.sha256,capturedAt:r.capturedAt,shaderTimeSeconds:r.frameTimeSeconds})),
+  const body={schema:SERIES_SCHEMA,frames:records.map(r=>({figureSha256:r.sha256,capturedAt:r.capturedAt,
+    shaderTimeSeconds:r.frameTimeSeconds,...(r.drawSequence===undefined?{}:{drawSequence:r.drawSequence})})),
     width:first.record.width,height:first.record.height,pairs,
     inferenceScope:'Descriptive within-session pixel changes; no independence, hardware timing, or significance claim'};
   return {...body,sha256:await sha256Hex(canonicalJson(body),subtle)};
