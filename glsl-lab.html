@@ -81,6 +81,26 @@
     #builderStatus[data-error="true"] { color:#ffb3ac; }
     .graph-import { display:inline-grid; gap:4px; font-size:.82rem; color:#b9d2dd; }
     .graph-import input { max-width:100%; }
+    #quickBuilder[hidden],#advancedBuilder[hidden] { display:none; }
+    .dag-toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:10px 0; }
+    .dag-toolbar button { flex:0 1 auto; }
+    .dag-toolbar select { background:#0c1926; border:1px solid #476478; color:#e4f7f6; padding:9px; border-radius:8px; min-height:43px; }
+    .dag-scroll { height:420px; width:100%; overflow:auto; overscroll-behavior:contain; border:1px solid #3c5b6b; border-radius:11px; background-color:#081522; background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px); background-size:28px 28px; }
+    .dag-surface { position:relative; width:2500px; height:2050px; transform-origin:top left; }
+    .dag-wires { position:absolute; top:0; left:0; width:2500px; height:2050px; pointer-events:none; }
+    .dag-card { position:absolute; width:200px; min-height:140px; border:1px solid #456478; border-radius:13px; background:#182938; padding:10px; display:grid; gap:8px; align-content:start; box-shadow:0 6px 15px #0006; }
+    .dag-card.selected { border-color:#80dec8; box-shadow:0 0 0 2px #318f80aa; }
+    .dag-title { padding:4px 5px; border:0; text-align:left; min-height:32px; color:#e3f7f5; background:transparent; font-weight:700; overflow-wrap:anywhere; }
+    .dag-meta { color:#9db2c2; font:11px/1.5 ui-monospace,monospace; }
+    .dag-grab { min-height:35px; background:#234d50; border-color:#427574; touch-action:none; cursor:grab; }
+    .dag-inspector { border:1px solid #355364; padding:12px; background:#101e29; border-radius:12px; margin-top:12px; }
+    .dag-inspector h3 { margin:0 0 6px; font-size:1rem; }
+    .dag-field { display:grid; gap:6px; font-weight:600; margin:12px 0; }
+    .dag-field select { min-height:44px; padding:8px; border:1px solid #486374; border-radius:8px; background:#0b1723; color:#e3f2fa; width:100%; }
+    .dag-field input[type=range] { width:100%; accent-color:#78decb; }
+    .dag-field output { color:#a8e6d8; font-weight:400; }
+    #dagStatus[data-error=true] { color:#ffabab; }
+    .dag-help { font-size:.82rem; color:#a5bac9; }
     footer { max-width:1400px; margin:auto; padding:0 18px 25px; color:#788999; font-size:.75rem; }
     @media(max-width:820px) {
       .brand { padding:10px 14px; }
@@ -172,6 +192,8 @@
         <div class="note">These are five safe visual controls across three existing demos. The other 14 demos, custom GLSL, and video recording remain in the <a href="./index.html">classic editor</a>.</div>
       </div>
       <div class="pane" id="paneBuild" role="tabpanel" aria-labelledby="tabBuild" hidden>
+        <button type="button" id="advancedToggle">Switch to Advanced Wiring</button>
+        <div id="quickBuilder">
         <strong>Build with visual operations</strong>
         <p>Start with coordinates, add a Turn or Wave, and adjust each part. Connections are made automatically when their types match. Select an operation to edit it.</p>
         <div class="builder-actions">
@@ -204,6 +226,50 @@
         <label class="field-label" for="builderCode">Generated GLSL</label>
         <textarea id="builderCode" class="codebox" readonly spellcheck="false"></textarea>
         <div class="note">These blocks are a supported, typed subset of GLSL. An existing compact demo is not automatically converted into blocks. To archive a successful graph render, use Save validated build above.</div>
+        </div>
+        <div id="advancedBuilder" hidden>
+          <p class="dag-help">Swipe across the wiring canvas. Drag a card by its Move handle, or select one and use the arrow controls. To branch a shader, connect two matching values into a Blend or Add node using the dropdowns below.</p>
+          <div class="dag-toolbar">
+            <label for="dagNewType">Add operation</label>
+            <select id="dagNewType" aria-label="Operation type to add"></select>
+            <button id="dagAdd" type="button">Add node</button>
+            <label for="dagScale">Zoom</label>
+            <select id="dagScale" aria-label="Wiring canvas zoom"><option value="0.5">50%</option><option value="0.65" selected>65%</option><option value="0.85">85%</option><option value="1">100%</option></select>
+          </div>
+          <div class="dag-toolbar">
+            <button id="dagUndo" type="button">Undo</button>
+            <button id="dagRedo" type="button">Redo</button>
+            <button id="dagAutoLayout" type="button">Auto arrange</button>
+          </div>
+          <p id="dagNodes" class="muted"></p>
+          <div class="dag-scroll" aria-label="Interactive branching shader graph" tabindex="0">
+            <div id="dagSurface" class="dag-surface">
+              <svg id="dagWires" class="dag-wires" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2500 2050" aria-hidden="true"></svg>
+            </div>
+          </div>
+          <section class="dag-inspector" aria-label="Selected operation connections and parameters">
+            <h3 id="dagSelected">Blend</h3>
+            <div id="dagPorts"></div>
+            <div id="dagParams"></div>
+            <div class="dag-toolbar">
+              <button id="dagNudgeLeft" type="button" aria-label="Move selected node left">←</button>
+              <button id="dagNudgeRight" type="button" aria-label="Move selected node right">→</button>
+              <button id="dagNudgeUp" type="button" aria-label="Move selected node up">↑</button>
+              <button id="dagNudgeDown" type="button" aria-label="Move selected node down">↓</button>
+              <button id="dagRemove" type="button">Remove selected</button>
+            </div>
+          </section>
+          <div class="dag-toolbar">
+            <button id="dagBuild" class="accent" type="button">Build &amp; preview</button>
+            <button id="dagExport" type="button">Export wiring JSON</button>
+          </div>
+          <label class="graph-import" for="dagImport">Import wiring JSON <input id="dagImport" type="file" accept=".json,application/json"></label>
+          <p id="dagReady" class="muted"></p>
+          <p id="dagStatus" role="status" aria-live="polite"></p>
+          <label class="field-label" for="dagGenerated">Generated GLSL</label>
+          <textarea id="dagGenerated" class="codebox" readonly spellcheck="false"></textarea>
+          <div class="note">Graph v2 supports typed branching and explicit input selection. Unused nodes block compilation until connected to Output. Saved projects retain node connections and positions.</div>
+        </div>
       </div>
       <div class="pane" id="paneCode" role="tabpanel" aria-labelledby="tabCode" hidden>
         <strong>The original expression</strong>
@@ -261,7 +327,10 @@ window.glslLabBridge={
   getProjectState(){
     const isGraph=activeTab==='build'||current==='builder';
     const result={demoId:isGraph?'builder':current,parameters:{...settings}};
-    if(isGraph&&window.glslLabBuilder)result.graph=window.glslLabBuilder.graph;
+    if(isGraph) {
+      if(window.glslLabGraphMode==='advanced'&&window.glslLabAdvanced)result.graph=window.glslLabAdvanced.graph;
+      else if(window.glslLabBuilder)result.graph=window.glslLabBuilder.graph;
+    }
     return result;
   },
   applyProject(saved){
@@ -275,7 +344,13 @@ window.glslLabBridge={
     if(saved.demoId==='builder'){
       if(!saved.graph||!window.glslLabBuilder)throw new Error('This project needs a valid expression graph');
       selectTab('build');
-      window.glslLabBuilder.loadGraph(saved.graph);
+      if(saved.graph.version===2){
+        if(!window.glslLabAdvanced)throw new Error('Advanced Wiring module is unavailable');
+        window.glslLabAdvanced.loadGraph(saved.graph);
+      }else{
+        window.glslLabAdvanced?.selectMode('quick');
+        window.glslLabBuilder.loadGraph(saved.graph);
+      }
     }else{
       $('demo').value=saved.demoId;selectTab('play');compile(saved.demoId);
     }
@@ -478,6 +553,7 @@ if(!gl){setStatus('','WebGL2 is unavailable in this browser. Try enabling GPU ac
 else{compile('original');requestDraw();}
 </script>
 <script type="module" src="./src/graph-ui.mjs"></script>
+<script type="module" src="./src/graph-dag-ui.mjs"></script>
 <script type="module" src="./src/lab-projects.mjs"></script>
 </body>
 </html>
