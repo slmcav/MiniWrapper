@@ -41,3 +41,6 @@ G7 — P1 integrated local persistence: save/load/versioned project JSON, restor
 G8 — P2 build stack: immutable graph editing, insert/remove, automatic typed reconnection, safe parameter mutation, same-type reordering, undo/redo, export/import, project persistence, mobile Build tab, real browser generated GLSL compilation and P1 receipt eligibility. This is a sequential typed graph, not yet a freeform wiring canvas.
 
 G9 — P2 advanced branched workspace: validate graph v2 inputs and output, reject cycles and type mismatches, enforce unused-node/required-port build gates, preserve touch/keyboard layout and undo/redo, import/export v2 graphs, compile generated GLSL in the real browser, and keep full graph + source agreement inside hashed build receipts. Verify v1 projects still restore and archived shader fixtures remain unchanged.
+
+
+G10 — P3 GPU research samples: center-point pixel selection, known-color metric fixtures, reproducible hash linkage to validated shader receipts, tamper detection, stored-sample reanalysis, Chromium GPU readback, research JSON export and reload. Do not promote sample statistics into full-frame claims. Independent gates are required for lossless full-resolution figures and controlled longitudinal analysis.

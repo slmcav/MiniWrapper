@@ -83,3 +83,12 @@ This checkpoint does not yet satisfy the entire freeform P2 phase: explicit manu
 ## P2 advanced wiring checkpoint
 
 Graph version 2 introduces a typed directed acyclic graph with real branches, explicit per-port source controls, nine operation types, scroll/zoom node workspace, pointer-based movement, accessible position nudge controls, auto-layout, undo/redo, import/export, and code emission. Node output types and inputs are validated before GLSL generation; incomplete/unreachable drafts cannot mint verified WebGL build receipts. Projects preserve v1 or v2 schemas, and SHA-256 receipts include the original v2 graph plus exact generated source. The visual design image remains excluded from GitHub history and artifacts. This advances P2 but does not yet add draggable wire endpoints, generic code-to-graph parsing, reusable subgraphs, or advanced research capture.
+
+
+## P3 observed pixel sampling checkpoint
+
+The implemented P3 foundation records actual WebGL2 RGBA8 center-point samples after verified shader compilation, link and draw. Source identity and optional graph version/structure are fixed in the linked SHA-256 shader build receipt. The sampled pixel bytes, explicitly defined metrics, record hashes, sample reconstruction, and matching build receipts can be audited and exported.
+
+For framebuffer width W and height H, grid columns C=min(32,W), rows R=min(24,H), sample coordinates are x=floor((i+0.5)W/C) and y=floor((j+0.5)H/R), WebGL origin bottom-left. Y-prime = 0.2126R + 0.7152G + 0.0722B on the encoded 8-bit channel values. Population moments, 16 histogram bins of width 16, and clipped-channel/alpha fractions use C×R sample points only.
+
+The sampling method deliberately does not support conclusions about unsampled pixels, the full image, physical luminance, GPU timing, or research significance. Remaining P3 gates: capture/hash full-resolution lossless figures, link figures to research receipts, controlled repetitions with conditions and uncertainties, and produce a research bundle that can independently reproduce every displayed result.

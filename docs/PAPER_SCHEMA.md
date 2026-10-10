@@ -15,3 +15,10 @@ The Save validated build action is enabled only after the current WebGL program'
 ## Graph-v2 evidence provenance
 
 For validated builder-source records, the frozen receipt contains the complete authored graph (version 1 or 2) and its generated GLSL. The generator refuses any graph that does not deterministically produce the exact stored shader body. A graph-v2 receipt preserves node coordinates, port assignments, parameters and output. Incomplete graphs cannot claim measured success. Any future paper describing generated shader structure must cite this frozen graph and not a later mutable UI state.
+
+
+## P3 image sampling record
+
+Research records use schema glsl-lab/research-capture/1. Every record links to a verified, content-addressed shader build and archives deterministic RGBA8 point samples from actual WebGL2 readPixels. Each retained sample has bottom-left-origin coordinates defined by center-nearest-grid-v1, a sample byte digest, per-sample metrics, a document content digest, and a capture timestamp excluded from the content identifier. Exports include the original linked shader build receipts, and derived metrics are recomputed from archived bytes during audit.
+
+The reported luma proxy is a Rec.709-weighted *encoded-channel* computation (not linear-light physical luminance). The sampled histogram, clipping measure, and means do not estimate unsampled full-frame values. A reconstructed sample preview is not a publication-quality full-frame figure. P4 papers must describe these limitations explicitly and cannot mislabel sample statistics as frame-wide, temporally replicated, or scientifically novel results.
