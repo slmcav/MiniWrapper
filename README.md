@@ -120,3 +120,12 @@ GLSL Lab now exposes **Save validated build**, **Export last build JSON**, and a
 
 The paper button is intentionally disabled pending P3 measured research data and P4 bibliography/format verification. Browser storage may be cleared by the operating system; **export JSON to preserve copies**. Importing projects creates a new local identity and does not claim that their referenced build hashes are already present or verified. Receipt imports are not yet supported. Project data is stored only on the current browser origin; switching phones or clearing site data does not synchronize it.
 
+
+
+### P2 visual expression builder (working MVP)
+
+GLSL Lab now has a **Build** tab. It provides a touch-friendly connected stack of typed mathematical operations: **Coordinates → Turn → Distance → Wave → Color → Shader output**. Tap an operation to reveal its plain-language description and parameter sliders. Add more **Turn** or **Wave** operations, remove optional operations, reorder compatible adjacent operations, undo/redo edits, inspect generated GLSL, and import/export a graph JSON file. The connections remain mathematically valid because the editor rewires each operation in a validated type-safe chain; it does **not** claim general-purpose freeform node wiring.
+
+Use **Build & preview** to compile the generated shader in real WebGL2. When the preview successfully compiles, links, and draws, the existing **Save validated build** action becomes available. Builder-authored shaders are attributed to the user/editor, **not** to the author of the 17 supplied demos. The graph can also be saved as a named project, exported, imported, and restored on another browser; the original shaders stay unchanged.
+
+This is a constrained first implementation of the visual expression builder. Parallel branches, freely drawable wires, automatic reverse parsing of compact GLSL, advanced math operators, and generated academic papers are not yet implemented. The approved product comp remains outside the repository.

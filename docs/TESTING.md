@@ -36,3 +36,6 @@ G5 — Scholarly build receipt foundation: strict P1 compile/link/draw gating, c
 G6 — Image custody: test that the approved off-repository visual design image/derivatives do not enter tracked project directories. The protected comp must not be packaged into any deployment or publication.
 
 G7 — P1 integrated local persistence: save/load/versioned project JSON, restore sliders and demo, verified SHA-256 receipts, corrupted-store rejection, and a mobile browser save/export/reload scenario. A recorded successful build is invalidated on edits, failures or context loss. Paper generation stays gated.
+
+
+G8 — P2 build stack: immutable graph editing, insert/remove, automatic typed reconnection, safe parameter mutation, same-type reordering, undo/redo, export/import, project persistence, mobile Build tab, real browser generated GLSL compilation and P1 receipt eligibility. This is a sequential typed graph, not yet a freeform wiring canvas.

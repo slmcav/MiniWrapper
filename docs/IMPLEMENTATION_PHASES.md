@@ -72,3 +72,10 @@ These references have useful bibliographic metadata. A manuscript must cite only
 ## P1 checkpoint — connected implementation
 
 Browser Lab now captures validated WebGL shader states through an in-page bridge and saves content-hashed build receipts locally via src/lab-projects.mjs and src/project-store.mjs. Project JSON roundtrips, receipt SHA validation, tamper rejection and negative GPU paths have new tests. Cloud storage, multi-project workspace navigation, frame images and research metrics are still future P1/P3 work. Paper creation remains disabled until evidence and citation gates are implemented. This checkpoint is not a P1 completion claim.
+
+
+## P2 progress checkpoint — connected graph MVP
+
+The working Lab Build tab now supports typed operation cards, automatic connections in a linear graph, numeric control of each operation, compatible reordering, optional node addition/removal, one-gesture slider history, undo/redo, graph JSON import/export, live generated GLSL inspection, WebGL2 compilation on demand, and project persistence with reproducible P1 build receipt capture. The archived demos retain separate attribution; authored graphs are marked user-authored.
+
+This checkpoint does not yet satisfy the entire freeform P2 phase: explicit manually routed edges, branching, larger operation types, keyboard node-reordering alternatives beyond accessible buttons, and extended visual authoring studies remain. The node graph explicitly rejects cycles, disconnected nodes and mismatched types.
