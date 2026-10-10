@@ -52,3 +52,42 @@ test('GPU smoke: three demos compile, changing slider does not recompile',async(
   await page.locator('#savePng').click();
   expect((await file).suggestedFilename()).toBe('glsl-lab-yohei.png');
 });
+
+test('P1 mobile project and evidence workflow saves, verifies and reloads',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  await expect(page.locator('#projectStatus')).not.toBeEmpty({timeout:15000});
+  await page.locator('#projectName').fill('Research test project');
+  await page.locator('#saveProject').click();
+  await expect(page.locator('#projectStatus')).toContainText('Project saved');
+  await expect(page.locator('#projectPicker option')).toHaveCount(2);
+  const savedState=await page.evaluate(()=>{
+    const raw=localStorage.getItem('glsl-lab:projects:v1');
+    return raw&&JSON.parse(raw);
+  });
+  expect(savedState).toHaveLength(1);
+  expect(savedState[0].name).toBe('Research test project');
+  const available=await page.evaluate(()=>Boolean(document.getElementById('glcanvas').getContext('webgl2')));
+  test.skip(!available,'WebGL2 unavailable for real evidence capture on CI');
+  await expect(page.locator('#saveBuild')).toBeEnabled({timeout:15000});
+  await page.locator('#saveBuild').click();
+  await expect(page.locator('#receiptInfo')).toContainText('Saved SHA-256',{timeout:15000});
+  await expect(page.locator('#exportBuild')).toBeEnabled();
+  await expect(page.locator('#generatePaper')).toBeDisabled();
+  const stored=await page.evaluate(()=>({
+    receipts:JSON.parse(localStorage.getItem('glsl-lab:receipts:v1')),
+    projects:JSON.parse(localStorage.getItem('glsl-lab:projects:v1'))
+  }));
+  expect(stored.receipts).toHaveLength(1);
+  expect(stored.receipts[0].sha256).toMatch(/^[a-f0-9]{64}$/);
+  expect(stored.receipts[0].checks.frameDrawn).toBe(true);
+  expect(stored.receipts[0].checks.glError).toBe(0);
+  expect(stored.projects[0].buildIds).toContain(stored.receipts[0].sha256);
+  const dl=page.waitForEvent('download');
+  await page.locator('#exportBuild').click();
+  expect((await dl).suggestedFilename()).toMatch(/glsl-build-[a-f0-9]{12}\.json/);
+  await page.reload();
+  await expect(page.locator('#projectPicker option')).toHaveCount(2);
+  await page.locator('#projectPicker').selectOption(stored.projects[0].id);
+  await expect(page.locator('#projectName')).toHaveValue('Research test project');
+  await expect(page.locator('#projectStatus')).toContainText('Project loaded');
+});
