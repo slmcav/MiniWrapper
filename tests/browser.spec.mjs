@@ -369,3 +369,55 @@ test('P3 malformed repeat study settings do not create evidence',async({page})=>
   await expect(page.locator('#repeatStatus')).toContainText('Study rejected',{timeout:10000});
   await expect(page.locator('#repeatExportJson')).toBeDisabled();
 });
+
+test('P4 bibliography lists metadata-checked sources, quarantines pending citations',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  await expect(page.locator('#referenceList .audit-source')).toHaveCount(5,{timeout:15000});
+  await expect(page.locator('#referenceStatus')).toContainText('4 metadata-checked sources');
+  await expect(page.locator('#referenceStatus')).toContainText('1 pending primary-source checks');
+  await expect(page.locator('#auditExport')).toBeDisabled();
+  const download=page.waitForEvent('download');
+  await page.locator('#auditBibtex').click();
+  const data=(await readFile(await (await download).path())).toString('utf8');
+  expect(data).toContain('@manual{khronos-glsl-es300');
+  expect(data).toContain('@article{sacks1989');
+  expect(data).not.toContain('jeremias-quilez2013');
+  await expect(page.locator('#generatePaper')).toBeDisabled();
+});
+test('P4 evidence-audit panel rejects unsupported study files without a report',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  await page.locator('#auditStudyImport').setInputFiles({
+    name:'unverified-study.json',mimeType:'application/json',
+    buffer:Buffer.from(JSON.stringify({schema:'unsupported',trials:[]}))
+  });
+  await expect(page.locator('#auditStatus')).toContainText('Audit rejected');
+  await expect(page.locator('#auditExport')).toBeDisabled();
+  await expect(page.locator('#auditResults')).toContainText('Manuscript gate remains locked');
+});
+test('P4 complete real WebGL sweep produces a hash-verified limited methodology audit',async({page})=>{
+  test.setTimeout(120000);
+  await page.goto('/glsl-lab.html');
+  const available=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+  test.skip(!available,'Methodology audit requires an actual verified GPU study');
+  await expect(page.locator('#sweepRun')).toBeEnabled({timeout:30000});
+  await page.locator('#sweepRun').click();
+  await expect(page.locator('#sweepStatus')).toContainText('Experiment verified',{timeout:60000});
+  const dl=page.waitForEvent('download');
+  await page.locator('#sweepExportJson').click();
+  const raw=await readFile(await (await dl).path());
+  await page.locator('#auditStudyImport').setInputFiles({
+    name:'observed-study.json',mimeType:'application/json',buffer:raw
+  });
+  await expect(page.locator('#auditStatus')).toContainText('Experiment and methodology findings',{timeout:60000});
+  await expect(page.locator('#auditResults')).toContainText('Observed GPU draws: 3');
+  await expect(page.locator('#auditResults')).toContainText('Academic manuscript gate: LOCKED');
+  await expect(page.locator('#auditExport')).toBeEnabled();
+  const auditDl=page.waitForEvent('download');
+  await page.locator('#auditExport').click();
+  const audit=JSON.parse((await readFile(await (await auditDl).path())).toString('utf8'));
+  expect(audit.schema).toBe('glsl-lab/methodology-bundle/1');
+  expect(audit.report.release.academicManuscriptUnlocked).toBe(false);
+  expect(audit.report.measurements.observedGpuDraws).toBe(3);
+  expect(audit.references.some(r=>r.id==='jeremias-quilez2013')).toBe(false);
+  await expect(page.locator('#generatePaper')).toBeDisabled();
+});
