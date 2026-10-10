@@ -34,9 +34,15 @@ function observe(){
   return bridge.readPixelsForResearch();
 }
 async function prepare(shot){
-  const receipt=await createBuildReceipt(shot.observation);
-  const capture=await createResearchCapture(receipt,shot.pixels);
-  const figure=await createFigureEvidence(receipt,capture,shot.pixels);
+  if(!Number.isSafeInteger(shot.frameId)||shot.frameId<=0||
+      typeof shot.observedAt!=='string'||Number.isNaN(Date.parse(shot.observedAt)))
+    throw new Error('GPU observation is missing frame sequence or capture timestamp');
+  const clock=()=>shot.observedAt;
+  const receipt=await createBuildReceipt(shot.observation,{clock});
+  const capture=await createResearchCapture(receipt,shot.pixels,{clock});
+  const figure=await createFigureEvidence(receipt,capture,shot.pixels,{
+    clock,drawSequence:shot.frameId
+  });
   return {...figure,receipt,capture,drawId:shot.frameId};
 }
 async function operation(fn){
