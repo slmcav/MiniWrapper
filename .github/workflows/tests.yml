@@ -59,9 +59,8 @@ jobs:
           path: test-results/pdf-render/
           if-no-files-found: ignore
 
-
   latex:
-    name: Native LaTeX PDF and layout QA
+    name: Native LaTeX compilation and visual structure QA
     runs-on: ubuntu-latest
     needs: fast
     timeout-minutes: 18
@@ -70,81 +69,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install TeX and PDF inspection tools
+      - name: Install LaTeX compiler and independent PDF inspectors
         run: sudo apt-get update -qq && sudo apt-get install -y -qq texlive-latex-base texlive-latex-recommended texlive-fonts-recommended latexmk poppler-utils
-      - name: Produce synthetic research manuscript
+      - name: Produce archived evidence, source figures and manuscript LaTeX
         run: node tests/pdf-smoke.mjs
-      - name: Compile with native pdfLaTeX and inspect PDF
-        run: |
-          cd test-results/pdf-render
-          bash build-latex.sh
-          test -s manuscript.pdf
-          pdfname="$(find . -maxdepth 1 -name 'GLSL-*.pdf' -print -quit)"
-          test -n "$pdfname"
-          printf '%s\n' "$pdfname" | grep -Eq '^./GLSL-[a-f0-9]{32}_[a-f0-9]{64}\.pdf    name: Mobile browser and WebGL smoke
-    runs-on: ubuntu-latest
-    needs: fast
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: npm install --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:browser
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: miniwrapper-playwright-report
-          path: |
-            playwright-report/
-            test-results/
-          if-no-files-found: ignore
-
-          digest="$(sha256sum "$pdfname" | cut -d ' ' -f1)"
-          hashed="$(basename "$pdfname" | cut -d_ -f2)"
-          test "$hashed" = "$digest.pdf"
-          pdfinfo "$pdfname" > latex-info.txt
-          pdftotext -layout "$pdfname" latex-extracted.txt
-          grep -q 'Materials and methods' latex-extracted.txt
-          grep -q 'Data and reproducibility' latex-extracted.txt
-          grep -q 'Original GLSL source' latex-extracted.txt
-          pdfimages -list "$pdfname" > latex-images.txt
-          test "$(wc -l < latex-images.txt)" -ge 5
-          pdftoppm -f 1 -l 2 -scale-to 1400 -png "$pdfname" latex-page
-          test -s latex-page-1.png
-          test -s latex-page-2.png
-      - name: Assert LaTeX output has valid text bounds
-        run: |
-          cd test-results/pdf-render
-          pdftotext -bbox-layout manuscript.pdf latex-bbox.html
-          python3 - <<'PY'
-          from html.parser import HTMLParser
-          class Audit(HTMLParser):
-              def __init__(self):
-                  super().__init__(); self.page=None; self.pages=[]
-              def handle_starttag(self,tag,attrs):
-                  a=dict(attrs)
-                  if tag=='page':
-                      self.page={'w':float(a['width']),'h':float(a['height']),'words':0}
-                      self.pages.append(self.page)
-                  if tag=='word' and self.page:
-                      x1,y1,x2,y2=[float(a[k]) for k in ('xMin','yMin','xMax','yMax')]
-                      assert 0 <= x1 < x2 <= self.page['w']+1, 'Horizontal overflow'
-                      assert 0 <= y1 < y2 <= self.page['h']+1, 'Vertical overflow'
-                      self.page['words']+=1
-          p=Audit()
-          with open('latex-bbox.html',encoding='utf-8') as f:p.feed(f.read())
-          assert len(p.pages)>=2, 'Expected multi-page article'
-          assert sum(q['words'] for q in p.pages)>140, 'Article content too sparse'
-          assert all(q['words']>0 for q in p.pages), 'Blank article page'
-          print('Verified',len(p.pages),'LaTeX PDF pages')
-          PY
+      - name: Compile using actual pdfLaTeX engine
+        run: cd test-results/pdf-render && bash build-latex.sh
+      - name: Check PDF checksum filename, pages, image count and text bounds
+        run: python3 tests/inspect-latex-pdf.py test-results/pdf-render
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: native-latex-qa
+          name: academic-latex-pdf-qa
           path: test-results/pdf-render/
           if-no-files-found: ignore
 
