@@ -9,7 +9,7 @@
     :root { font: 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #e4e9ef; background: #0b1016; }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; }
-    main { display: grid; grid-template-rows: auto auto minmax(320px, 1fr); min-height: 100vh; }
+    main { display: grid; grid-template-rows: auto auto minmax(320px, 1fr) auto; min-height: 100vh; }
     header { padding: 14px clamp(16px, 3vw, 28px) 8px; }
     h1 { font-size: 1.25rem; margin: 0; letter-spacing: .02em; }
     header p { margin: 4px 0 0; color: #aebbc8; }
@@ -17,18 +17,27 @@
     label { display: inline-block; font-weight: 600; margin-bottom: 6px; }
     textarea { display: block; width: 100%; height: 135px; resize: vertical; padding: 11px 12px; color: #e8f2fd; background: #080d13; border: 1px solid #3d5164; border-radius: 6px; font: 12.5px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 2; }
     textarea:focus, button:focus-visible, select:focus-visible { outline: 2px solid #6cceba; outline-offset: 2px; }
-    .toolbar { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; margin-top: 11px; }
+    .toolbar, .downloads { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; margin-top: 11px; }
     button, select { border-radius: 6px; padding: 8px 13px; border: 1px solid #425366; font: inherit; color: #ecf5fa; background: #263240; }
     button { cursor: pointer; }
     button.primary { background: #167861; border-color: #24967d; font-weight: 650; }
     button:hover { filter: brightness(1.17); }
-    .toolbar label { margin: 0 0 0 4px; font-weight: 400; color: #c4d0db; }
+    button[disabled], select[disabled] { opacity: .6; cursor: not-allowed; filter: none; }
+    .toolbar label, .downloads label { margin: 0 0 0 4px; font-weight: 400; color: #c4d0db; }
     #status { margin-top: 9px; min-height: 20px; font-family: ui-monospace, monospace; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; color: #90d7b6; }
     #status.error { color: #ff9d9d; }
+    .downloads { margin-top: 8px; }
+    .downloads small { color: #95a3b1; }
     .viewport { min-height: 320px; position: relative; }
     canvas { display: block; width: 100%; height: 100%; min-height: 320px; background: #030408; }
     .hint { position: absolute; right: 13px; bottom: 11px; pointer-events: none; color: #a8b8c8; background: #0b1016b8; border-radius: 4px; padding: 4px 7px; font-size: 11px; }
-    @media (max-width: 600px) { textarea { height: 175px; } main { grid-template-rows: auto auto minmax(300px, 1fr); } .viewport { min-height: 300px; } }
+    footer { padding: 10px clamp(16px, 3vw, 28px) 18px; color: #7f8c99; font-size: 11px; }
+    footer a { color: inherit; }
+    @media (max-width: 600px) {
+      textarea { height: 175px; }
+      main { grid-template-rows: auto auto minmax(300px, 1fr) auto; }
+      .viewport { min-height: 300px; }
+    }
   </style>
 </head>
 <body>
@@ -42,10 +51,11 @@
     <textarea id="code" spellcheck="false" aria-describedby="status"></textarea>
     <div class="toolbar">
       <button id="render" class="primary" type="button">Render (Ctrl/⌘ + Enter)</button>
-      <label for="example">Example</label>
-      <select id="example" aria-label="Shader example">
+      <label for="example">Demos</label>
+      <select id="example" aria-label="Shader demos">
         <option value="original">Original field</option>
         <option value="rotation">Rotating 3D fractal</option>
+        <option value="yohei">Log-polar bloom (@YoheiNishitsuji)</option>
       </select>
       <button id="pause" type="button">Pause</button>
       <button id="reset" type="button">Reset time</button>
@@ -57,37 +67,61 @@
       </select>
     </div>
     <div id="status" role="status" aria-live="polite"></div>
+    <div class="downloads" aria-label="Downloads">
+      <button id="download-image" type="button">Download PNG</button>
+      <button id="record-video" type="button">Record video</button>
+      <small>Native exports: still frame as PNG, animation as WebM or MP4 depending on browser support.</small>
+    </div>
   </section>
   <div class="viewport">
     <canvas id="glcanvas" aria-label="Live fragment shader output"></canvas>
     <span class="hint">WebGL2 · time in seconds</span>
   </div>
+  <footer>
+    References: Demo 3 shader credited in the selector and here to <span>@YoheiNishitsuji</span>. Other demos are retained from supplied MiniWrapper snippets.
+  </footer>
 </main>
 <script>
 'use strict';
 
-// Exact snippet supplied for MiniWrapper, retained in the editor without rewriting.
-const DEFAULT_SNIPPET = 'float i,e,R,s;vec3 q,p,d=vec3(FC.xy/r*.4-vec2(.2,-.8),1);for(q.zy--;i++<70.;){o.rgb+=hsv(.59,R,min(e*s-.15,1.)/40.);s=4.;p=q+=d*e*R*.3;p=vec3(log(R=length(p*1.3)),exp2(-p.z/R),atan(p.y,p.x)*s-t*.3);for(e=--p.y;s<1e3;s+=s)e+=sin(dot(cos(p*s),sin(p.xyx*s+t*.9)))/s*.5;}';
-
-// Alternate compact GLSL expression supplied for the rotation-compatibility fix.
-const ROTATION_SNIPPET = 'for(float i,g,e,s;++i<99.;o.rgb+=.01-hsv(.1,g*.016-e*.3,s/2e2)){vec3 p=vec3((FC.xy-.5*r)/r.y*5.+vec2(0,9),g)*rotate3D(-1.1-cos(t*.15)*.1,vec3(1,11.+sin(t)*.15,-1.5));s=2.;for(int i;i++<19;p=vec3(.08,4,-1)-abs(abs(p)*e-vec3(3,4,3)))s*=e=7.1/dot(p,p*.51);g+=p.y/s;s=log2(s)/exp(e);}';
+const DEMOS = {
+  original: 'float i,e,R,s;vec3 q,p,d=vec3(FC.xy/r*.4-vec2(.2,-.8),1);for(q.zy--;i++<70.;){o.rgb+=hsv(.59,R,min(e*s-.15,1.)/40.);s=4.;p=q+=d*e*R*.3;p=vec3(log(R=length(p*1.3)),exp2(-p.z/R),atan(p.y,p.x)*s-t*.3);for(e=--p.y;s<1e3;s+=s)e+=sin(dot(cos(p*s),sin(p.xyx*s+t*.9)))/s*.5;}',
+  rotation: 'for(float i,g,e,s;++i<99.;o.rgb+=.01-hsv(.1,g*.016-e*.3,s/2e2)){vec3 p=vec3((FC.xy-.5*r)/r.y*5.+vec2(0,9),g)*rotate3D(-1.1-cos(t*.15)*.1,vec3(1,11.+sin(t)*.15,-1.5));s=2.;for(int i;i++<19;p=vec3(.08,4,-1)-abs(abs(p)*e-vec3(3,4,3)))s*=e=7.1/dot(p,p*.51);g+=p.y/s;s=log2(s)/exp(e);}',
+  yohei: 'float i,e,R,s;vec3 q,p,d=vec3((FC.xy-.5*r)/r.y,.8);for(q.z--;i++<99.;){o.rgb+=hsv(.1,-e,e/1.5e1);p=q+=d*max(e,.004)*R*.22;p=vec3(log2(R=length(p))-t*.3,e=asin(-p.z/R-.01)-.9,atan(p.x,p.y)*2.5-t*.3);for(s=2.;s<1e3/(i*.3);s+=s)e+=abs(dot(sin(p.yzx*s),cos(p.yzx*s)))/s;}'
+};
 
 const codeEl = document.getElementById('code');
 const statusEl = document.getElementById('status');
 const canvas = document.getElementById('glcanvas');
 const pauseButton = document.getElementById('pause');
 const scaleEl = document.getElementById('scale');
-codeEl.value = DEFAULT_SNIPPET;
-const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' });
+const exampleEl = document.getElementById('example');
+const downloadImageButton = document.getElementById('download-image');
+const recordVideoButton = document.getElementById('record-video');
+
+exampleEl.value = 'original';
+codeEl.value = DEMOS[exampleEl.value];
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
 
 function status(message, isError = false) {
   statusEl.textContent = message;
   statusEl.classList.toggle('error', isError);
 }
 
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
 if (!gl) {
   status('WebGL2 is not available. Enable hardware acceleration or use a browser/device with WebGL2 support.', true);
-  for (const id of ['render', 'pause', 'reset']) document.getElementById(id).disabled = true;
+  for (const id of ['render', 'pause', 'reset', 'download-image', 'record-video']) document.getElementById(id).disabled = true;
 } else {
   const vertexSource = `#version 300 es
     precision highp float;
@@ -95,15 +129,11 @@ if (!gl) {
     void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
   `;
 
-  // The host provides ShaderToy-like aliases: FC, r, t, o, and hsv().
-  // Only the known uninitialized declarations are seeded; all shader equations stay intact.
   function seedUninitializedLocals(source) {
     return source
       .replace(/\bfloat\s+i\s*,\s*e\s*,\s*R\s*,\s*s\s*;/, 'float i=0.,e=1.,R=1.,s=4.;')
       .replace(/\bvec3\s+q\s*,\s*p\s*,\s*d\s*=/, 'vec3 q=vec3(0.),p=vec3(0.),d=')
-      // The second example reads outer and inner loop counters before assignment.
-      .replace(/\bfor\s*\(\s*float\s+i\s*,\s*g\s*,\s*e\s*,\s*s\s*;/g,
-               'for(float i=0.,g=0.,e=0.,s=0.;')
+      .replace(/\bfor\s*\(\s*float\s+i\s*,\s*g\s*,\s*e\s*,\s*s\s*;/g, 'for(float i=0.,g=0.,e=0.,s=0.;')
       .replace(/\bfor\s*\(\s*int\s+i\s*;/g, 'for(int i=0;');
   }
 
@@ -118,8 +148,6 @@ vec3 hsv(float h, float s, float v) {
   vec3 p = abs(fract(vec3(h) + K.xyz) * 6. - K.www);
   return v * mix(K.xxx, clamp(p - K.xxx, 0., 1.), s);
 }
-// Axis-angle rotation with a unit axis, returning a 3x3 column-major matrix.
-// GLSL supports both mat3 * vec3 and vec3 * mat3 (the latter is row-vector multiplication).
 mat3 rotate3D(float angle, vec3 axis) {
   vec3 a = normalize(axis);
   float c = cos(angle), s = sin(angle), k = 1. - c;
@@ -164,6 +192,29 @@ void main() {
   let timeStart = performance.now();
   let pausedAt = 0;
   let paused = false;
+  let mediaRecorder = null;
+  let recordedChunks = [];
+
+  const supportedVideoType = [
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+    'video/mp4;codecs=avc1.42E01E',
+    'video/mp4'
+  ].find(type => window.MediaRecorder && MediaRecorder.isTypeSupported(type)) || '';
+
+  const supportedVideoExtension = supportedVideoType.startsWith('video/mp4') ? 'mp4' : 'webm';
+  const recordButtonLabel = 'Record ' + supportedVideoExtension.toUpperCase();
+  recordVideoButton.textContent = recordButtonLabel;
+
+  if (!window.MediaRecorder || !canvas.captureStream || !supportedVideoType) {
+    recordVideoButton.disabled = true;
+    recordVideoButton.title = 'This browser does not support native video recording for canvas capture.';
+  }
+
+  function currentTimeSeconds(now = performance.now()) {
+    return paused ? pausedAt : (now - timeStart) / 1000;
+  }
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2) * Number(scaleEl.value);
@@ -176,15 +227,20 @@ void main() {
     gl.viewport(0, 0, width, height);
   }
 
-  function frame(now) {
-    raf = 0;
+  function draw(now = performance.now()) {
     if (!program) return;
     resize();
     gl.useProgram(program);
     gl.bindVertexArray(vao);
     gl.uniform2f(uniforms.r, canvas.width, canvas.height);
-    gl.uniform1f(uniforms.t, paused ? pausedAt : (now - timeStart) / 1000);
+    gl.uniform1f(uniforms.t, currentTimeSeconds(now));
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  function frame(now) {
+    raf = 0;
+    if (!program) return;
+    draw(now);
     if (!paused && !document.hidden) raf = requestAnimationFrame(frame);
   }
 
@@ -225,9 +281,13 @@ void main() {
     }
   }
 
+  function timestampForFile() {
+    return new Date().toISOString().replace(/[.:]/g, '-');
+  }
+
   document.getElementById('render').addEventListener('click', compile);
-  document.getElementById('example').addEventListener('change', event => {
-    codeEl.value = event.target.value === 'rotation' ? ROTATION_SNIPPET : DEFAULT_SNIPPET;
+  exampleEl.addEventListener('change', event => {
+    codeEl.value = DEMOS[event.target.value] || DEMOS.original;
     compile();
   });
   codeEl.addEventListener('keydown', event => {
@@ -239,11 +299,11 @@ void main() {
   pauseButton.addEventListener('click', () => {
     if (!program) return;
     if (!paused) {
-      pausedAt = (performance.now() - timeStart) / 1000;
+      pausedAt = currentTimeSeconds();
       paused = true;
       pauseButton.textContent = 'Resume';
       status('Paused at t = ' + pausedAt.toFixed(2) + ' s.');
-      requestFrame();
+      draw();
     } else {
       timeStart = performance.now() - pausedAt * 1000;
       paused = false;
@@ -261,6 +321,46 @@ void main() {
   scaleEl.addEventListener('change', () => {
     status('Resolution: ' + Math.round(Number(scaleEl.value) * 100) + '%.');
     requestFrame();
+  });
+  downloadImageButton.addEventListener('click', () => {
+    if (!program) return;
+    draw();
+    canvas.toBlob(blob => {
+      if (!blob) {
+        status('PNG export failed in this browser.', true);
+        return;
+      }
+      downloadBlob(blob, 'miniwrapper-' + exampleEl.value + '-' + timestampForFile() + '.png');
+      status('Downloaded PNG.');
+    }, 'image/png');
+  });
+  recordVideoButton.addEventListener('click', () => {
+    if (!program || recordVideoButton.disabled) return;
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      return;
+    }
+    try {
+      recordedChunks = [];
+      const stream = canvas.captureStream(30);
+      mediaRecorder = new MediaRecorder(stream, { mimeType: supportedVideoType });
+      mediaRecorder.ondataavailable = event => {
+        if (event.data && event.data.size > 0) recordedChunks.push(event.data);
+      };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || supportedVideoType });
+        downloadBlob(blob, 'miniwrapper-' + exampleEl.value + '-' + timestampForFile() + '.' + supportedVideoExtension);
+        recordVideoButton.textContent = recordButtonLabel;
+        status('Downloaded ' + supportedVideoExtension.toUpperCase() + ' recording.');
+        for (const track of stream.getTracks()) track.stop();
+      };
+      mediaRecorder.start();
+      recordVideoButton.textContent = 'Stop Recording';
+      status('Recording ' + supportedVideoExtension.toUpperCase() + '. Tap again to stop and download.');
+      requestFrame();
+    } catch (error) {
+      status('Video recording failed: ' + String(error.message || error), true);
+    }
   });
   window.addEventListener('resize', requestFrame);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) requestFrame(); });
