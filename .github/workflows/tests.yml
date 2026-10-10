@@ -14,19 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  dependency-lock-candidate:
-    name: Generate remediated dependency integrity lock
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-      - uses: actions/upload-artifact@v4
-        with:
-          name: security-patched-lock-candidate
-          path: package-lock.json
   fast:
     name: Fast regression and expression graph tests
     runs-on: ubuntu-latest
