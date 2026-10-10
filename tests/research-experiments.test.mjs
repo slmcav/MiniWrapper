@@ -18,7 +18,7 @@ async function make(id,add=0,p=protocol()){
    const rgba=Uint8Array.from({length:48},(_,k)=>k%4===3?255:(k+i*9+add)%256);
    const receipt=await createBuildReceipt({
      shaderBody:'o.rgb=vec3(.2);',expandedShader:'#version 300 es\nvoid main(){o.rgb=vec3(.2);}',
-     demoId:'original',attribution:'@YoheiNishitsuji',
+     demoId:'research_fixture',attribution:'Synthetic QA fixture',
      checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
      viewport:{width:4,height:3},
      parameters:{...p.baseline,[p.parameter]:p.levels[i]},shaderTimeSeconds:p.shaderTimeSeconds,
