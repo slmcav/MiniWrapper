@@ -165,7 +165,7 @@ export async function exportManuscriptBundle(bundle,{
   for(const file of files)fileInventory.push({path:file.name,bytes:file.data.length,
     sha256:await hash(file.data,subtle)});
   const manifest={
-    schema:'glsl-lab/manuscript-bundle/1',manuscript:bundle.record,
+    schema:'glsl-lab/manuscript-bundle/2',manuscript:bundle.record,
     verification:{studySha256:bundle.study.sha256,auditSha256:bundle.audit.sha256,
       manuscriptReviewCompleted:false,academicManuscriptUnlocked:false},
     typesetting:{engine:'pdfLaTeX',input:'manuscript.tex',compiledPdfIncluded:false,
