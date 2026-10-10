@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
+import {createStarterGraph,emitGLSL} from '../src/expression-graph.mjs';
 import {BUILD_RECEIPT_SCHEMA, canonicalJson,createBuildReceipt,validateBuildReceipt,verifyBuildReceipt} from '../src/build-evidence.mjs';
 const subtle=webcrypto.subtle;
 const input=()=>({
@@ -77,4 +78,21 @@ test('round-trip JSON receipt retains validated evidence',async()=>{
 test('non-UTC or invalid observation timestamps rejected',async()=>{
   await assert.rejects(()=>build(input(),'tomorrow'),/UTC ISO/);
   await assert.rejects(()=>build(input(),'2026-10-10T06:00:00-07:00'),/UTC ISO/);
+});
+
+test('P2 generated shader receipts retain the exact typed graph and verify its GLSL',async()=>{
+  const graph=createStarterGraph(),body=emitGLSL(graph);
+  const typed=input();typed.shaderBody=body;typed.demoId='builder';
+  typed.attribution='User-authored via GLSL Lab expression graph';typed.graph=graph;
+  const result=await build(typed);
+  assert.deepEqual(result.graph,graph);
+  assert.equal(await verifyBuildReceipt(JSON.parse(JSON.stringify(result)),subtle),true);
+});
+test('P2 cannot mint an authored graph receipt with missing or mismatched graph',async()=>{
+  const typed=input();typed.demoId='builder';typed.shaderBody=emitGLSL(createStarterGraph());
+  await assert.rejects(()=>build(typed),/requires the authored graph/);
+  typed.graph=createStarterGraph();typed.shaderBody='o.rgb = vec3(0.);';
+  await assert.rejects(()=>build(typed),/not generated/);
+  const demo=input();demo.graph=createStarterGraph();
+  await assert.rejects(()=>build(demo),/must not claim a graph/);
 });
