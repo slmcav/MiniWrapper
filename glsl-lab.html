@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>GLSL Lab — MiniWrapper</title>
+  <style>
+    :root { color-scheme:dark; font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#0b1016; color:#edf4fc; }
+    * { box-sizing:border-box; }
+    body { margin:0; }
+    button,select,input,textarea { font:inherit; }
+    button,a,select,input { -webkit-tap-highlight-color:transparent; }
+    a { color:#98e8d7; }
+    button { background:#243444; color:#eaf4fa; border:1px solid #466074; border-radius:11px; min-height:43px; padding:8px 14px; cursor:pointer; }
+    button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,a:focus-visible { outline:2px solid #8fdfd0; outline-offset:3px; }
+    .brand { padding:12px clamp(14px,2.6vw,27px); display:flex; align-items:center; gap:15px; flex-wrap:wrap; justify-content:space-between; }
+    .brand h1 { font-size:1.2rem; letter-spacing:.04em; margin:0; }
+    .brand p { margin:2px 0 0; color:#a6b8c6; font-size:.85rem; }
+    .back { text-decoration:none; font-size:.9rem; border:1px solid #445769; padding:8px 13px; border-radius:10px; color:#dbe9f3; }
+    .layout { max-width:1400px; margin:auto; display:grid; gap:16px; grid-template-columns:minmax(0,1.1fr) minmax(290px,.9fr); padding:0 clamp(12px,2.6vw,27px) 24px; align-items:start; }
+    .stage { position:sticky; top:12px; z-index:2; border:1px solid #35495b; border-radius:17px; background:#101925; overflow:hidden; box-shadow:0 18px 46px #0005; }
+    .stage-head { display:flex; align-items:center; justify-content:space-between; padding:10px 13px; background:#172333; gap:8px; }
+    .stage-head strong { font-size:.92rem; }
+    .chip { font-size:.72rem; color:#aee5d6; }
+    canvas { display:block; width:100%; aspect-ratio:16/10; background:#060710; touch-action:pan-y; }
+    .stage-foot { padding:8px 12px; display:flex; align-items:center; flex-wrap:wrap; gap:8px; justify-content:space-between; }
+    .stage-foot button { min-height:36px; padding:6px 12px; font-size:.83rem; }
+    .stage-foot .state { font-size:.79rem; color:#c0cedc; }
+    .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
+    .tabs { display:grid; grid-template-columns:1fr 1fr; border-bottom:1px solid #354a5c; }
+    .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
+    .tabs button[aria-selected="true"] { background:#194d4a; color:#eafffa; box-shadow:inset 0 -3px 0 #77dbc5; }
+    .pane { padding:15px; }
+    .pane[hidden] { display:none; }
+    .pane p { color:#a8bbc9; margin:5px 0 14px; font-size:.88rem; }
+    .field-label { display:block; font-weight:650; margin:0 0 6px; }
+    .demo-choice { width:100%; color:#ecf8fe; background:#0d1722; border:1px solid #4b6073; padding:11px; border-radius:10px; margin-bottom:10px; }
+    .attribution { color:#9facb9; font-size:.76rem; margin:0 0 17px; }
+    .control { border-top:1px solid #293c4b; padding:12px 1px 9px; }
+    .control-head { display:flex; align-items:baseline; justify-content:space-between; gap:15px; }
+    .control-head label { font-weight:600; }
+    output { font-variant-numeric:tabular-nums; color:#94decc; }
+    input[type="range"] { display:block; width:100%; min-height:31px; margin:6px 0 0; accent-color:#69d5bf; cursor:pointer; }
+    .why { margin:0; color:#93aabb; font-size:.78rem; }
+    .actions { margin-top:15px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .accent { background:#0b7c6c; border-color:#23a38c; font-weight:680; }
+    .note { background:#0c1723; padding:11px; border-radius:10px; margin-top:14px; font-size:.8rem; color:#a9bccb; }
+    .codebox { width:100%; height:180px; resize:vertical; background:#08121c; color:#d8ecf2; border:1px solid #3b5366; border-radius:9px; padding:11px; font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; }
+    .values { white-space:pre-wrap; color:#a4e3d4; background:#08121c; padding:11px; border-radius:9px; font:12px/1.6 ui-monospace,monospace; margin-bottom:12px; }
+    #error { white-space:pre-wrap; overflow-wrap:anywhere; color:#ffa9a9; padding:8px 13px; font:12px/1.5 ui-monospace,monospace; }
+    #error:empty { display:none; }
+    .muted { color:#9bacba; font-size:.76rem; margin-top:9px; }
+    footer { max-width:1400px; margin:auto; padding:0 18px 25px; color:#788999; font-size:.75rem; }
+    @media(max-width:820px) {
+      .brand { padding:10px 14px; }
+      .layout { display:block; padding:0 9px 18px; }
+      .stage { top:0; margin:0 0 12px; border-radius:12px; }
+      canvas { aspect-ratio:16/9; }
+      .panel { border-radius:12px; }
+      .pane { padding:13px; }
+      .stage-head { padding:7px 11px; }
+      .stage-foot { padding:6px 10px; }
+    }
+    @media(prefers-reduced-motion:reduce) { * { scroll-behavior:auto!important; } }
+  </style>
+</head>
+<body>
+  <header class="brand">
+    <div><h1>GLSL Lab</h1><p>Touch the controls. See the mathematics change.</p></div>
+    <a class="back" href="./index.html">← Classic shader editor</a>
+  </header>
+  <main class="layout">
+    <section class="stage" aria-label="Live GPU shader preview">
+      <div class="stage-head"><strong id="stageTitle">Original field</strong><span class="chip">LIVE · WebGL2</span></div>
+      <canvas id="glcanvas" aria-label="Live shader output"></canvas>
+      <div class="stage-foot">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button type="button" id="playPause">Pause</button>
+          <button type="button" id="restart">Restart</button>
+          <button type="button" id="savePng">Save PNG</button>
+        </div>
+        <span class="state" id="state" role="status" aria-live="polite">Starting…</span>
+      </div>
+      <div id="error" role="alert"></div>
+    </section>
+    <section class="panel" aria-label="GLSL Lab controls">
+      <div class="tabs" role="tablist" aria-label="Lab mode">
+        <button type="button" id="tabPlay" role="tab" aria-selected="true" aria-controls="panePlay">Play</button>
+        <button type="button" id="tabCode" role="tab" aria-selected="false" aria-controls="paneCode">Understand · Code</button>
+      </div>
+      <div class="pane" id="panePlay" role="tabpanel" aria-labelledby="tabPlay">
+        <label class="field-label" for="demo">Start with a visual</label>
+        <select id="demo" class="demo-choice">
+          <option value="original">Original field</option>
+          <option value="rotation">Rotating 3D fractal</option>
+          <option value="yohei">Log-polar bloom</option>
+        </select>
+        <div class="attribution">Original shader expressions by @YoheiNishitsuji</div>
+        <p>Move a slider. The image responds immediately. No coding needed.</p>
+        <div class="control">
+          <div class="control-head"><label for="zoom">Shape size</label><output id="zoomValue" for="zoom">100%</output></div>
+          <input id="zoom" data-key="zoom" type="range" min="0.5" max="2.5" step="0.05" value="1">
+          <div class="why">Zoom in or out without changing the shape’s equation.</div>
+        </div>
+        <div class="control">
+          <div class="control-head"><label for="angle">Turn the view</label><output id="angleValue" for="angle">0°</output></div>
+          <input id="angle" data-key="angle" type="range" min="-180" max="180" step="5" value="0">
+          <div class="why">Rotate the view around its center.</div>
+        </div>
+        <div class="control">
+          <div class="control-head"><label for="speed">Movement speed</label><output id="speedValue" for="speed">1.0×</output></div>
+          <input id="speed" data-key="speed" type="range" min="0" max="2.5" step="0.1" value="1">
+          <div class="why">Control how quickly time moves in the expression.</div>
+        </div>
+        <div class="control">
+          <div class="control-head"><label for="hue">Color shift</label><output id="hueValue" for="hue">0°</output></div>
+          <input id="hue" data-key="hue" type="range" min="-180" max="180" step="5" value="0">
+          <div class="why">Move the color around the hue wheel.</div>
+        </div>
+        <div class="control">
+          <div class="control-head"><label for="brightness">Brightness</label><output id="brightnessValue" for="brightness">100%</output></div>
+          <input id="brightness" data-key="brightness" type="range" min="0.25" max="2" step="0.05" value="1">
+          <div class="why">Increase or decrease the light contributed by each sample.</div>
+        </div>
+        <div class="actions">
+          <button class="accent" type="button" id="resetControls">Reset controls</button>
+          <button type="button" id="openCode">Show the math</button>
+        </div>
+        <div class="note">These are five safe visual controls across three existing demos. The other 14 demos, custom GLSL, and video recording remain in the <a href="./index.html">classic editor</a>.</div>
+      </div>
+      <div class="pane" id="paneCode" role="tabpanel" aria-labelledby="tabCode" hidden>
+        <strong>The original expression</strong>
+        <p>This is the same compact GLSL used in MiniWrapper. The Lab wraps it with uniforms for your sliders.</p>
+        <textarea id="code" class="codebox" readonly spellcheck="false"></textarea>
+        <div class="actions">
+          <button id="copyCode" type="button">Copy expression</button>
+          <a href="./index.html">Open full editor</a>
+        </div>
+        <p>Values you are currently sending to the GPU:</p>
+        <div class="values" id="values"></div>
+        <div class="note">Zoom and rotation adjust the pixel coordinates (FC). Speed changes time (t). Color shift and brightness change the HSV helper. Slider movements update uniforms; only changing the demo compiles a new shader.</div>
+      </div>
+    </section>
+  </main>
+  <footer>MiniWrapper · GLSL Lab (Play prototype) · Three demo expressions credited to @YoheiNishitsuji. No external libraries or server.</footer>
+<script>
+'use strict';
+const DEMOS = {"original":"float i,e,R,s;vec3 q,p,d=vec3(FC.xy/r*.4-vec2(.2,-.8),1);for(q.zy--;i++<70.;){o.rgb+=hsv(.59,R,min(e*s-.15,1.)/40.);s=4.;p=q+=d*e*R*.3;p=vec3(log(R=length(p*1.3)),exp2(-p.z/R),atan(p.y,p.x)*s-t*.3);for(e=--p.y;s<1e3;s+=s)e+=sin(dot(cos(p*s),sin(p.xyx*s+t*.9)))/s*.5;}","rotation":"for(float i,g,e,s;++i<99.;o.rgb+=.01-hsv(.1,g*.016-e*.3,s/2e2)){vec3 p=vec3((FC.xy-.5*r)/r.y*5.+vec2(0,9),g)*rotate3D(-1.1-cos(t*.15)*.1,vec3(1,11.+sin(t)*.15,-1.5));s=2.;for(int i;i++<19;p=vec3(.08,4,-1)-abs(abs(p)*e-vec3(3,4,3)))s*=e=7.1/dot(p,p*.51);g+=p.y/s;s=log2(s)/exp(e);}","yohei":"float i,e,R,s;vec3 q,p,d=vec3((FC.xy-.5*r)/r.y,.8);for(q.z--;i++<99.;){o.rgb+=hsv(.1,-e,e/1.5e1);p=q+=d*max(e,.004)*R*.22;p=vec3(log2(R=length(p))-t*.3,e=asin(-p.z/R-.01)-.9,atan(p.x,p.y)*2.5-t*.3);for(s=2.;s<1e3/(i*.3);s+=s)e+=abs(dot(sin(p.yzx*s),cos(p.yzx*s)))/s;}"};
+const LABELS = { original:'Original field', rotation:'Rotating 3D fractal', yohei:'Log-polar bloom' };
+const defaults = { zoom:1, angle:0, speed:1, hue:0, brightness:1 };
+const settings = Object.assign({}, defaults);
+const $ = id => document.getElementById(id);
+const canvas=$('glcanvas');
+const gl=canvas.getContext('webgl2',{antialias:false,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+let program=null, loc={}, animationId=0, lastStamp=0, elapsed=0, running=true, current='original';
+function setStatus(message,error) {
+  $('state').textContent=error?'Error':message;
+  $('error').textContent=error||'';
+}
+function replaceSeeds(body) {
+  return body
+    .replace(/\bfloat\s+i\s*,\s*e\s*,\s*R\s*,\s*s\s*;/g,'float i=0.,e=1.,R=1.,s=4.;')
+    .replace(/\bvec3\s+q\s*,\s*p\s*,\s*d\s*=/g,'vec3 q=vec3(0.),p=vec3(0.),d=')
+    .replace(/\bfor\s*\(\s*float\s+i\s*,\s*g\s*,\s*e\s*,\s*s\s*;/g,'for(float i=0.,g=0.,e=0.,s=0.;')
+    .replace(/\bfor\s*\(\s*int\s+i\s*;/g,'for(int i=0;');
+}
+const vertexSource = '#version 300 es\nprecision highp float;\nlayout(location=0) in vec2 a_pos;\nvoid main(){gl_Position=vec4(a_pos,0.,1.);}';
+function fragmentSource(body) {
+  return '#version 300 es\n' +
+    'precision highp float;\nuniform vec2 r;\nuniform float t;\n' +
+    'uniform float uZoom,uAngle,uHue,uBrightness;\nout vec4 o;\n' +
+    'vec3 hsv(float h,float s,float v){\n' +
+    'h=fract(h+uHue);v*=uBrightness;\n' +
+    'vec4 K=vec4(1.,2./3.,1./3.,3.);\n' +
+    'vec3 p=abs(fract(vec3(h)+K.xyz)*6.-K.www);\n' +
+    'return v*mix(K.xxx,clamp(p-K.xxx,0.,1.),s);\n}\n' +
+    'mat3 rotate3D(float angle,vec3 axis){\n' +
+    'vec3 a=normalize(axis);float c=cos(angle),s=sin(angle),k=1.-c;\n' +
+    'return mat3(c+a.x*a.x*k,a.y*a.x*k+a.z*s,a.z*a.x*k-a.y*s,' +
+    'a.x*a.y*k-a.z*s,c+a.y*a.y*k,a.z*a.y*k+a.x*s,' +
+    'a.x*a.z*k+a.y*s,a.y*a.z*k-a.x*s,c+a.z*a.z*k);\n}\n' +
+    'void main(){\nvec2 point=(gl_FragCoord.xy-r*.5)/uZoom;\n' +
+    'float c=cos(uAngle),s=sin(uAngle);\n' +
+    'vec2 FC=mat2(c,s,-s,c)*point+r*.5;\n' +
+    'o=vec4(0.,0.,0.,1.);\n' + replaceSeeds(body) + '\n}';
+}
+function makeShader(type,source) {
+  const shader=gl.createShader(type);
+  gl.shaderSource(shader,source);
+  gl.compileShader(shader);
+  if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)){
+    const error=gl.getShaderInfoLog(shader)||'GLSL compile failed';
+    gl.deleteShader(shader);
+    throw new Error(error);
+  }
+  return shader;
+}
+let vao=null;
+if(gl){
+  const buffer=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  vao=gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+  gl.bindVertexArray(null);
+}
+function compile(name) {
+  if(!gl)return;
+  let vert,frag,next;
+  try {
+    vert=makeShader(gl.VERTEX_SHADER,vertexSource);
+    frag=makeShader(gl.FRAGMENT_SHADER,fragmentSource(DEMOS[name]));
+    next=gl.createProgram();
+    gl.attachShader(next,vert);gl.attachShader(next,frag);gl.linkProgram(next);
+    if(!gl.getProgramParameter(next,gl.LINK_STATUS))
+      throw new Error(gl.getProgramInfoLog(next)||'Shader program link failed');
+    if(program)gl.deleteProgram(program);
+    program=next;next=null;current=name;
+    loc={r:gl.getUniformLocation(program,'r'),t:gl.getUniformLocation(program,'t'),
+      zoom:gl.getUniformLocation(program,'uZoom'),
+      angle:gl.getUniformLocation(program,'uAngle'),
+      hue:gl.getUniformLocation(program,'uHue'),
+      brightness:gl.getUniformLocation(program,'uBrightness')};
+    $('stageTitle').textContent=LABELS[name];$('code').value=DEMOS[name];
+    elapsed=0;lastStamp=0;setStatus('Live');
+    updateValues();
+    requestDraw();
+  } catch(e){setStatus('',String(e.message||e));}
+  finally {if(vert)gl.deleteShader(vert);if(frag)gl.deleteShader(frag);if(next)gl.deleteProgram(next);}
+}
+function sizeCanvas() {
+  const rect=canvas.getBoundingClientRect();
+  const density=Math.min(devicePixelRatio||1,1.5)*.8;
+  const width=Math.max(1,Math.round(rect.width*density));
+  const height=Math.max(1,Math.round(rect.height*density));
+  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+  gl.viewport(0,0,width,height);
+}
+function draw(now) {
+  animationId=0;
+  if(!gl||!program)return;
+  if(running && lastStamp>0)elapsed+=Math.min((now-lastStamp)/1000,.1)*settings.speed;
+  lastStamp=now;
+  sizeCanvas();
+  gl.useProgram(program);gl.bindVertexArray(vao);
+  gl.uniform2f(loc.r,canvas.width,canvas.height);
+  gl.uniform1f(loc.t,elapsed);
+  gl.uniform1f(loc.zoom,settings.zoom);
+  gl.uniform1f(loc.angle,settings.angle*Math.PI/180);
+  gl.uniform1f(loc.hue,settings.hue/360);
+  gl.uniform1f(loc.brightness,settings.brightness);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  if(running && !document.hidden)animationId=requestAnimationFrame(draw);
+}
+function requestDraw(){if(!animationId&&gl&&program&&!document.hidden)animationId=requestAnimationFrame(draw);}
+function updateValues(){
+  $('zoomValue').textContent=Math.round(settings.zoom*100)+'%';
+  $('angleValue').textContent=Math.round(settings.angle)+'°';
+  $('speedValue').textContent=settings.speed.toFixed(1)+'×';
+  $('hueValue').textContent=Math.round(settings.hue)+'°';
+  $('brightnessValue').textContent=Math.round(settings.brightness*100)+'%';
+  $('values').textContent='uZoom = '+settings.zoom.toFixed(2)+'\nuAngle = '+(settings.angle*Math.PI/180).toFixed(3)+' radians\nuHue = '+(settings.hue/360).toFixed(3)+' turns\nuBrightness = '+settings.brightness.toFixed(2)+'\nt = '+elapsed.toFixed(2)+' seconds\nspeed = '+settings.speed.toFixed(1)+'× (applied before t)';
+}
+for(const input of document.querySelectorAll('input[data-key]')){
+  input.addEventListener('input',()=>{
+    settings[input.dataset.key]=Number(input.value);
+    updateValues();
+    requestDraw();
+  });
+}
+$('demo').addEventListener('change',event=>compile(event.target.value));
+$('resetControls').addEventListener('click',()=>{
+  Object.assign(settings,defaults);
+  for(const input of document.querySelectorAll('input[data-key]'))input.value=settings[input.dataset.key];
+  updateValues();requestDraw();
+});
+$('playPause').addEventListener('click',()=>{
+  running=!running;
+  lastStamp=0;
+  $('playPause').textContent=running?'Pause':'Play';
+  setStatus(running?'Live':'Paused');
+  requestDraw();
+});
+$('restart').addEventListener('click',()=>{elapsed=0;lastStamp=0;updateValues();requestDraw();});
+function selectTab(tab){
+  const showCode=tab==='code';
+  $('panePlay').hidden=showCode;$('paneCode').hidden=!showCode;
+  $('tabPlay').setAttribute('aria-selected',String(!showCode));
+  $('tabCode').setAttribute('aria-selected',String(showCode));
+  updateValues();
+}
+$('tabPlay').addEventListener('click',()=>selectTab('play'));
+$('tabCode').addEventListener('click',()=>selectTab('code'));
+$('openCode').addEventListener('click',()=>selectTab('code'));
+$('copyCode').addEventListener('click',async()=>{
+  try { await navigator.clipboard.writeText(DEMOS[current]); $('copyCode').textContent='Copied'; }
+  catch(e){$('copyCode').textContent='Select and copy above';$('code').select();}
+});
+$('savePng').addEventListener('click',()=>{
+  if(!program)return;
+  const after=(blob)=>{
+    if(!blob){setStatus('','PNG export failed');return;}
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');link.href=url;link.download='glsl-lab-'+current+'.png';document.body.appendChild(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+  };
+  canvas.toBlob(after,'image/png');
+});
+window.addEventListener('resize',requestDraw);
+document.addEventListener('visibilitychange',()=>{lastStamp=0;if(!document.hidden)requestDraw();});
+canvas.addEventListener('webglcontextlost',event=>{
+  event.preventDefault();if(animationId)cancelAnimationFrame(animationId);animationId=0;
+  setStatus('','GPU context lost. Reload to restore the Lab.');
+});
+if(!gl){setStatus('','WebGL2 is unavailable in this browser. Try enabling GPU acceleration or a different device.');}
+else{compile('original');requestDraw();}
+</script>
+</body>
+</html>
