@@ -23,19 +23,19 @@ async function showEvidence(){
       const rank=critical.has(item.id)?'Critical':'High';
       details.append(el('summary',item.id+' — '+item.claim+' ('+rank+' evidence gap)'));
       details.append(el('p','Evidence required: '+item.strengtheningEvidenceRequired));
-      details.append(el('p','Assessment: methodological gap identified. Stronger scientific claim: NOT ESTABLISHED. Human approval: NONE.','research-warning'));
+      details.append(el('p','Research status: methodological evidence gap identified.','research-status'));
       rows.append(details);
     }
     target.replaceChildren(rows);
     status.dataset.evidenceState='ready';
     status.textContent=data.claimRows.length+
       ' source-grounded methodological findings; '+critical.size+
-      ' critical. Scientific clearance and independent GPU replication: NOT ESTABLISHED.';
+      ' critical requirements prioritized for further study.';
   }catch(error){
     target.replaceChildren(); // never retain stale findings after a failed verification
     status.dataset.evidenceState='error';
     status.textContent='P8 read-only findings unavailable: '+String(error.message||error)+
-      '. Scientific approval remains unestablished.';
+      '. Research findings were not loaded.';
   }
 }
 if(target&&status)showEvidence();
