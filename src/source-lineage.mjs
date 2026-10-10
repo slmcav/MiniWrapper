@@ -3,11 +3,11 @@
 // The matching-file regression gate must be updated whenever the generator changes.
 export const SOURCE_LINEAGE_SCHEMA='glsl-lab/source-lineage/1';
 export const PINNED_REPOSITORY='slmcav/MiniWrapper';
-export const SOURCE_SNAPSHOT_COMMIT='3810b1d9501e753902856a194fb9b0b9a147fedb';
+export const SOURCE_SNAPSHOT_COMMIT='d8e4e953493a344fb286ab6e7a1aca80cbc98029';
 export const PINNED_SOURCE_BLOBS=Object.freeze([
   {
     "path": "glsl-lab.html",
-    "gitBlobSha1": "f9a277a37fb723809d815feeb14b34afe39a141e"
+    "gitBlobSha1": "75f6e9484bb799072abdb377a7917ae65a9387bf"
   },
   {
     "path": "src/build-evidence.mjs",
@@ -35,15 +35,15 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
   },
   {
     "path": "src/methodology-audit.mjs",
-    "gitBlobSha1": "511168cfe193d6424ba64afd6d754325950a87d1"
+    "gitBlobSha1": "5f4c2d95e9c1358d5b3b644929d5c2b376f9c4ef"
   },
   {
     "path": "src/manuscript-engine.mjs",
-    "gitBlobSha1": "69bbacddbc32187d12cb31fac507bf4d0cbaeda9"
+    "gitBlobSha1": "baa7a84de20e434d174f3147ee05e3544ea0aaac"
   },
   {
     "path": "src/manuscript-render.mjs",
-    "gitBlobSha1": "c96b3bab39b3d50ef9d06d4945f55939d5528e69"
+    "gitBlobSha1": "2d2cda4375cc7e4f90ddada4af06fe1de822f042"
   },
   {
     "path": "src/research-pdf.mjs",
@@ -55,19 +55,19 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
   },
   {
     "path": "src/manuscript-verify.mjs",
-    "gitBlobSha1": "dfadb7a2ff0048ec6c1fb887d89d762f86076c14"
+    "gitBlobSha1": "f2accb95a15f380b00f412cc098363777ab3ecd9"
   },
   {
     "path": "src/lab-manuscript.mjs",
-    "gitBlobSha1": "059e34e270a8005d1da4883dd2156b1d9ae5c69e"
+    "gitBlobSha1": "4fce59369d182a3f0f5dcde577c74a9e5cb60708"
   },
   {
     "path": "src/lab-methodology.mjs",
-    "gitBlobSha1": "e5e41f5678a0adf827ae631191dcccbd79535d18"
+    "gitBlobSha1": "bf1c217a4b2027b5eb628fe4c16651657f3483a9"
   },
   {
     "path": "src/lab-bundle-verify.mjs",
-    "gitBlobSha1": "ebe31d4120bec0a72734029ed878d65b88af0552"
+    "gitBlobSha1": "cd9a80548de8ec9ce3a37a450b96aacb9fb24184"
   },
   {
     "path": "scripts/verify-research-zip.mjs",
@@ -100,6 +100,39 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
   {
     "path": "docs/P8_EVIDENCE_REGISTER.json",
     "gitBlobSha1": "a9a16c8ce785cf42a21cd22052342d51e1af816f"
+  }
+,
+  {
+    "path": "src/graph-ui.mjs",
+    "gitBlobSha1": "63d49666b8a42e2a1e83cc11c0ff44a213e301e9"
+  },
+  {
+    "path": "src/lab-experiments.mjs",
+    "gitBlobSha1": "6178925d032a4467550129213d11c5bc8fb51d41"
+  },
+  {
+    "path": "src/lab-replications.mjs",
+    "gitBlobSha1": "de30b36465c43a36b19d788ac859db00458cab02"
+  },
+  {
+    "path": "src/research-source-policy.mjs",
+    "gitBlobSha1": "a0674f12726930ea684b65d9604ae895dbaf79ef"
+  },
+  {
+    "path": "src/manuscript-latex.mjs",
+    "gitBlobSha1": "bc175fb4b2d668b1be06e81dd6f4105a3dfd8b78"
+  },
+  {
+    "path": "src/latex-build-scripts.mjs",
+    "gitBlobSha1": "50468606e6945110420859415828ad6f881e6673"
+  },
+  {
+    "path": "src/pdf-filename.mjs",
+    "gitBlobSha1": "0a2608262946f0f36964c2ce704f0df04202e6f1"
+  },
+  {
+    "path": "src/lab-workflow-guide.mjs",
+    "gitBlobSha1": "3dc8012138ccb9b51dccad66f639a64cdb5f9284"
   }
 ].map(record=>Object.freeze(record)));
 export function exportSourceLineage(){
