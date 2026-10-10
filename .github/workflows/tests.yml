@@ -14,20 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  dependency-lock-candidate:
-    name: Prepare exact Node dependency lock for final freeze
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-      - uses: actions/upload-artifact@v4
-        with:
-          name: candidate-release-package-lock
-          path: package-lock.json
   fast:
     name: Fast regression and expression graph tests
     runs-on: ubuntu-latest
@@ -118,7 +104,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund
+      - name: Install exact SHA-512-integrity-pinned dependency graph
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
       - uses: actions/upload-artifact@v4
@@ -134,4 +121,33 @@ jobs:
           path: |
             playwright-report/
             test-results/
+          if-no-files-found: ignore
+
+  release:
+    name: Final independent research release and custody QA
+    runs-on: ubuntu-latest
+    needs: [fast, pdf, latex, browser]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify frozen producer bytes, evidence safeguards, and pinned npm tree
+        run: node --test tests/release-freeze.test.mjs
+      - name: Reconstruct exact dependency tree from the committed lock
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Audit locked dependencies for high severity supply-chain vulnerabilities
+        run: npm audit --audit-level=high
+      - name: Record release inputs and immutable content checksums
+        run: |
+          mkdir -p test-results/release
+          git rev-parse HEAD > test-results/release/producing-commit.txt
+          git rev-parse --verify HEAD^{tree} > test-results/release/source-tree.txt
+          sha256sum package.json package-lock.json src/source-lineage.mjs src/manuscript-latex.mjs src/research-source-policy.mjs > test-results/release/source-sha256.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academic-final-release-custody
+          path: test-results/release/
           if-no-files-found: ignore
