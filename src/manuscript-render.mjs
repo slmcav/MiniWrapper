@@ -88,6 +88,7 @@ export function renderManuscriptHTML(bundle,{embedImages=true}={}){
       ' total RGBA8 pixels). The manipulated uniform was '+esc(r.parameter)+
       '; the other recorded uniform controls were held at their baseline. Shader time was fixed at '+
       f(r.shaderTimeSeconds)+' s.</p>',
+    '<p>Source identifier: '+esc(r.shaderIdentifier)+'. Source attribution (as recorded in the original build receipt, not independently authenticated): '+esc(r.shaderAttribution)+'.</p>',
     '<p>Experimental order: '+esc(r.orderDescription)+'. Figure selection: '+
       esc(r.figureSelectionRule)+'. The archive retains all recorded images and their digests.</p>',
     '<h3>2.2 Pixel measurements</h3><p>For 8-bit encoded RGB channel values, the weighted quantity Y′ is '+
