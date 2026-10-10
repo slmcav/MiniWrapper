@@ -68,6 +68,16 @@
     .replicate-panel input[type=file] { width:100%;max-width:100%; }
     .replicate-panel .study-out { color:#c9e9e0; white-space:pre-wrap; overflow-wrap:anywhere; font:12px/1.5 ui-monospace,monospace; }
     .replicate-panel [data-error=true] { color:#ffb3ac; }
+    .audit-panel { margin-top:12px; padding:12px; border:1px solid #3c6976; border-radius:12px; background:#122431; }
+    .audit-panel h3 { margin:0 0 8px; font-size:1rem; color:#cae8e1; }
+    .audit-panel input[type=file] { max-width:100%;width:100%; }
+    .audit-panel .audit-list { display:grid; gap:9px; margin:8px 0; }
+    .audit-panel .audit-source { border-bottom:1px solid #365267; padding:8px 0; }
+    .audit-panel .audit-source strong,.audit-panel .audit-source small { display:block; }
+    .audit-panel .audit-source a { color:#8fe7ce; overflow-wrap:anywhere; }
+    .audit-panel .audit-source small { color:#b1c8d2; }
+    .audit-panel .audit-findings { white-space:pre-wrap; overflow-wrap:anywhere; color:#bbdfd8; font:12px/1.55 ui-monospace,monospace; }
+    .audit-panel [data-error=true] { color:#ffb2b2; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
     .tabs { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
@@ -254,6 +264,22 @@
           <p id="repeatSummary" class="study-out">No repeated observations yet.</p>
           <p id="repeatComparison" class="study-out">Import a separate compatible study to compare.</p>
           <p class="research-warning">Three draws per treatment describe repeat variation, not three independent or randomized experiments. Graphics strings are browser-reported, not proof of identical GPU hardware. Full images remain in browser memory until exported. Nine-frame capture is limited to 180,000 pixels per frame.</p>
+        </section>
+        <section class="audit-panel" aria-label="Bibliography and methodology readiness">
+          <h3>Bibliography and methodology audit</h3>
+          <p>Reference metadata come from identified standards registries or scholarly listings. A computational audit can verify source receipts and calculate what the experiment demonstrates; it does not substitute for independent peer review.</p>
+          <p id="referenceStatus" role="status">Bibliography is loading.</p>
+          <div id="referenceList" class="audit-list" aria-label="Registered scientific references"></div>
+          <div class="build-buttons">
+            <button id="auditBibtex" type="button">Export vetted BibTeX</button>
+            <button id="auditExport" type="button" disabled>Export methodology audit</button>
+          </div>
+          <label for="auditStudyImport">Audit an exported 3-point or 9-frame experiment JSON
+            <input id="auditStudyImport" type="file" accept=".json,application/json">
+          </label>
+          <p id="auditStatus" role="status" aria-live="polite">Select a complete experiment JSON to audit.</p>
+          <p id="auditResults" class="audit-findings">No experiment audited. Academic manuscript remains locked.</p>
+          <p class="research-warning">Publisher/registry metadata checks are not external scientific review. Unsupported statistical inference, hardware independence, novelty and peer-reviewed publication claims remain blocked.</p>
         </section>
       </section>
     </section>
@@ -745,5 +771,6 @@ else{compile('original');requestDraw();}
 <script type="module" src="./src/lab-figures.mjs"></script>
 <script type="module" src="./src/lab-experiments.mjs"></script>
 <script type="module" src="./src/lab-replications.mjs"></script>
+<script type="module" src="./src/lab-methodology.mjs"></script>
 </body>
 </html>
