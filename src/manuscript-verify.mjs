@@ -76,8 +76,11 @@ export async function verifyManuscriptZip(zip,{
     incoming.every((value,index)=>value===expected.zip[index]),
     'Research ZIP file content, source chain, PDF or central-directory bytes do not reproduce');
   need(canonicalJson(manifest)===canonicalJson(expected.manifest),'Research manifest differs');
+  const digest=new Uint8Array(await subtle.digest('SHA-256',incoming));
+  const archiveSha256=Array.from(digest,byte=>byte.toString(16).padStart(2,'0')).join('');
   return {
     schema:BUNDLE_VERIFICATION_SCHEMA,verdict:'PASS',
+    archiveSha256,
     observedGpuDraws:study.trials.length,studySha256:study.sha256,
     manuscriptSha256:regenerated.record.sha256,auditSha256:audit.sha256,
     inventoryEntries:manifest.fileInventory.length,
