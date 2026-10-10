@@ -20,6 +20,8 @@ test('v2 draft add, connect, build; disconnected nodes block promotion',()=>{
  assert.equal(inspectDAG(g).unused.includes('wave1'),true);
  assert.throws(()=>emitDAG(g),/Unused nodes/);
  g=connectDAG(g,'blend','b','wave1');
+ assert.throws(()=>emitDAG(g),/Unused nodes/);
+ g=removeDAGNode(g,'number');
  assert.doesNotThrow(()=>emitDAG(g));
 });
 test('v2 multiple typed ports allow sum and blend without implicit conversions',()=>{
