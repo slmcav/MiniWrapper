@@ -368,8 +368,8 @@ test('P3 malformed repeat study settings do not create evidence',async({page})=>
 test('P4 bibliography lists metadata-checked sources, quarantines pending citations',async({page})=>{
   await page.goto('/glsl-lab.html');
   await expect(page.locator('#referenceList .audit-source')).toHaveCount(5,{timeout:15000});
-  await expect(page.locator('#referenceStatus')).toContainText('4 metadata-checked sources');
-  await expect(page.locator('#referenceStatus')).toContainText('1 pending primary-source checks');
+  await expect(page.locator('#referenceStatus')).toContainText('4 sources in the reference registry');
+  await expect(page.locator('#referenceStatus')).toContainText('1 source record awaiting reconciliation');
   await expect(page.locator('#auditExport')).toBeDisabled();
   const download=page.waitForEvent('download');
   await page.locator('#auditBibtex').click();
