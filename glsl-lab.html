@@ -60,6 +60,14 @@
     .sweep-panel input[type=file] { max-width:100%; }
     .sweep-panel .out { white-space:pre-wrap; overflow-wrap:anywhere; font:12px/1.5 ui-monospace,monospace; color:#c3dfd7; }
     .sweep-panel [data-error=true] { color:#ffb3ac; }
+    .replicate-panel { margin-top:12px; padding:12px; border:1px solid #496f80; border-radius:12px; background:#112633; }
+    .replicate-panel h3 { margin:0 0 7px; font-size:1rem; color:#c1ece0; }
+    .replicate-panel .study-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:9px; }
+    .replicate-panel label { display:grid; gap:5px; font-size:.8rem; }
+    .replicate-panel select,.replicate-panel input[type=number] { background:#0a1c27; color:#f1f9fb; border:1px solid #4b7080; border-radius:8px; padding:9px; min-height:44px; width:100%; }
+    .replicate-panel input[type=file] { width:100%;max-width:100%; }
+    .replicate-panel .study-out { color:#c9e9e0; white-space:pre-wrap; overflow-wrap:anywhere; font:12px/1.5 ui-monospace,monospace; }
+    .replicate-panel [data-error=true] { color:#ffb3ac; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
     .tabs { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
@@ -215,6 +223,37 @@
           <p id="sweepSummary" class="out">No experiment recorded.</p>
           <p id="sweepComparison" class="out">Import another independently initiated session to compare the same protocol.</p>
           <p class="research-warning">Three treatment levels are descriptive, not three independent experimental replications. Cross-session comparisons require the exact same protocol and shader and do not establish independence, significance or GPU performance.</p>
+        </section>
+        <section class="replicate-panel" aria-label="Counterbalanced replicated observations">
+          <h3>Counterbalanced repeat study</h3>
+          <p>Observe each of three treatment levels three times in a predefined cyclic order. Record the reported graphics capabilities, full-frame measurements and within-level dispersion. Export nine lossless images with the research archive.</p>
+          <div class="study-grid">
+            <label for="repeatParameter">Parameter
+              <select id="repeatParameter"><option value="zoom">Zoom</option><option value="hue">Hue</option><option value="angle">Rotation</option><option value="brightness">Brightness</option></select>
+            </label>
+            <label for="repeatStep">Step each side
+              <input id="repeatStep" type="number" min=".01" max="60" step=".01" value=".2">
+            </label>
+            <label for="repeatTime">Shader time (s)
+              <input id="repeatTime" type="number" min="0" max="3600" step=".1" value="2">
+            </label>
+            <label for="repeatPhase">Counterbalance start
+              <select id="repeatPhase"><option value="0">A → B → C</option><option value="1">B → C → A</option><option value="2">C → A → B</option></select>
+            </label>
+          </div>
+          <div class="build-buttons">
+            <button id="repeatRun" type="button" disabled>Observe 9 frames</button>
+            <button id="repeatExportJson" type="button" disabled>Export study JSON</button>
+            <button id="repeatExportZip" type="button" disabled>Export 9 PNGs</button>
+          </div>
+          <label for="repeatImport">Compare a previously exported repeat-study JSON
+            <input id="repeatImport" type="file" accept=".json,application/json">
+          </label>
+          <p id="repeatStatus" role="status" aria-live="polite">Requires a verified WebGL shader.</p>
+          <p id="repeatPlatform" class="study-out">Graphics platform capabilities not captured.</p>
+          <p id="repeatSummary" class="study-out">No repeated observations yet.</p>
+          <p id="repeatComparison" class="study-out">Import a separate compatible study to compare.</p>
+          <p class="research-warning">Three draws per treatment describe repeat variation, not three independent or randomized experiments. Graphics strings are browser-reported, not proof of identical GPU hardware. Full images remain in browser memory until exported. Nine-frame capture is limited to 180,000 pixels per frame.</p>
         </section>
       </section>
     </section>
@@ -396,6 +435,24 @@ window.glslLabBridge={
   onValidationChange(listener){frameListeners.add(listener);listener(validFrame!==null);return ()=>frameListeners.delete(listener);},
   capture(){if(!validFrame)throw new Error('No successfully drawn frame to capture');return JSON.parse(JSON.stringify(validFrame));},
   getFrameNumber(){return validFrame?frameNumber:-1;},
+  getGraphicsPlatform(){
+    if(!gl||gl.isContextLost?.())throw new Error('WebGL2 graphics context unavailable');
+    const text=value=>String(value??'unreported').slice(0,200);
+    const int=value=>Number.isSafeInteger(value)&&value>=0?value:0;
+    const highp=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.HIGH_FLOAT);
+    return {
+      api:'WebGL2',
+      webglVersion:text(gl.getParameter(gl.VERSION)),
+      shadingLanguageVersion:text(gl.getParameter(gl.SHADING_LANGUAGE_VERSION)),
+      vendor:text(gl.getParameter(gl.VENDOR)),
+      renderer:text(gl.getParameter(gl.RENDERER)),
+      maxTextureSize:int(gl.getParameter(gl.MAX_TEXTURE_SIZE)),
+      maxRenderbufferSize:int(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)),
+      maxVertexAttribs:int(gl.getParameter(gl.MAX_VERTEX_ATTRIBS)),
+      fragmentHighpPrecision:int(highp?.precision),
+      devicePixelRatio:Math.round(Math.min(16,Math.max(.1,Number(devicePixelRatio)||1))*1000)/1000
+    };
+  },
   renderSweepPoint(parameters,shaderTimeSeconds){
     if(!gl||!program||!compiledOK||gl.isContextLost?.())throw new Error('A validated WebGL2 program is required');
     if(!Number.isFinite(shaderTimeSeconds)||shaderTimeSeconds<0||shaderTimeSeconds>3600)throw new Error('Invalid fixed shader time');
@@ -687,5 +744,6 @@ else{compile('original');requestDraw();}
 <script type="module" src="./src/lab-research.mjs"></script>
 <script type="module" src="./src/lab-figures.mjs"></script>
 <script type="module" src="./src/lab-experiments.mjs"></script>
+<script type="module" src="./src/lab-replications.mjs"></script>
 </body>
 </html>
