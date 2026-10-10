@@ -169,21 +169,6 @@
           <button class="accent" type="button" id="resetControls">Reset controls</button>
           <button type="button" id="openCode">Show the math</button>
         </div>
-        <div class="project-box">
-          <h2>My projects</h2>
-          <p>Save your chosen demo and settings in this browser. Export JSON to keep a portable copy.</p>
-          <label for="projectName">Project name</label>
-          <input id="projectName" type="text" value="Untitled GLSL project" maxlength="80">
-          <div class="actions">
-            <button class="accent" id="saveProject" type="button">Save project</button>
-            <button id="exportProject" type="button">Export project JSON</button>
-          </div>
-          <label for="projectPicker">Load a saved project</label>
-          <select id="projectPicker"><option value="">Select saved project</option></select>
-          <label for="importProject">Import project JSON</label>
-          <input id="importProject" type="file" accept=".json,application/json">
-          <p id="projectStatus" role="status" aria-live="polite">Checking browser storage…</p>
-        </div>
         <div class="note">These are five safe visual controls across three existing demos. The other 14 demos, custom GLSL, and video recording remain in the <a href="./index.html">classic editor</a>.</div>
       </div>
       <div class="pane" id="paneBuild" role="tabpanel" aria-labelledby="tabBuild" hidden>
@@ -231,6 +216,23 @@
         <p>Values you are currently sending to the GPU:</p>
         <div class="values" id="values"></div>
         <div class="note">Zoom and rotation adjust the pixel coordinates (FC). Speed changes time (t). Color shift and brightness change the HSV helper. Slider movements update uniforms; only changing the demo compiles a new shader.</div>
+      </div>
+      <div class="pane" aria-label="Project and saved build management">
+        <div class="project-box">
+          <h2>My projects</h2>
+          <p>Save your chosen demo and settings in this browser. Export JSON to keep a portable copy.</p>
+          <label for="projectName">Project name</label>
+          <input id="projectName" type="text" value="Untitled GLSL project" maxlength="80">
+          <div class="actions">
+            <button class="accent" id="saveProject" type="button">Save project</button>
+            <button id="exportProject" type="button">Export project JSON</button>
+          </div>
+          <label for="projectPicker">Load a saved project</label>
+          <select id="projectPicker"><option value="">Select saved project</option></select>
+          <label for="importProject">Import project JSON</label>
+          <input id="importProject" type="file" accept=".json,application/json">
+          <p id="projectStatus" role="status" aria-live="polite">Checking browser storage…</p>
+        </div>
       </div>
     </section>
   </main>
