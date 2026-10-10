@@ -68,3 +68,16 @@ test('P3 sample grid rejects damaged buffers and invalid dimensions',()=>{
  assert.throws(()=>sampleGrid(new Uint8Array(8),2,2),/Invalid full RGBA/);
  assert.throws(()=>sampleGrid(new Uint8Array(16),2,2,3,2),/Invalid sampling grid/);
 });
+
+test('P3 corrupted stored RGBA or metric evidence blocks any subsequent write',async()=>{
+ const storage=memory(),build=await receipt(),first=await createResearchCapture(build,pixels(4,3),{subtle,clock});
+ await saveResearchCapture(first,build,storage,subtle);
+ const altered=JSON.parse(storage.getItem('glsl-lab:research:v1'));
+ altered[0].metrics.meanLuma8=999;
+ const forged=JSON.stringify(altered);
+ storage.setItem('glsl-lab:research:v1',forged);
+ await assert.rejects(()=>readResearchStore(storage,subtle),/measurements failed reproduction audit/);
+ const next=await createResearchCapture(build,pixels(4,3),{subtle,clock:()=> '2026-10-11T08:00:00.000Z'});
+ await assert.rejects(()=>saveResearchCapture(next,build,storage,subtle),/measurements failed reproduction audit/);
+ assert.equal(storage.getItem('glsl-lab:research:v1'),forged);
+});
