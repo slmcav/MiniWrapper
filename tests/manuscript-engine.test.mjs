@@ -9,6 +9,8 @@ import {createReplicatedProtocol,createReplicatedSession} from '../src/research-
 import {auditMethodology} from '../src/methodology-audit.mjs';
 import {assembleManuscript,verifyManuscript,manuscriptRows} from '../src/manuscript-engine.mjs';
 import {renderManuscriptHTML,exportManuscriptBundle} from '../src/manuscript-render.mjs';
+import {createDirectPdf} from '../src/research-pdf.mjs';
+import {prepareEditorialPacket,verifyEditorialPacket} from '../src/scholarly-review.mjs';
 const subtle=webcrypto.subtle;
 globalThis.btoa??=s=>Buffer.from(s,'binary').toString('base64');
 globalThis.atob??=s=>Buffer.from(s,'base64').toString('binary');
@@ -99,7 +101,7 @@ test('P4 manuscript export bundles exact study, audit, figures, references and s
   assert.ok(zip.includes(Buffer.from('references.bib')));
   assert.ok(zip.includes(Buffer.from('shader.glsl')));
   assert.ok(zip.includes(Buffer.from('figures/frame-03.png')));
-  assert.equal(product.manifest.fileInventory.length,8);
+  assert.equal(product.manifest.fileInventory.length,10);
   assert.ok(product.manifest.fileInventory.every(x=>/^[a-f0-9]{64}$/.test(x.sha256)));
   assert.equal(product.manifest.verification.academicManuscriptUnlocked,false);
   assert.doesNotMatch(renderManuscriptHTML(manuscript,{embedImages:false}),/data:image\/png;base64,/);
@@ -124,4 +126,51 @@ test('P4 GLSL contents are HTML-escaped, not executable markup',async()=>{
   assert.ok(html.includes('&lt;script&gt;'));
   assert.ok(!html.includes('<script>alert'));
   assert.ok(html.includes('&lt;/pre&gt;'));
+});
+
+test('P5 directly generated A4 PDF has valid cross-reference, article text and embedded figures',async()=>{
+  const {session,audit}=await fixture();
+  const manuscript=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const pdf=Buffer.from(await createDirectPdf(manuscript,{subtle}));
+  assert.equal(pdf.subarray(0,8).toString('latin1'),'%PDF-1.4');
+  assert.ok(pdf.includes(Buffer.from('/Type /Pages')));
+  assert.ok(pdf.includes(Buffer.from('/MediaBox [0 0 595.28 841.89]')));
+  assert.ok(pdf.includes(Buffer.from('/Subtype /Image')));
+  assert.ok(pdf.includes(Buffer.from('UNREVIEWED RESEARCH DRAFT')));
+  assert.ok(pdf.includes(Buffer.from('2. Materials and methods')));
+  assert.ok(pdf.includes(Buffer.from('References')));
+  assert.ok(pdf.includes(Buffer.from('xref\n')));
+  assert.ok(pdf.includes(Buffer.from('startxref\n')));
+  assert.ok(pdf.includes(Buffer.from('%%EOF')));
+  const size=Number(pdf.toString('latin1').match(/\/Count (\d+) >>/)[1]);
+  assert.ok(size>=2);
+});
+test('P5 PDF generation honors nine-frame treatment statistics and verified source attribution',async()=>{
+  const {session,audit}=await fixture(true);
+  const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const pdf=Buffer.from(await createDirectPdf(draft,{subtle}));
+  assert.ok(pdf.includes(Buffer.from('Sample SD =')));
+  assert.ok(pdf.includes(Buffer.from('@YoheiNishitsuji')));
+  assert.ok(pdf.includes(Buffer.from('independent experimental units'))===false);
+  assert.ok(pdf.includes(Buffer.from('UNREVIEWED')));
+});
+test('P5 tampered sources cannot produce a seemingly valid direct PDF',async()=>{
+  const {session,audit}=await fixture();
+  const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const changed={...draft,record:{...draft.record,authorship:'False author'}};
+  await assert.rejects(()=>createDirectPdf(changed,{subtle}),/do not reproduce/);
+});
+test('P5 unsigned editorial packet explicitly requires real independent human review',async()=>{
+  const {session,audit}=await fixture();
+  const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const packet=await prepareEditorialPacket(draft,{subtle,clock:clock(0)});
+  assert.equal(packet.status,'NOT_SUBMITTED_FOR_REVIEW');
+  assert.equal(packet.humanReviewComplete,false);
+  assert.equal(packet.publicationAuthorized,false);
+  assert.ok(packet.criteria.length>=10);
+  assert.ok(packet.criteria.every(c=>c.status==='pending'));
+  assert.ok(packet.bibliography.some(r=>r.metadataStatus==='pending_primary_metadata'));
+  assert.equal(await verifyEditorialPacket(packet,draft,subtle),true);
+  const forgery=structuredClone(packet);forgery.publicationAuthorized=true;
+  await assert.rejects(()=>verifyEditorialPacket(forgery,draft,subtle),/falsely represents/);
 });
