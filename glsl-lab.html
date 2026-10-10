@@ -97,6 +97,13 @@
     .source-review-panel textarea { min-height:86px;resize:vertical; }
     .source-review-panel .review-data { white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,monospace;color:#bcd9d5; }
     .source-review-panel [data-error=true] { color:#ffb8b0; }
+    .p8-methods { margin-top:15px; padding-top:13px; border-top:1px solid #4b7582; }
+    .p8-methods h4 { margin:0 0 7px; font-size:.98rem; color:#cae8e1; }
+    .p8-claim { margin:8px 0; border:1px solid #456777; border-radius:9px; background:#10212d; }
+    .p8-claim summary { cursor:pointer; padding:10px; font-weight:600; overflow-wrap:anywhere; }
+    .p8-claim summary:focus-visible { outline:2px solid #8fdfd0; outline-offset:2px; }
+    .p8-claim p { margin:5px 10px 11px; overflow-wrap:anywhere; }
+    #p8EvidenceStatus[data-evidence-state=error] { color:#ffb8b0; }
     .panel { border:1px solid #314557; border-radius:17px; overflow:hidden; background:#141e29; min-height:390px; }
     .tabs { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid #354a5c; }
     .tabs button { border:0; border-radius:0; background:#192838; color:#bdcedc; padding:12px; }
@@ -342,6 +349,14 @@
             <p id="sourceClaimCrosswalk" class="review-data">No claim-level source crosswalk yet.</p>
             <button id="sourceCrosswalkExport" type="button" disabled>Export claim-level crosswalk JSON</button>
             <p class="research-warning">A hashed dossier only proves that its notes have not changed since export. Reader identity, source access, passage interpretation and independent scholarly review remain unverified. This workflow never unlocks academic publication.</p>
+            <section class="p8-methods" aria-label="Read-only P8 methodological evidence gaps">
+              <h4>P8 — Independent methodology and primary-literature assessment</h4>
+              <p>Source-grounded analytical findings, separate from the manuscript, the scientific archive and self-declared reader notes. A pinned research register identifies exactly which stronger claims need additional evidence.</p>
+              <p id="p8EvidenceStatus" role="status" aria-live="polite" data-evidence-state="loading">Research findings are loading.</p>
+              <div id="p8EvidenceRows" aria-label="Claim-specific evidence requirements"></div>
+              <p><a href="./docs/P8_INDEPENDENT_METHODS.md">Read the primary-literature methods assessment</a> · <a href="./docs/P9_REPLICATION_PROTOCOL.md">Independent replication protocol</a></p>
+              <p class="research-warning">No field in this display certifies a reader, experimental replication, journal peer review, scientific novelty or publication authorization. Original manuscript receipts and unsigned review packets are unchanged.</p>
+            </section>
           </section>
           <section class="paper-draft-panel" aria-label="Generated research manuscript draft">
             <h3>Research manuscript draft</h3>
@@ -864,5 +879,6 @@ else{compile('original');requestDraw();}
 <script type="module" src="./src/lab-manuscript.mjs"></script>
 <script type="module" src="./src/lab-bundle-verify.mjs"></script>
 <script type="module" src="./src/lab-source-review.mjs"></script>
+<script type="module" src="./src/lab-p8-methods.mjs"></script>
 </body>
 </html>
