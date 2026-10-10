@@ -26,6 +26,7 @@ $('manuscriptZipImport').addEventListener('change',async e=>{
     $('manuscriptZipResults').textContent=[
       'Verification: '+result.verdict,
       'Exact ZIP SHA-256: '+result.archiveSha256,
+      'Producer source snapshot: '+result.sourceSnapshotCommit,
       'GPU observations: '+result.observedGpuDraws,
       'Study SHA-256: '+result.studySha256,
       'Manuscript SHA-256: '+result.manuscriptSha256,
