@@ -111,6 +111,13 @@ test('P2 mobile builder compiles a typed graph and saves its project',async({pag
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('glsl-lab:projects:v1'))[0]);
   expect(saved.demoId).toBe('builder');
   expect(saved.graph.nodes).toHaveLength(6);
+  await page.locator('#saveBuild').click();
+  await expect(page.locator('#receiptInfo')).toContainText('Saved SHA-256',{timeout:30000});
+  const receipt=await page.evaluate(()=>JSON.parse(localStorage.getItem('glsl-lab:receipts:v1'))[0]);
+  expect(receipt.shader.identifier).toBe('builder');
+  expect(receipt.graph.nodes).toHaveLength(6);
+  expect(receipt.shader.attribution).toMatch(/User-authored/);
+  expect(receipt.sha256).toMatch(/^[a-f0-9]{64}$/);
   await page.reload();
   await page.locator('#projectPicker').selectOption(saved.id);
   await expect(page.locator('#paneBuild')).toBeVisible();
