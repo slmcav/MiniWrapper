@@ -454,6 +454,20 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   expect(html).toContain('References');
   expect(html).toContain('Appendix A');
   expect(html).toContain('@page');
+  const pdfDl=page.waitForEvent('download');
+  await page.locator('#paperDirectPdf').click();
+  const pdf=Buffer.from(await readFile(await (await pdfDl).path()));
+  expect(pdf.subarray(0,8).toString('latin1')).toBe('%PDF-1.4');
+  expect(pdf.includes(Buffer.from('/Subtype /Image'))).toBe(true);
+  expect(pdf.includes(Buffer.from('UNREVIEWED'))).toBe(true);
+  const reviewDl=page.waitForEvent('download');
+  await page.locator('#paperReviewPacket').click();
+  const review=JSON.parse((await readFile(await (await reviewDl).path())).toString('utf8'));
+  expect(review.status).toBe('NOT_SUBMITTED_FOR_REVIEW');
+  expect(review.humanReviewComplete).toBe(false);
+  expect(review.publicationAuthorized).toBe(false);
+  expect(review.criteria.length).toBeGreaterThanOrEqual(10);
+  expect(review.criteria.every(item=>item.status==='pending')).toBe(true);
   const zipDl=page.waitForEvent('download');
   await page.locator('#paperExportZip').click();
   const zip=Buffer.from(await readFile(await (await zipDl).path()));
@@ -461,6 +475,8 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   expect(zip.includes(Buffer.from('manuscript.html'))).toBe(true);
   expect(zip.includes(Buffer.from('figures/frame-03.png'))).toBe(true);
   expect(zip.includes(Buffer.from('references.bib'))).toBe(true);
+  expect(zip.includes(Buffer.from('manuscript.pdf'))).toBe(true);
+  expect(zip.includes(Buffer.from('review-packet.json'))).toBe(true);
   const n=zip.readUInt16LE(26),offset=30+n+zip.readUInt16LE(28),size=zip.readUInt32LE(18);
   const manifest=JSON.parse(zip.toString('utf8',offset,offset+size));
   expect(manifest.verification.academicManuscriptUnlocked).toBe(false);
@@ -477,5 +493,7 @@ test('P4 manuscript release gate closes again when a subsequent audit fails',asy
   await expect(page.locator('#generatePaper')).toBeDisabled();
   await expect(page.locator('#paperDownloadHtml')).toBeDisabled();
   await expect(page.locator('#paperExportZip')).toBeDisabled();
+  await expect(page.locator('#paperDirectPdf')).toBeDisabled();
+  await expect(page.locator('#paperReviewPacket')).toBeDisabled();
   await expect(page.locator('#paperPreview')).toBeHidden();
 });
