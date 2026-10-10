@@ -14,7 +14,6 @@ function demos(script,endMarker) {
   return vm.runInNewContext(script.slice(start,end)+'\nDEMOS;');
 }
 const original=demos(classicJs,'const codeEl');
-const labPresets=demos(labJs,'const LABELS');
 const lockedHashes={
   original:'deb0b018',rotation:'3dffcc5a',yohei:'bee505cd',demo4:'b9f0942a',
   demo5:'1a239088',demo6:'895a3665',demo7:'76b58235',demo8:'64e61f32',
@@ -31,9 +30,10 @@ test('all 17 supplied GLSL strings stay unchanged',()=>{
   assert.deepEqual(Object.keys(original),Object.keys(lockedHashes));
   for(const [key,source] of Object.entries(original))assert.equal(fnv32(source),lockedHashes[key],key+' changed unexpectedly');
 });
-test('Lab presets match the first 3 exact source expressions',()=>{
-  assert.deepEqual(Object.keys(labPresets),['original','rotation','yohei']);
-  for(const k of Object.keys(labPresets))assert.equal(labPresets[k],original[k]);
+test('Lab excludes credited exploration presets entirely',()=>{
+  assert.ok(!labJs.includes('const DEMOS ='));
+  assert.ok(!lab.includes('id="demo"'));
+  assert.match(labJs,/Only authored expression graphs may run in GLSL Lab/);
 });
 test('classic remains linked and retains its 17 shader controls',()=>{
   for(const token of ['href="./glsl-lab.html"','id="example"','id="download-image"','id="record-video"','id="recording-indicator"'])
