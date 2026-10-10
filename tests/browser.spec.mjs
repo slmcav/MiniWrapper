@@ -123,3 +123,56 @@ test('P2 mobile builder compiles a typed graph and saves its project',async({pag
   await expect(page.locator('#paneBuild')).toBeVisible();
   await expect(page.locator('#graphChain .graph-node')).toHaveCount(6);
 });
+
+test('P2 advanced typed wiring builds a branched shader with validated evidence',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  await page.locator('#tabBuild').click();
+  await page.locator('#advancedToggle').click();
+  await expect(page.locator('#advancedBuilder')).toBeVisible();
+  await expect(page.locator('#quickBuilder')).toBeHidden();
+  await expect(page.locator('.dag-card')).toHaveCount(8);
+  await expect(page.locator('#dagBuild')).toBeEnabled();
+  await expect(page.locator('#dagGenerated')).toHaveValue(/mix\(g_waveA, g_number/);
+  const available=await page.evaluate(()=>Boolean(document.getElementById('glcanvas').getContext('webgl2')));
+  test.skip(!available,'WebGL2 absent: advanced graph GPU smoke requires actual GL');
+  await page.locator('#dagBuild').click();
+  await expect(page.locator('#error')).toBeEmpty({timeout:30000});
+  await expect(page.locator('#saveBuild')).toBeEnabled({timeout:30000});
+  await page.locator('#projectName').fill('Branch experiment');
+  await page.locator('#saveProject').click();
+  await expect(page.locator('#projectStatus')).toContainText('Project saved');
+  await page.locator('#saveBuild').click();
+  await expect(page.locator('#receiptInfo')).toContainText('Saved SHA-256',{timeout:30000});
+  const saved=await page.evaluate(()=>({
+    project:JSON.parse(localStorage.getItem('glsl-lab:projects:v1'))[0],
+    receipt:JSON.parse(localStorage.getItem('glsl-lab:receipts:v1'))[0]
+  }));
+  expect(saved.project.graph.version).toBe(2);
+  expect(saved.receipt.graph.version).toBe(2);
+  expect(saved.receipt.graph.nodes).toHaveLength(8);
+  expect(saved.receipt.sha256).toMatch(/^[a-f0-9]{64}$/);
+  expect(saved.project.buildIds).toContain(saved.receipt.sha256);
+  await page.reload();
+  await page.locator('#projectPicker').selectOption(saved.project.id);
+  await expect(page.locator('#advancedBuilder')).toBeVisible();
+  await expect(page.locator('.dag-card')).toHaveCount(8);
+});
+test('P2 advanced wires enforce unused-node gate and allow explicit reconnection',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  await page.locator('#tabBuild').click();
+  await page.locator('#advancedToggle').click();
+  await page.locator('#dagNewType').selectOption('wave');
+  await page.locator('#dagAdd').click();
+  await expect(page.locator('.dag-card')).toHaveCount(9);
+  await expect(page.locator('#dagBuild')).toBeDisabled();
+  await page.locator('[data-dag-node="blend"]').click();
+  await page.locator('[data-dag-port="b"]').selectOption('wave1');
+  await expect(page.locator('#dagBuild')).toBeDisabled();
+  await page.locator('[data-dag-node="number"]').click();
+  await expect(page.locator('#dagRemove')).toBeEnabled();
+  await page.locator('#dagRemove').click();
+  await expect(page.locator('.dag-card')).toHaveCount(8);
+  await expect(page.locator('#dagBuild')).toBeEnabled();
+  await page.locator('#dagAutoLayout').click();
+  await expect(page.locator('#dagReady')).toHaveText('Ready to compile');
+});

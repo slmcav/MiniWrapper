@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto,randomUUID} from 'node:crypto';
 import {createStarterGraph,validateGraph} from '../src/expression-graph.mjs';
+import {createStarterDAG} from '../src/graph-dag.mjs';
 import {createBuildReceipt} from '../src/build-evidence.mjs';
 import {PROJECT_SCHEMA,createProject,validateProject,listProjects,saveProject,
   importProject,exportProject,listReceipts,saveReceipt,findReceipt} from '../src/project-store.mjs';
@@ -112,4 +113,22 @@ test('P2 reject builder projects with invalid or missing graphs',()=>{
   const invalid=createStarterGraph();invalid.nodes[1].input='missing';
   assert.throws(()=>create({demoId:'builder',graph:invalid}),/Missing node/);
   assert.throws(()=>create({demoId:'original',graph:createStarterGraph()}),/cannot contain/);
+});
+
+test('P2 v2 wiring project persists explicit ports and card positions',()=>{
+  const s=storage(),graph=createStarterDAG(),project=create({demoId:'builder',graph});
+  saveProject(project,s);
+  assert.deepEqual(listProjects(s)[0].graph,graph);
+  const imported=importProject(exportProject(project),{storage:s,clock:now,randomUUID:uuid});
+  assert.notEqual(imported.id,project.id);
+  assert.equal(imported.graph.version,2);
+  assert.equal(imported.graph.nodes.find(n=>n.id==='blend').inputs.a,'waveA');
+  assert.deepEqual(imported.graph.nodes.find(n=>n.id==='color').position,graph.nodes.find(n=>n.id==='color').position);
+});
+test('P2 invalid DAG project imports are refused without corrupting local storage',()=>{
+  const s=storage(),graph=createStarterDAG(),p=create({demoId:'builder',graph});
+  saveProject(p,s);
+  const invalid=JSON.parse(exportProject(p));invalid.graph.nodes[5].inputs.a='coords';
+  assert.throws(()=>importProject(JSON.stringify(invalid),{storage:s,clock:now,randomUUID:uuid}),/Type mismatch/);
+  assert.deepEqual(listProjects(s)[0].graph,graph);
 });

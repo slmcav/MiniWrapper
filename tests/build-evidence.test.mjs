@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 import {createStarterGraph,emitGLSL} from '../src/expression-graph.mjs';
+import {createStarterDAG,emitDAG,connectDAG} from '../src/graph-dag.mjs';
 import {BUILD_RECEIPT_SCHEMA, canonicalJson,createBuildReceipt,validateBuildReceipt,verifyBuildReceipt} from '../src/build-evidence.mjs';
 const subtle=webcrypto.subtle;
 const input=()=>({
@@ -95,4 +96,26 @@ test('P2 cannot mint an authored graph receipt with missing or mismatched graph'
   await assert.rejects(()=>build(typed),/not generated/);
   const demo=input();demo.graph=createStarterGraph();
   await assert.rejects(()=>build(demo),/must not claim a graph/);
+});
+
+test('P2 DAG v2 receipt contains exact typed wiring, layout and generated source',async()=>{
+  const graph=createStarterDAG(),body=emitDAG(graph),record=input();
+  record.demoId='builder';record.attribution='User-authored via GLSL Lab expression graph';
+  record.graph=graph;record.shaderBody=body;
+  const receipt=await build(record);
+  assert.equal(receipt.graph.version,2);
+  assert.equal(receipt.graph.nodes.length,8);
+  assert.equal(receipt.shader.body,body);
+  assert.equal(await verifyBuildReceipt(JSON.parse(JSON.stringify(receipt)),subtle),true);
+});
+test('P2 DAG v2 receipts reject unused nodes, mismatched source and bad version',async()=>{
+  const graph=createStarterDAG(),record=input();
+  record.demoId='builder';record.attribution='User-authored via GLSL Lab expression graph';
+  record.graph=graph;record.shaderBody='o.rgb = vec3(0.);';
+  await assert.rejects(()=>build(record),/not generated/);
+  record.shaderBody=emitDAG(graph);
+  record.graph=connectDAG(graph,'blend','b','waveA');
+  await assert.rejects(()=>build(record),/Unused nodes/);
+  record.graph={...graph,version:99};
+  await assert.rejects(()=>build(record),/Unsupported builder graph version/);
 });
