@@ -176,3 +176,51 @@ test('P2 advanced wires enforce unused-node gate and allow explicit reconnection
   await page.locator('#dagAutoLayout').click();
   await expect(page.locator('#dagReady')).toHaveText('Ready to compile');
 });
+
+test('P3 real WebGL sampled research capture is reproducible and exportable',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  const available=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+  test.skip(!available,'WebGL2 unavailable; actual pixel readback is a required device gate');
+  await expect(page.locator('#researchCapture')).toBeEnabled({timeout:30000});
+  await page.locator('#researchCapture').click();
+  await expect(page.locator('#researchStatus')).toContainText('Captured actual WebGL pixels',{timeout:30000});
+  await expect(page.locator('#researchCount')).toContainText('1 locally stored sampled frame');
+  await expect(page.locator('#researchMetrics')).toContainText('Sample:');
+  await expect(page.locator('#researchExport')).toBeEnabled();
+  const evidence=await page.evaluate(async()=>{
+    const capture=JSON.parse(localStorage.getItem('glsl-lab:research:v1'))[0];
+    const receipt=JSON.parse(localStorage.getItem('glsl-lab:receipts:v1'))[0];
+    const module=await import('/src/research-capture.mjs');
+    await module.verifyResearchCapture(capture,receipt);
+    return {capture,receipt};
+  });
+  expect(evidence.capture.receiptSha256).toBe(evidence.receipt.sha256);
+  expect(evidence.capture.sampler.columns).toBeLessThanOrEqual(32);
+  expect(evidence.capture.sampler.rows).toBeLessThanOrEqual(24);
+  expect(evidence.capture.metrics.sampleCount).toBe(evidence.capture.sampler.columns*evidence.capture.sampler.rows);
+  expect(evidence.capture.metrics.lumaHistogram16.reduce((a,b)=>a+b,0)).toBe(evidence.capture.metrics.sampleCount);
+  expect(evidence.capture.sample.sha256).toMatch(/^[a-f0-9]{64}$/);
+  const dl=page.waitForEvent('download');
+  await page.locator('#researchExport').click();
+  expect((await dl).suggestedFilename()).toBe('glsl-lab-research-1-captures.json');
+  await page.reload();
+  await expect(page.locator('#researchCount')).toContainText('1 locally stored sampled frame',{timeout:30000});
+  await expect(page.locator('#researchExport')).toBeEnabled();
+  await expect(page.locator('#generatePaper')).toBeDisabled();
+});
+test('P3 research capture cannot proceed without a freshly validated frame',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  await expect(page.locator('#researchCapture')).toBeEnabled({timeout:30000});
+  await page.locator('#tabPlay').click();
+  await page.locator('#zoom').evaluate(el=>{
+    el.value='1.75';
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  await expect(page.locator('#zoomValue')).toHaveText('175%');
+  // After the next successful render, a fresh capture is allowed again.
+  await expect(page.locator('#researchCapture')).toBeEnabled({timeout:30000});
+  await page.locator('#researchCapture').click();
+  await expect(page.locator('#researchStatus')).toContainText('Captured actual WebGL pixels',{timeout:30000});
+  const observed=await page.evaluate(()=>JSON.parse(localStorage.getItem('glsl-lab:receipts:v1'))[0]);
+  expect(observed.parameters.zoom).toBe(1.75);
+});
