@@ -2,6 +2,8 @@
 // Uses synthetic pixels only; not empirical evidence.
 import {webcrypto} from 'node:crypto';
 import {mkdir,writeFile} from 'node:fs/promises';
+import {renderLaTeXManuscript} from '../src/manuscript-latex.mjs';
+import {latexBuildScripts} from '../src/latex-build-scripts.mjs';
 import {createBuildReceipt} from '../src/build-evidence.mjs';
 import {createResearchCapture} from '../src/research-capture.mjs';
 import {createFigureEvidence} from '../src/research-figures.mjs';
@@ -44,4 +46,13 @@ const manuscript=await assembleManuscript(study,{audit,subtle,clock:time(0)});
 const pdf=await createDirectPdf(manuscript,{subtle});
 await mkdir(dir,{recursive:true});
 await writeFile(dir+'/shader-study.pdf',pdf);
+const latex=await renderLaTeXManuscript(manuscript,subtle);
+const scripts=latexBuildScripts(manuscript.record);
+await writeFile(dir+'/manuscript.tex',latex);
+await writeFile(dir+'/shader.glsl',manuscript.shader);
+await writeFile(dir+'/build-latex.sh',scripts.bash);
+await writeFile(dir+'/build-latex.ps1',scripts.powershell);
+await mkdir(dir+'/figures',{recursive:true});
+for(const figure of manuscript.figures)await writeFile(dir+'/'+figure.path,figure.png);
+process.stdout.write('Wrote reproducible LaTeX source and original PNGs into '+dir+'\\n');
 process.stdout.write('Wrote '+dir+'/shader-study.pdf ('+pdf.length+' bytes)\n');
