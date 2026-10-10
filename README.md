@@ -193,3 +193,16 @@ After a verified research experiment is imported, audited and assembled as an un
 **Export complete research ZIP** now includes `manuscript.pdf` alongside HTML, original PNGs, study data, GLSL, bibliography, methodology report, a SHA-256 inventory, and an unsigned `review-packet.json`. **Export reviewer checklist** downloads the handoff separately. Every review criterion remains pending: author/license rights, primary-text/passages, literature comparison, design/uncertainty, hardware, figure fidelity, reproducibility, final page layout, and independent review. Neither a hash nor a metadata check authenticates peer review or publication approval.
 
 A separate CI job generates a known synthetic study, parses the direct PDF with Poppler (`pdfinfo` and `pdftotext`), rasterizes its pages, and retains output for visual inspection. The release gates also verify source tampering, original-frame images and publication-state refusal. A4 PDF uses standard Times/Courier encoding and may transliterate unsupported mathematical glyphs or names; visually review these before scholarly distribution. See `docs/EDITORIAL_REVIEW.md`. The accepted product visual comp is kept entirely outside the repository.
+
+### P6 — Independently verify a completed research ZIP
+
+The Research manuscript draft section now includes **Verify an exported research bundle**. Import the previously exported ZIP to verify the entire experiment, every archived RGBA/PNG figure, the bibliography, the exact manuscript/PDF and the unsigned editorial-review packet. It re-creates the original ZIP and compares **every byte** rather than trusting the exported manifest. A successful result can be downloaded as an unsigned machine-verification receipt. A failed or tampered archive refuses the receipt.
+
+The same verification is available offline with Node.js 22+:
+
+```sh
+node scripts/verify-research-zip.mjs path/to/manuscript.zip
+node scripts/verify-research-zip.mjs path/to/manuscript.zip --receipt path/to/verification.json
+```
+
+This verification can be repeated on another computer without network access, but it is an internal evidence-consistency test—not proof of original hardware conditions, human identity, independent replication or academic publication. Keep the Git revision that produced the archive, because evolving bibliography/layout code can legitimately require the original version for byte-identical reconstruction. See `docs/REPRODUCIBILITY.md` for the complete protocol and claim-level citation audit.

@@ -145,3 +145,11 @@ A dependency-free, client-side PDF 1.4 writer consumes the verified manuscript a
 The independent Poppler render check is an additional quality gate. PDF parser acceptance and visual page proof are recorded separately; rendering a PDF does not establish journal acceptance, calibrated math typography or independent peer review. The reviewer packet preserves explicit incomplete tasks, including primary-text passage verification, source rights, repeatability, graphics calibration, statistical assumptions, originality evaluation and independent scientific/editorial signoff. The application cannot automatically mark peer review passed.
 
 Remaining P5 steps include complete literature appraisal and author rights review, venue-specific formatting, review signatures by identifiable humans, non-ASCII font embedding, long-code appendix wrapping and QA on multiple authentic mobile/desktop studies.
+
+## P6 — Portable offline research bundle verification
+
+The export is no longer a terminal artifact: the Lab reimports the manuscript ZIP as an untrusted bounded stored-ZIP container, validates its local headers/CRC/central directory and refuses duplicate or unsafe paths. The archive then supplies a frozen experiment and methodology report. The import process independently re-runs the full research verification, manuscript assembly, PNG generation, PDF generation, bibliography and reviewer packet and compares the **entire regenerated ZIP byte-for-byte**. The downloadable machine-verification receipt contains original study, audit and manuscript hashes, exact figure counts and no publication-approval claim.
+
+A companion Node.js 22+ CLI implements the same verification with nonzero process exit on failure. Both routes have regression coverage for three-frame and nine-frame studies, forged approval state and corrupted bytes; the Chromium manuscript scenario imports and deliberately corrupts a real WebGL-derived export. Full research semantics, citation scopes and versioning limitations are documented in `docs/REPRODUCIBILITY.md`.
+
+Replaying an internally consistent archive does not establish its original hardware or scientific authorship. Authenticity requires independently accountable signatures/observers, documented acquisition environment and independent review. The approved visual reference never belongs in Git history.
