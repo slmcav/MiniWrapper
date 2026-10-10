@@ -4,6 +4,7 @@ import {verifyManuscript,MANUSCRIPT_SCHEMA} from './manuscript-engine.mjs';
 import {zipStored} from './research-figures.mjs';
 import {createDirectPdf} from './research-pdf.mjs';
 import {prepareEditorialPacket} from './scholarly-review.mjs';
+import {exportSourceLineage} from './source-lineage.mjs';
 const ok=(p,m)=>{if(!p)throw new TypeError(m);};
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const f=n=>Number(n).toFixed(3);
@@ -150,6 +151,7 @@ export async function exportManuscriptBundle(bundle,{
     {name:'methodology-audit.json',data:enc.encode(JSON.stringify(bundle.audit,null,2)+'\n')},
     {name:'references.bib',data:enc.encode(bundle.bibtex)},
     {name:'shader.glsl',data:enc.encode(bundle.shader)},
+    {name:'source-lineage.json',data:enc.encode(JSON.stringify(exportSourceLineage(),null,2)+'\n')},
     {name:'manuscript.pdf',data:await createDirectPdf(bundle,{subtle})},
     {name:'review-packet.json',data:enc.encode(JSON.stringify(await prepareEditorialPacket(bundle,{subtle,clock:()=>bundle.record.generatedAt}),null,2)+'\n')}
   ];
