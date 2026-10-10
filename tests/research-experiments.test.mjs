@@ -48,7 +48,7 @@ test('P3 separate sessions compare descriptively despite different image pixels'
  assert.equal(summary.comparisons.length,3);
  assert.ok(summary.comparisons[0].meanAbsRgb8>0);
  assert.match(summary.inferenceScope,/independence not established/);
- await assert.rejects(()=>compareSweepSessions(first,first,subtle),/same session/);
+ await assert.rejects(()=>compareSweepSessions(first,first,subtle),/one session with itself/);
 });
 test('P3 identical pixels in separate session are permissible, changed protocol is not',async()=>{
  const first=await make('session_0001'),same=await make('session_0002');
@@ -60,11 +60,11 @@ test('P3 identical pixels in separate session are permissible, changed protocol 
 test('P3 tampering archived pixels, parameters or drawing order invalidates the study',async()=>{
  const study=await make('session_0001');
  const damaged=structuredClone(study);damaged.trials[0].rgbaBase64='AAAA';
- await assert.rejects(()=>verifySweepSession(damaged,subtle),/hash mismatch/);
+ await assert.rejects(()=>verifySweepSession(damaged,subtle),/SHA-256 mismatch/);
  const forged=structuredClone(study);forged.trials[2].receipt.parameters.zoom=1.9;
  const {sha256,...body}=forged;
  forged.sha256=await sha256Hex(canonicalJson(body),subtle);
- await assert.rejects(()=>verifySweepSession(forged,subtle),/hash mismatch|settings/);
+ await assert.rejects(()=>verifySweepSession(forged,subtle),/SHA-256 mismatch|settings/);
 });
 test('P3 archive exports complete verified experiment JSON and all PNGs as ZIP',async()=>{
  const s=await make('session_0001'),zip=Buffer.from(await exportSweepZip(s,subtle));
