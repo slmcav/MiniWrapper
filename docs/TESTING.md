@@ -39,3 +39,5 @@ G7 — P1 integrated local persistence: save/load/versioned project JSON, restor
 
 
 G8 — P2 build stack: immutable graph editing, insert/remove, automatic typed reconnection, safe parameter mutation, same-type reordering, undo/redo, export/import, project persistence, mobile Build tab, real browser generated GLSL compilation and P1 receipt eligibility. This is a sequential typed graph, not yet a freeform wiring canvas.
+
+G9 — P2 advanced branched workspace: validate graph v2 inputs and output, reject cycles and type mismatches, enforce unused-node/required-port build gates, preserve touch/keyboard layout and undo/redo, import/export v2 graphs, compile generated GLSL in the real browser, and keep full graph + source agreement inside hashed build receipts. Verify v1 projects still restore and archived shader fixtures remain unchanged.

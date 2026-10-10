@@ -11,3 +11,7 @@ Paper bundle target: HTML, PDF, BibTeX, build receipt JSON, exact GLSL, captured
 ## Browser integration checkpoint
 
 The Save validated build action is enabled only after the current WebGL program's vertex/fragment compilation, linking, draw submission and gl.getError()==gl.NO_ERROR have been observed. A slider edit, shader switch, reset, failed draw or context loss invalidates the capture. The receipt is produced with src/build-evidence.mjs, verified again, and stored locally under the sha256 key; the JSON can then be exported. These observations do not include unmeasured shader quality or claims of originality.
+
+## Graph-v2 evidence provenance
+
+For validated builder-source records, the frozen receipt contains the complete authored graph (version 1 or 2) and its generated GLSL. The generator refuses any graph that does not deterministically produce the exact stored shader body. A graph-v2 receipt preserves node coordinates, port assignments, parameters and output. Incomplete graphs cannot claim measured success. Any future paper describing generated shader structure must cite this frozen graph and not a later mutable UI state.
