@@ -94,19 +94,34 @@ export function compareFullFrames(first,second){
 export async function createFrameSeries(figures,options={}){
   const subtle=options.subtle||globalThis.crypto?.subtle;
   need(Array.isArray(figures)&&figures.length>=2&&figures.length<=5,'Series needs 2 to 5 verified frames');
-  const first=figures[0],records=figures.map(x=>x.record),seen=new Set();
+  const first=figures[0],records=figures.map(x=>x.record);
+  need(first.receipt,'Series must include verified build receipts');
+  await verifyBuildReceipt(first.receipt,subtle);
+  const conditions=canonicalJson({
+    shader:first.receipt.shader,graph:first.receipt.graph||null,
+    parameters:first.receipt.parameters,viewport:first.receipt.viewport,runtime:first.receipt.runtime
+  });
   for(const f of figures){
-    need(f.record.schema===FIGURE_SCHEMA&&f.rgba instanceof Uint8Array,'Invalid series frame');
+    need(f.record.schema===FIGURE_SCHEMA&&f.rgba instanceof Uint8Array&&f.receipt,'Invalid series frame');
+    await verifyBuildReceipt(f.receipt,subtle);
+    need(f.record.receiptSha256===f.receipt.sha256,'Series figure has mismatched build provenance');
     need(f.record.width===first.record.width&&f.record.height===first.record.height,'Frame dimensions changed during series');
-    need(!seen.has(f.record.sha256),'Repeated identical frame content cannot be counted as a new observation');
-    seen.add(f.record.sha256);
+    need(canonicalJson({shader:f.receipt.shader,graph:f.receipt.graph||null,
+      parameters:f.receipt.parameters,viewport:f.receipt.viewport,runtime:f.receipt.runtime})===conditions,
+      'Shader, graph, settings or viewport changed during series');
+  }
+  for(let i=1;i<records.length;i++){
+    need(Date.parse(records[i].capturedAt)>=Date.parse(records[i-1].capturedAt),
+      'Figure observations must be ordered by capture time');
+    need(records[i].frameTimeSeconds>=records[i-1].frameTimeSeconds,
+      'Shader time decreased during capture series');
   }
   const pairs=[];
   for(let i=1;i<figures.length;i++){
     pairs.push({from:i-1,to:i,elapsedShaderSeconds:Math.round((records[i].frameTimeSeconds-records[i-1].frameTimeSeconds)*1e6)/1e6,
       ...compareFullFrames(figures[i-1].rgba,figures[i].rgba)});
   }
-  const body={schema:SERIES_SCHEMA,figureSha256:records.map(r=>r.sha256),
+  const body={schema:SERIES_SCHEMA,frames:records.map(r=>({figureSha256:r.sha256,capturedAt:r.capturedAt,shaderTimeSeconds:r.frameTimeSeconds})),
     width:first.record.width,height:first.record.height,pairs,
     inferenceScope:'Descriptive within-session pixel changes; no independence, hardware timing, or significance claim'};
   return {...body,sha256:await sha256Hex(canonicalJson(body),subtle)};
