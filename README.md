@@ -2,15 +2,15 @@
 
 A **single-file browser wrapper** for compact GLSL fragment-shader expressions. Open `index.html` in a browser with **WebGL2** enabled; the supplied demos are preloaded in the selector and render automatically. No build system, external libraries, accounts, or server are required.
 
-## GLSL Lab (mobile-first Play prototype)
+## GLSL Lab — computational graphics research
 
-[Open GLSL Lab](glsl-lab.html) from the button at the top of the classic editor, or open [the dedicated page](glsl-lab.html) directly. The Lab is a separate static HTML page so the 17-demo classic editor and its video recording remain unchanged.
+[Open GLSL Lab](glsl-lab.html) for an authored shader, controlled WebGL2 experiment, reproducible measurements and a LaTeX research manuscript. The gallery remains in [the classic shader editor](index.html): all 17 supplied shaders retain their original @YoheiNishitsuji attribution **outside** the scientific Lab. Gallery sources cannot be promoted into scientific study or manuscript exports, including direct pasted copies and straightforward formatting variants.
 
-The **Play** panel currently supports three source demos (Original field, Rotating 3D fractal, Log-polar bloom), all credited to **@YoheiNishitsuji**. Its five real-time controls are Shape size (zoom), Turn the view (orientation), Movement speed (time), Color shift (HSV hue), and Brightness (HSV value). The controls update WebGL2 uniforms without recompiling the shader; changing the selected demo compiles that demo once.
+The mobile Lab keeps the animated canvas pinned while the research controls scroll, with an accessible bottom drawer containing **Play**, **Build**, and **Code**. Swipe horizontally inside the expanded drawer to switch modes. Desktop layouts retain the two-column workspace. Start with an editable typed shader graph; only successfully compiled and drawn sources can enter the evidence pathway.
 
-The preview stays visible while scrolling on small screens. **Understand · Code** shows the unchanged compact GLSL expression and the currently applied parameter values. Pause, restart, reset controls, copy expression, and Save PNG are available. This is an intentionally limited **Play prototype**, not a claim that arbitrary GLSL can be automatically converted into draggable blocks. The other 14 demos, custom shader authoring, and native video export remain in the classic editor.
+**Research workflow:** Author a graph → run a controlled 3-point or 9-draw experiment → **Audit current study** → generate the evidence-backed manuscript → **Export LaTeX research package**. Export contains `manuscript.tex`, `build-latex.sh`, `build-latex.ps1`, original shader GLSL, original framebuffer PNG figures, complete experimental JSON, methodology JSON, BibTeX, unsigned source-review packet, source-lineage inventory and SHA-256 manifest. Native TeX Live compilation generates an A4 PDF named `GLSL-{UniqueID}_{PDFSHA256}.pdf`; the final 64-digit hash is computed from the exact compiled PDF bytes.
 
-This page uses plain HTML/CSS/JavaScript with no build step or dependency. GitHub Pages serves it at `/MiniWrapper/glsl-lab.html`.
+See [P10 academic release QA](docs/ACADEMIC_RELEASE_QA.md) for the nine-phase research quality gates and [P9 independent replication protocol](docs/P9_REPLICATION_PROTOCOL.md) for the experimental-unit design. The historical P1–P7 implementation notes below describe their original release state; this section is the current research-path contract.
 
 ## Run
 
@@ -84,7 +84,7 @@ The user-visible textbox retains the original compact expressions. Only these kn
 ## Files
 
 - `index.html` — fully standalone editor, GLSL compiler, WebGL2 canvas, animation loop, demo selector, and export controls.
-- `glsl-lab.html` — mobile-first Play/Understand workspace with three original demos, five live GPU controls, and PNG export.
+- `glsl-lab.html` — research-only typed expression builder, live WebGL2 canvas, mobile bottom drawer, controlled studies, metadata audit and evidence-backed LaTeX export.
 - `README.md` — usage and explanation of the supplied functions.
 
 ## Browser compatibility and performance
@@ -186,17 +186,19 @@ The document includes a read-only in-page preview, **Download print-ready HTML**
 
 Before assembling or archiving, the engine recomputes the complete study/audit, original full-resolution frames, figure hashes and citation scope; it refuses altered artifacts. It reports only measurements actually present, labels n=1 SD as *not estimated*, describes n=3 SD as descriptive, preserves underlying authorship credit, and excludes sources pending metadata review. The output explicitly states **UNREVIEWED RESEARCH DRAFT**, not peer reviewed, publication-ready or scientifically novel. PDF creation uses the platform's print dialog and requires selecting a PDF destination; **it is not a direct JavaScript-generated PDF file**. The external scholarly sign-off and publication release gate remain separate.
 
-### P5 — Direct PDF, PDF quality check and independent review handoff
+### P5 — Historical direct-PDF fixture (superseded in the academic pipeline)
 
-After a verified research experiment is imported, audited and assembled as an unreviewed research manuscript, select **Download PDF directly**. This creates a genuine A4 PDF 1.4 in the browser with typeset article sections, exact archived GLSL, treatment statistics, equations, scoped references, and GPU-source-derived image figures. It does not use screenshot capture or the browser print dialog, which remains available separately.
+The earlier implementation produced a PDF using custom browser JavaScript. Its standalone formatter and Poppler checks remain as a regression fixture for archive compatibility. The **current** scholarly PDF pathway instead generates verifiable `manuscript.tex` and compiles it using native `pdfLaTeX` from the complete research package. Original WebGL2 figures and all evidence receipts are retained. The scientific PDF is compiled after export; the browser does not substitute an HTML printout or the legacy JavaScript PDF for TeX output.
 
-**Export complete research ZIP** now includes `manuscript.pdf` alongside HTML, original PNGs, study data, GLSL, bibliography, methodology report, a SHA-256 inventory, and an unsigned `review-packet.json`. **Export reviewer checklist** downloads the handoff separately. Every review criterion remains pending: author/license rights, primary-text/passages, literature comparison, design/uncertainty, hardware, figure fidelity, reproducibility, final page layout, and independent review. Neither a hash nor a metadata check authenticates peer review or publication approval.
+### P10 — Research-only Lab and TeX manuscript export
 
-A separate CI job generates a known synthetic study, parses the direct PDF with Poppler (`pdfinfo` and `pdftotext`), rasterizes its pages, and retains output for visual inspection. The release gates also verify source tampering, original-frame images and publication-state refusal. A4 PDF uses standard Times/Courier encoding and may transliterate unsupported mathematical glyphs or names; visually review these before scholarly distribution. See `docs/EDITORIAL_REVIEW.md`. The accepted product visual comp is kept entirely outside the repository.
+The research page accepts only user-authored typed expression graphs. The 17 credited classic-gallery demonstrations are excluded at both shader study auditing and manuscript assembly, even if the original source is pasted into a purportedly independent project. The source filter identifies exact and straightforward reformatted copies; the signed-off research rights review remains separate.
+
+Research users can build, save and export a graph; perform controlled GPU captures; audit the current in-memory study or an imported archive; create a cited manuscript; export a source-complete LaTeX ZIP; run the included TeX Live scripts; and reproduce the archived data with the offline ZIP verifier. A4 PDF production is tested using native TeX, Poppler text/image/page extraction and content-hash filename validation. The approved visual contract is private and is not stored in GitHub.
 
 ### P6 — Independently verify a completed research ZIP
 
-The Research manuscript draft section now includes **Verify an exported research bundle**. Import the previously exported ZIP to verify the entire experiment, every archived RGBA/PNG figure, the bibliography, the exact manuscript/PDF and the unsigned editorial-review packet. It re-creates the original ZIP and compares **every byte** rather than trusting the exported manifest. A successful result can be downloaded as an unsigned machine-verification receipt. A failed or tampered archive refuses the receipt.
+The Research manuscript draft section now includes **Verify an exported research bundle**. Import the previously exported ZIP to verify the entire experiment, every archived RGBA/PNG figure, the bibliography, the exact manuscript/LaTeX source and the unsigned editorial-review packet. It re-creates the original ZIP and compares **every byte** rather than trusting the exported manifest. A successful result can be downloaded as an unsigned machine-verification receipt. A failed or tampered archive refuses the receipt.
 
 The same verification is available offline with Node.js 22+:
 
@@ -210,7 +212,7 @@ This verification can be repeated on another computer without network access, bu
 The P6 independent ZIP verifier includes an exact `archiveSha256` in its verification receipt, visibly and through the offline CLI. This is the digest of the supplied ZIP byte stream, distinct from the study SHA-256, manuscript SHA-256, and the per-file inventory. Keep the corresponding Git checkout to reproduce source-dependent rendering. It is not a signature or publication approval.
 
 
-Every new research ZIP contains `source-lineage.json`, which records the exact producer-source snapshot and the Git blob IDs of 21 critical application/generator/verifier files. The independent archive checker refuses lineage that does not match its release, while fast CI fails if any pinned source file changes without updating the snapshot. Use the recorded Git snapshot when independently reproducing an older study. This protects against silent cross-version bibliography and PDF-layout drift without suggesting that code content hashes authenticate the origin of GPU pixels.
+Every new research ZIP contains `source-lineage.json`, which records the exact producer-source snapshot and the pinned Git blob IDs of the source-generating and verification files. The independent archive checker refuses lineage that does not match its release, while fast CI fails if any pinned source file changes without updating the snapshot. Use the recorded Git snapshot when independently reproducing an older study. This protects against silent cross-version bibliography and PDF-layout drift without suggesting that code content hashes authenticate the origin of GPU pixels.
 
 ### P7 citation-by-citation review notes
 
