@@ -51,7 +51,8 @@ test('P3 tampered pixels, metrics and receipt provenance fail closed',async()=>{
  await assert.rejects(()=>verifyResearchCapture(tamper(x=>x.metrics.meanRgb8[0]=999),build,subtle),/measurements/);
  await assert.rejects(()=>verifyResearchCapture(tamper(x=>x.sample.rgbaBase64='AAAA'),build,subtle),/byte length/);
  await assert.rejects(()=>verifyResearchCapture(tamper(x=>x.sha256='f'.repeat(64)),build,subtle),/SHA-256 mismatch/);
- await assert.rejects(()=>verifyResearchCapture(good,await receipt(5,3),subtle),/different shader build/);
+ const otherBuild=await receipt(5,3);
+ await assert.rejects(()=>verifyResearchCapture(good,otherBuild,subtle),/different shader build/);
 });
 test('P3 research store only saves linked, hash-verified observations',async()=>{
  const storage=memory(),build=await receipt(),record=await createResearchCapture(build,pixels(4,3),{subtle,clock});
