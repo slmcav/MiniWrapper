@@ -121,10 +121,21 @@ export async function readResearchStore(storage=globalThis.localStorage,subtle=g
   valid(raw.length<=1_200_000,'Research storage size limit exceeded');
   const records=JSON.parse(raw);
   valid(Array.isArray(records)&&records.length<=16,'Research capture count limit exceeded');
-  // Stored captures are self-consistent; linked receipts are independently checked by caller.
+  // Validate each stored sample independently before allowing another write.
+  // The caller also validates that each receiptSha256 resolves to a genuine build.
   for(const record of records){
-    valid(plain(record)&&hex(record.sha256),'Malformed stored capture');
-    valid(plain(record.sample)&&typeof record.sample.rgbaBase64==='string','Malformed stored pixel data');
+    valid(plain(record)&&hex(record.sha256)&&hex(record.receiptSha256),'Malformed stored capture');
+    valid(record.schema===RESEARCH_SCHEMA&&plain(record.sample)&&plain(record.sampler)&&plain(record.metrics),'Malformed research record');
+    const grid=record.sampler;
+    valid(Number.isSafeInteger(grid.columns)&&Number.isSafeInteger(grid.rows)&&
+      grid.columns>0&&grid.rows>0&&grid.columns<=32&&grid.rows<=24,'Invalid stored grid');
+    valid(typeof record.sample.rgbaBase64==='string'&&hex(record.sample.sha256),'Malformed stored pixel data');
+    const bytes=decodeBase64(record.sample.rgbaBase64);
+    valid(bytes.length===grid.columns*grid.rows*4,'Stored RGBA sample length mismatch');
+    valid(await hashBytes(bytes,subtle)===record.sample.sha256,'Stored sampled pixels failed SHA-256 audit');
+    valid(canonicalJson(record.metrics)===canonicalJson(calculateSampleMetrics(bytes)),'Stored measurements failed reproduction audit');
+    const {sha256,capturedAt,...body}=record;
+    valid(await sha256Hex(canonicalJson(body),subtle)===sha256,'Stored research record SHA-256 mismatch');
   }
   return records.map(copy);
 }
