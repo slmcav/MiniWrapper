@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {webcrypto} from 'node:crypto';
 import {ORIGINAL_DEMO_SIGNATURES,canonicalShader,identifyExampleShader,assertResearchEligibleShader} from '../src/research-source-policy.mjs';
 import {pdfFilename,assertPdfFilename} from '../src/pdf-filename.mjs';
+import {escapeLaTeXText} from '../src/manuscript-latex.mjs';
 const subtle=webcrypto.subtle;
 test('All seventeen attributed gallery shaders are forbidden as research evidence, even when reformatted',async()=>{
  const gallery=await readFile(new URL('../index.html',import.meta.url),'utf8');
@@ -87,4 +88,11 @@ test('Academic modules and test server maintain syntactically valid JavaScript',
   const check=spawnSync(process.execPath,['--check',file.pathname],{encoding:'utf8'});
   assert.equal(check.status,0,path+': '+check.stderr);
  }
+});
+
+test('Native LaTeX manuscript preserves scholarly diacritics and mathematical glyphs',()=>{
+ assert.equal(escapeLaTeXText('García & Müller'),String.raw`García \& Müller`);
+ assert.equal(escapeLaTeXText('π × μ'),String.raw`\ensuremath{\pi} \ensuremath{\times} \ensuremath{\mu}`);
+ assert.throws(()=>escapeLaTeXText('emoji: \u{1f680}'),/Unsupported LaTeX character/);
+ assert.equal(escapeLaTeXText('C# {Study}_1'),String.raw`C\# \{Study\}\_1`);
 });
