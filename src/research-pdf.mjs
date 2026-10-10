@@ -203,6 +203,8 @@ export async function createDirectPdf(bundle,{subtle=globalThis.crypto?.subtle}=
   article.paragraph('Archived shader identifier: '+r.shaderIdentifier+
     '. Shader attribution in the recorded source receipt: '+r.shaderAttribution+
     ' (not independently authenticated).');
+  // Keep the subsection heading, explanatory paragraph and equations on one page.
+  article.ensure(150);
   article.heading('2.1. Measurement equation',2);
   article.paragraph('For encoded 8-bit RGB channel values, define the Rec.709-weighted encoded-channel '+
     'luma proxy. It is not calibrated physical luminance:');
