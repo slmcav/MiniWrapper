@@ -713,6 +713,8 @@ test('Phase 2 visual contract: real dashboard panels remain simultaneous on desk
  expect(positions.preview.x).toBeLessThan(positions.builder.x);
  expect(positions.builder.x).toBeLessThan(positions.paper.x);
  expect(positions.lower.y).toBeGreaterThan(positions.preview.y+240);
+ expect(positions.lower.x+positions.lower.w).toBeLessThanOrEqual(positions.paper.x+2);
+ expect(positions.paper.h).toBeGreaterThanOrEqual(650);
  expect(positions.overflow).toBeLessThanOrEqual(positions.viewport+1);
  await page.screenshot({path:'test-results/visual-audit/desktop-contract-1648.png',animations:'disabled'});
  await page.getByRole('navigation',{name:'Project navigation'}).getByRole('button',{name:'Settings'}).click();
@@ -725,6 +727,7 @@ test('Phase 2 mobile contract: four accessible navigation modes open actual cont
  await page.goto('/glsl-lab.html');
  await expect(page.locator('.contract-mobile-nav')).toBeVisible();
  await expect(page.locator('.contract-sidebar')).toBeHidden();
+ await expect(page.locator('.contract-heading h1')).toHaveCSS('white-space','nowrap');
  await expect(page.locator('.contract-mobile-nav button')).toHaveCount(4);
  await page.getByRole('navigation',{name:'Mobile research navigation'}).getByRole('button',{name:'Builder'}).click();
  await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','true');
