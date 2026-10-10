@@ -3,6 +3,10 @@ import {REFERENCES,bibliographicReadiness,exportBibtex} from './reference-regist
 import {auditMethodology,verifyMethodologyAudit,bibliographyForAudit} from './methodology-audit.mjs';
 const $=id=>document.getElementById(id);
 let audit=null,study=null,busy=false;
+window.glslLabAuditedStudy={
+  current(){return audit&&study?{audit,study}:null;}
+};
+const notify=()=>window.dispatchEvent(new Event('glsl-lab-audit-updated'));
 const state=(msg,error=false)=>{
   $('auditStatus').textContent=msg;$('auditStatus').dataset.error=String(error);
 };
@@ -54,9 +58,11 @@ $('auditStudyImport').addEventListener('change',async event=>{
       ...result.release.reasons.map(x=>'- '+x)
     ].join('\n');
     $('auditExport').disabled=false;
+    notify();
     state('Experiment and methodology findings independently recomputed from archived bytes. No publication authorization granted.');
   }catch(e){
     audit=null;study=null;$('auditExport').disabled=true;
+    notify();
     $('auditResults').textContent='No accepted methodology audit. Manuscript gate remains locked.';
     state('Audit rejected: '+String(e.message||e),true);
   }finally{busy=false;event.target.value='';}
