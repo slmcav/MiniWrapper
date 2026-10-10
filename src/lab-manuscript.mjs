@@ -38,6 +38,7 @@ $('generatePaper').addEventListener('click',async()=>{
     await verifyManuscript(prepared);
     const html=renderManuscriptHTML(prepared,{embedImages:true});
     draft=prepared;markup=html;
+    window.dispatchEvent(new Event('glsl-lab-manuscript-ready'));
     $('paperPreview').srcdoc=html;$('paperPreview').hidden=false;
     $('paperSource').textContent='Manuscript SHA-256: '+draft.record.sha256+
       '\n'+draft.record.observedDraws+' verified GPU observations; '+
