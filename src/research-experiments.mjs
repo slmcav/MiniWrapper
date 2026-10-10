@@ -41,7 +41,7 @@ function expectedSettings(p,index){
 }
 function shaderIdentity(receipt){
  return canonicalJson({shader:receipt.shader,graph:receipt.graph||null,viewport:receipt.viewport,
-    runtime:receipt.runtime,compileCpuMs:receipt.compileCpuMs??null});
+    runtime:receipt.runtime});
 }
 function frameBytes(trial){
  return decode(trial.rgbaBase64);
@@ -73,6 +73,14 @@ async function auditCore(protocol,trials,subtle){
    assert(canonicalJson(figure.record)===canonicalJson(entry.figure),
      'Archived lossless figure does not reproduce its recorded pixel evidence');
    rebuilt.push({...figure,receipt:entry.receipt,capture:entry.capture});
+ }
+ for(let i=1;i<trials.length;i++){
+   const prior=trials[i-1].figure,current=trials[i].figure;
+   assert(Date.parse(current.capturedAt)>=Date.parse(prior.capturedAt),
+     'Sweep observations must be chronologically ordered');
+   if(prior.drawSequence!==undefined||current.drawSequence!==undefined)
+     assert(Number.isSafeInteger(prior.drawSequence)&&Number.isSafeInteger(current.drawSequence)&&
+       current.drawSequence>prior.drawSequence,'Sweep requires distinct ordered GPU draws');
  }
  // Comparisons are ordered by treatment level, not timing; presentation order is recorded.
  return {identity,viewport,figures:rebuilt};
