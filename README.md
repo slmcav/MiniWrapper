@@ -13,13 +13,15 @@ The app compiles the textbox text into a GLSL ES 3.00 fragment shader, draws a f
 
 ## Included demos
 
-### 1. Original field
+All three supplied shader demos are credited to **@YoheiNishitsuji**. MiniWrapper preserves their compact expressions in the demo selector.
+
+### 1. Original field (@YoheiNishitsuji)
 
 ```glsl
 float i,e,R,s;vec3 q,p,d=vec3(FC.xy/r*.4-vec2(.2,-.8),1);for(q.zy--;i++<70.;){o.rgb+=hsv(.59,R,min(e*s-.15,1.)/40.);s=4.;p=q+=d*e*R*.3;p=vec3(log(R=length(p*1.3)),exp2(-p.z/R),atan(p.y,p.x)*s-t*.3);for(e=--p.y;s<1e3;s+=s)e+=sin(dot(cos(p*s),sin(p.xyx*s+t*.9)))/s*.5;}
 ```
 
-### 2. Rotating 3D fractal
+### 2. Rotating 3D fractal (@YoheiNishitsuji)
 
 ```glsl
 for(float i,g,e,s;++i<99.;o.rgb+=.01-hsv(.1,g*.016-e*.3,s/2e2)){vec3 p=vec3((FC.xy-.5*r)/r.y*5.+vec2(0,9),g)*rotate3D(-1.1-cos(t*.15)*.1,vec3(1,11.+sin(t)*.15,-1.5));s=2.;for(int i;i++<19;p=vec3(.08,4,-1)-abs(abs(p)*e-vec3(3,4,3)))s*=e=7.1/dot(p,p*.51);g+=p.y/s;s=log2(s)/exp(e);}
@@ -58,7 +60,7 @@ The user-visible textbox retains the original compact expressions. Only these kn
 ## Export support
 
 - **PNG** export uses the current canvas frame.
-- **WebM/MP4** export (depending on browser support) uses the browser's native `canvas.captureStream()` and `MediaRecorder` support.
+- **WebM/MP4** export (depending on browser support) uses the browser's native `canvas.captureStream()` and `MediaRecorder` support. A pulsing red dot appears immediately to the right of the recording button while the recorder is active, disappearing on Stop, recording completion, or an error.
 - On browsers without native recording support, the video recording button is disabled.
 
 ## Files
