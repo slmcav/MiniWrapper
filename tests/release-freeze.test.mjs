@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {SOURCE_SNAPSHOT_COMMIT,PINNED_SOURCE_BLOBS} from '../src/source-lineage.mjs';
-import {createReviewPacket} from '../src/scholarly-review.mjs';
 import {ORIGINAL_DEMO_SIGNATURES} from '../src/research-source-policy.mjs';
 
 const read=async(path)=>readFile(new URL('../'+path,import.meta.url),'utf8');
