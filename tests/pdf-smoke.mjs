@@ -26,7 +26,7 @@ for(let i=0;i<3;i++){
   const receipt=await createBuildReceipt({
     shaderBody:'o.rgb = vec3(.5);',
     expandedShader:'#version 300 es\nvoid main(){o.rgb = vec3(.5);}',
-    demoId:'original',attribution:'@YoheiNishitsuji',
+    demoId:'research_fixture',attribution:'Synthetic QA fixture',
     checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
     viewport:{width:w,height:h},parameters:{...params,zoom:protocol.levels[i]},shaderTimeSeconds:2
   },{subtle,clock:time(i)});
