@@ -327,3 +327,45 @@ test('P3 invalid parameter sweep is rejected without creating a research archive
   await expect(page.locator('#sweepStatus')).toContainText('Experiment rejected');
   await expect(page.locator('#sweepExportJson')).toBeDisabled();
 });
+
+test('P3 mobile nine-frame counterbalanced capture records graphics capability and reproducible evidence',async({page})=>{
+  test.setTimeout(180000);
+  await page.goto('/glsl-lab.html');
+  const available=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+  test.skip(!available,'A real WebGL2 shader is required for replicated graphics research');
+  await expect(page.locator('#repeatRun')).toBeEnabled({timeout:30000});
+  await page.locator('#repeatRun').click();
+  await expect(page.locator('#repeatStatus')).toContainText('Nine frames verified',{timeout:90000});
+  await expect(page.locator('#repeatSummary')).toContainText('n=3');
+  await expect(page.locator('#repeatPlatform')).toContainText('WebGL');
+  const dl=page.waitForEvent('download');
+  await page.locator('#repeatExportJson').click();
+  const downloaded=await dl;
+  expect(downloaded.suggestedFilename()).toMatch(/^glsl-repeat-[\w-]+\.json$/);
+  const study=JSON.parse((await readFile(await downloaded.path())).toString('utf8'));
+  expect(study.schema).toBe('glsl-lab/replicated-session/1');
+  expect(study.trials).toHaveLength(9);
+  expect(study.summary.map(x=>x.observationCount)).toEqual([3,3,3]);
+  expect(study.protocol.sequence.map(x=>x.levelIndex)).toEqual([0,1,2,1,2,0,2,0,1]);
+  expect(study.platform.api).toBe('WebGL2');
+  const repeatProof=await page.evaluate(async session=>{
+    const mod=await import('/src/research-replications.mjs');
+    const figures=await mod.verifyReplicatedSession(session);
+    return {count:figures.length,allPixels:figures.every(f=>f.rgba.length===f.record.width*f.record.height*4)};
+  },study);
+  expect(repeatProof).toEqual({count:9,allPixels:true});
+  const zipDl=page.waitForEvent('download');
+  await page.locator('#repeatExportZip').click();
+  const zip=Buffer.from(await readFile(await (await zipDl).path()));
+  expect(zip.readUInt32LE(0)).toBe(0x04034b50);
+  expect(zip.includes(Buffer.from('figures/trial-09.png'))).toBe(true);
+  await expect(page.locator('#generatePaper')).toBeDisabled();
+});
+test('P3 malformed repeat study settings do not create evidence',async({page})=>{
+  await page.goto('/glsl-lab.html');
+  await expect(page.locator('#repeatRun')).toBeEnabled({timeout:30000});
+  await page.locator('#repeatStep').fill('99');
+  await page.locator('#repeatRun').click();
+  await expect(page.locator('#repeatStatus')).toContainText('Study rejected',{timeout:10000});
+  await expect(page.locator('#repeatExportJson')).toBeDisabled();
+});
