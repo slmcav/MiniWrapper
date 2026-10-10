@@ -13,6 +13,9 @@
     header { padding: 14px clamp(16px, 3vw, 28px) 8px; }
     h1 { font-size: 1.25rem; margin: 0; letter-spacing: .02em; }
     header p { margin: 4px 0 0; color: #aebbc8; }
+    header .lab-link { display:inline-flex; align-items:center; justify-content:center; margin-top:10px; min-height:42px; border:1px solid #2fb79d; background:#0e685b; color:#f2fffc; border-radius:9px; padding:9px 15px; font-weight:650; text-decoration:none; }
+    header .lab-link:hover { background:#117e6d; }
+    header .lab-link:focus-visible { outline:2px solid #8fdfd0; outline-offset:3px; }
     section { padding: 12px clamp(16px, 3vw, 28px) 14px; border-block: 1px solid #283342; background: #131b25; }
     label { display: inline-block; font-weight: 600; margin-bottom: 6px; }
     textarea { display: block; width: 100%; height: 135px; resize: vertical; padding: 11px 12px; color: #e8f2fd; background: #080d13; border: 1px solid #3d5164; border-radius: 6px; font: 12.5px/1.6 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 2; }
@@ -52,6 +55,7 @@
   <header>
     <h1>MiniWrapper</h1>
     <p>Run compact GLSL fragment-shader snippets directly in a WebGL2 browser.</p>
+    <a class="lab-link" href="./glsl-lab.html" role="button">Open GLSL Lab →</a>
   </header>
   <section aria-label="Shader editor">
     <label for="code">Fragment shader body</label>
