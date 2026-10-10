@@ -2,6 +2,7 @@
 // Three treatment levels x three positional counterbalance blocks = nine *observed* draws.
 // Descriptive within-treatment dispersion only, not independent experimental trials.
 import {canonicalJson,sha256Hex,verifyBuildReceipt} from './build-evidence.mjs';
+import {assertResearchEligibleShader} from './research-source-policy.mjs';
 import {createSweepProtocol} from './research-experiments.mjs';
 import {verifyResearchCapture} from './research-capture.mjs';
 import {createFigureEvidence,zipStored} from './research-figures.mjs';
@@ -87,6 +88,8 @@ async function reconstruct(protocol,trials,platform,subtle){
       trial.levelIndex===slot.levelIndex,'Observed order violates counterbalance protocol');
     check(obj(trial.receipt)&&obj(trial.capture)&&obj(trial.figure),'Incomplete trial provenance');
     await verifyBuildReceipt(trial.receipt,subtle);
+    assertResearchEligibleShader({body:trial.receipt.shader.body,
+      identifier:trial.receipt.shader.identifier,attribution:trial.receipt.shader.attribution});
     await verifyResearchCapture(trial.capture,trial.receipt,subtle);
     const settings={...protocol.sweep.baseline,
       [protocol.sweep.parameter]:protocol.sweep.levels[slot.levelIndex]};

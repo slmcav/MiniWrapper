@@ -1,5 +1,6 @@
 // Evidence-driven research draft preparation: no claims of publication or peer review.
 import {canonicalJson,sha256Hex} from './build-evidence.mjs';
+import {assertResearchEligibleShader} from './research-source-policy.mjs';
 import {auditMethodology,verifyMethodologyAudit,bibliographyForAudit} from './methodology-audit.mjs';
 import {createFigureEvidence} from './research-figures.mjs';
 export const MANUSCRIPT_SCHEMA='glsl-lab/manuscript-draft/1';
@@ -27,6 +28,10 @@ export async function assembleManuscript(study,{
   audit,clock=()=>new Date().toISOString(),subtle=globalThis.crypto?.subtle
 }={}){
   need(subtle&&typeof subtle.digest==='function','Web Crypto required');
+  for(const trial of study.trials)assertResearchEligibleShader({
+    body:trial.receipt?.shader?.body,identifier:trial.receipt?.shader?.identifier,
+    attribution:trial.receipt?.shader?.attribution
+  });
   const reviewed=audit||await auditMethodology(study,{clock,subtle});
   await verifyMethodologyAudit(reviewed,study,subtle);
   need(reviewed.release.academicManuscriptUnlocked===false&&reviewed.release.descriptiveReportSupported===true,

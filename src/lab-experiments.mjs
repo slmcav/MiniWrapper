@@ -75,6 +75,8 @@ $('sweepRun').addEventListener('click',async()=>{
     const candidate=await run();
     const compared=prior?await compareSweepSessions(prior,candidate):null;
     session=candidate;comparison=compared;output();
+    window.glslLabLatestExperiment=candidate;
+    window.dispatchEvent(new Event('glsl-lab-study-ready'));
     message(compared?'Experiment verified and compared to the imported session.':
       'Experiment verified. Export the JSON to reproduce or compare this session.');
   }catch(error){message('Experiment rejected: '+String(error.message||error),true);}

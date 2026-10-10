@@ -9,6 +9,6 @@
     "test:all": "npm run test:fast && npm run test:browser"
   },
   "devDependencies": {
-    "@playwright/test": "1.55.0"
+    "@playwright/test": "1.64.0"
   }
 }

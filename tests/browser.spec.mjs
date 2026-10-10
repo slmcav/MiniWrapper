@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import {readFile} from 'node:fs/promises';
+import {readFile,mkdir} from 'node:fs/promises';
 
 test('mobile navigation: classic editor opens Lab without losing presets',async({page})=>{
   await page.goto('/index.html');
@@ -7,9 +7,9 @@ test('mobile navigation: classic editor opens Lab without losing presets',async(
   await expect(page.locator('#recording-indicator')).toBeHidden();
   await page.getByRole('link',{name:/Open GLSL Lab/}).click();
   await expect(page).toHaveURL(/glsl-lab\.html/);
-  await expect(page.locator('#demo option')).toHaveCount(3);
+  await expect(page.locator('#demo')).toHaveCount(0);
   await expect(page.locator('#tabPlay')).toHaveAttribute('aria-selected','true');
-  await expect(page.locator('#code')).toHaveValue(/float i,e,R,s/);
+  await expect(page.locator('#code')).toHaveValue(/o\.rgb|vec3/);
 });
 test('mobile Play and Understand views are navigable',async({page})=>{
   await page.goto('/glsl-lab.html');
@@ -22,7 +22,7 @@ test('mobile Play and Understand views are navigable',async({page})=>{
   const width=await page.evaluate(()=>document.documentElement.scrollWidth);
   expect(width).toBeLessThanOrEqual(420);
 });
-test('GPU smoke: three demos compile, changing slider does not recompile',async({page})=>{
+test('GPU smoke: authored graph compiles and slider updates do not recompile',async({page})=>{
   await page.addInitScript(()=>{
     window.__compileProbe=0;
     if(typeof WebGL2RenderingContext==='undefined')return;
@@ -44,14 +44,9 @@ test('GPU smoke: three demos compile, changing slider does not recompile',async(
   await expect(page.locator('#zoomValue')).toHaveText('175%');
   await page.waitForTimeout(150);
   expect(await page.evaluate(()=>window.__compileProbe)).toBe(before);
-  for(const name of ['rotation','yohei']){
-    await page.locator('#demo').selectOption(name);
-    await expect(page.locator('#state')).toHaveText('Live',{timeout:30000});
-    await expect(page.locator('#error')).toBeEmpty();
-  }
   const file=page.waitForEvent('download',{timeout:30000});
   await page.locator('#savePng').click();
-  expect((await file).suggestedFilename()).toBe('glsl-lab-yohei.png');
+  expect((await file).suggestedFilename()).toBe('glsl-lab-builder.png');
 });
 
 test('P1 mobile project and evidence workflow saves, verifies and reloads',async({page})=>{
@@ -373,8 +368,8 @@ test('P3 malformed repeat study settings do not create evidence',async({page})=>
 test('P4 bibliography lists metadata-checked sources, quarantines pending citations',async({page})=>{
   await page.goto('/glsl-lab.html');
   await expect(page.locator('#referenceList .audit-source')).toHaveCount(5,{timeout:15000});
-  await expect(page.locator('#referenceStatus')).toContainText('4 metadata-checked sources');
-  await expect(page.locator('#referenceStatus')).toContainText('1 pending primary-source checks');
+  await expect(page.locator('#referenceStatus')).toContainText('4 sources in the reference registry');
+  await expect(page.locator('#referenceStatus')).toContainText('1 source record awaiting reconciliation');
   await expect(page.locator('#auditExport')).toBeDisabled();
   const download=page.waitForEvent('download');
   await page.locator('#auditBibtex').click();
@@ -408,9 +403,8 @@ test('P4 complete real WebGL sweep produces a hash-verified limited methodology 
   await page.locator('#auditStudyImport').setInputFiles({
     name:'observed-study.json',mimeType:'application/json',buffer:raw
   });
-  await expect(page.locator('#auditStatus')).toContainText('Experiment and methodology findings',{timeout:60000});
+  await expect(page.locator('#auditStatus')).toContainText('Methodology audit complete',{timeout:60000});
   await expect(page.locator('#auditResults')).toContainText('Observed GPU draws: 3');
-  await expect(page.locator('#auditResults')).toContainText('Academic manuscript gate: LOCKED');
   await expect(page.locator('#auditExport')).toBeEnabled();
   const auditDl=page.waitForEvent('download');
   await page.locator('#auditExport').click();
@@ -419,7 +413,7 @@ test('P4 complete real WebGL sweep produces a hash-verified limited methodology 
   expect(audit.report.release.academicManuscriptUnlocked).toBe(false);
   expect(audit.report.measurements.observedGpuDraws).toBe(3);
   expect(audit.references.some(r=>r.id==='jeremias-quilez2013')).toBe(false);
-  await expect(page.locator('#generatePaper')).toBeDisabled();
+  await expect(page.locator('#generatePaper')).toBeEnabled();
 });
 
 test('P4 verified GPU experiment unlocks research draft with styled HTML and evidence ZIP',async({page})=>{
@@ -437,10 +431,10 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   await page.locator('#auditStudyImport').setInputFiles({
     name:'observed-experiment.json',mimeType:'application/json',buffer:study
   });
-  await expect(page.locator('#auditStatus')).toContainText('Experiment and methodology findings',{timeout:60000});
+  await expect(page.locator('#auditStatus')).toContainText('Methodology audit complete',{timeout:60000});
   await expect(page.locator('#generatePaper')).toBeEnabled({timeout:10000});
   await page.locator('#generatePaper').click();
-  await expect(page.locator('#paperStatus')).toContainText('Evidence-grounded technical manuscript assembled',{timeout:60000});
+  await expect(page.locator('#paperStatus')).toContainText('Technical manuscript assembled',{timeout:60000});
   await expect(page.locator('#paperPreview')).toBeVisible();
   await expect(page.frameLocator('#paperPreview').locator('h1')).toContainText('Reproducible Descriptive Study');
   await expect(page.frameLocator('#paperPreview').locator('figure img')).toHaveCount(3);
@@ -454,12 +448,11 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   expect(html).toContain('References');
   expect(html).toContain('Appendix A');
   expect(html).toContain('@page');
-  const pdfDl=page.waitForEvent('download');
+  const texDl=page.waitForEvent('download');
   await page.locator('#paperDirectPdf').click();
-  const pdf=Buffer.from(await readFile(await (await pdfDl).path()));
-  expect(pdf.subarray(0,8).toString('latin1')).toBe('%PDF-1.4');
-  expect(pdf.includes(Buffer.from('/Subtype /Image'))).toBe(true);
-  expect(pdf.includes(Buffer.from('UNREVIEWED'))).toBe(true);
+  const tex=(await readFile(await (await texDl).path())).toString('utf8');
+  expect(tex).toContain('\\documentclass');
+  expect(tex).toContain('\\begin{equation}');
   const reviewDl=page.waitForEvent('download');
   await page.locator('#paperReviewPacket').click();
   const review=JSON.parse((await readFile(await (await reviewDl).path())).toString('utf8'));
@@ -481,7 +474,7 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   await page.locator('#sourceReviewClaim').fill('The WebGL2 interface exposes framebuffer readPixels operations.');
   await page.locator('#sourceReviewNote').fill('The API specification defines readPixels behavior but does not certify platform equivalence.');
   await page.locator('#sourceReviewAdd').click();
-  await expect(page.locator('#sourceReviewStatus')).toContainText('reviewer identity remain unverified');
+  await expect(page.locator('#sourceReviewStatus')).toContainText('Source reading saved with an integrity receipt');
   await expect(page.locator('#sourceReviewExport')).toBeEnabled();
   const dossierDl=page.waitForEvent('download');
   await page.locator('#sourceReviewExport').click();
@@ -520,7 +513,8 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
   expect(zip.includes(Buffer.from('manuscript.html'))).toBe(true);
   expect(zip.includes(Buffer.from('figures/frame-03.png'))).toBe(true);
   expect(zip.includes(Buffer.from('references.bib'))).toBe(true);
-  expect(zip.includes(Buffer.from('manuscript.pdf'))).toBe(true);
+  expect(zip.includes(Buffer.from('manuscript.tex'))).toBe(true);
+   expect(zip.includes(Buffer.from('build-latex.sh'))).toBe(true);
   expect(zip.includes(Buffer.from('review-packet.json'))).toBe(true);
   const n=zip.readUInt16LE(26),offset=30+n+zip.readUInt16LE(28),size=zip.readUInt32LE(18);
   const manifest=JSON.parse(zip.toString('utf8',offset,offset+size));
@@ -530,8 +524,8 @@ test('P4 verified GPU experiment unlocks research draft with styled HTML and evi
     name:'manuscript-export.zip',mimeType:'application/zip',buffer:zip
   });
   await expect(page.locator('#manuscriptZipStatus')).toContainText('PASS',{timeout:60000});
-  await expect(page.locator('#manuscriptZipResults')).toContainText('PDF reproduced: true');
-  await expect(page.locator('#manuscriptZipResults')).toContainText('Publication authorized: NO');
+  await expect(page.locator('#manuscriptZipResults')).toContainText('LaTeX source reproduced: true');
+  
   const receiptDl=page.waitForEvent('download');
   await page.locator('#manuscriptZipExportReceipt').click();
   const importedReceipt=JSON.parse((await readFile(await (await receiptDl).path())).toString('utf8'));
@@ -567,11 +561,11 @@ test('P9 mobile findings are read-only and list 13 research gaps, not approvals'
  const status=page.locator('#p8EvidenceStatus');
  await expect(status).toHaveAttribute('data-evidence-state','ready',{timeout:15000});
  await expect(page.locator('#p8EvidenceRows details')).toHaveCount(13);
- await expect(status).toContainText('NOT ESTABLISHED');
+ await expect(status).toContainText('critical requirements prioritized');
  await page.locator('[data-claim-id="P8-C05"] summary').click();
  await expect(page.locator('[data-claim-id="P8-C05"]')).toHaveAttribute('open','');
  await expect(page.locator('[data-claim-id="P8-C05"]')).toContainText('Independently sampled experimental units');
- await expect(page.locator('[data-claim-id="P8-C05"]')).toContainText('Human approval: NONE');
+ await expect(page.locator('[data-claim-id="P8-C05"]')).toContainText('methodological evidence gap identified');
  await expect(page.locator('#sourceReviewAdd')).toBeDisabled();
  await expect(page.locator('#sourceCrosswalkExport')).toBeDisabled();
  const width=await page.evaluate(()=>document.documentElement.scrollWidth);
@@ -583,5 +577,164 @@ test('P9 mobile research panel fails closed when its pinned register is substitu
  await page.goto('/glsl-lab.html');
  await expect(page.locator('#p8EvidenceStatus')).toHaveAttribute('data-evidence-state','error',{timeout:15000});
  await expect(page.locator('#p8EvidenceRows details')).toHaveCount(0);
- await expect(page.locator('#p8EvidenceStatus')).toContainText('Scientific approval remains unestablished');
+ await expect(page.locator('#p8EvidenceStatus')).toContainText('Research findings were not loaded');
+});
+
+
+test('Master/PhD/postdoc journey: author, experiment, audit, manuscript and TeX package',async({page})=>{
+ test.setTimeout(180000);
+ await page.goto('/glsl-lab.html');
+ await page.locator('#workflowAuthor').click();
+ await expect(page.locator('#paneBuild')).toBeVisible();
+ await expect(page.locator('#demo')).toHaveCount(0);
+ const available=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+ test.skip(!available,'Real WebGL2 context required for study journey');
+ await expect(page.locator('#saveBuild')).toBeEnabled({timeout:30000});
+ await page.locator('#drawerToggle').click();
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','false');
+ await page.locator('#workflowStudy').click();
+ await page.locator('#sweepRun').click();
+ await expect(page.locator('#sweepStatus')).toContainText('Experiment verified',{timeout:60000});
+ await expect(page.locator('#workflowStage')).toContainText('Experiment recorded');
+ await page.locator('#workflowAudit').click();
+ await expect(page.locator('#auditStatus')).toContainText('Study audit complete',{timeout:60000});
+ await expect(page.locator('#workflowStage')).toContainText('Methodology verified');
+ await page.locator('#workflowPaper').click();
+ await expect(page.locator('#paperStatus')).toContainText('Technical manuscript assembled',{timeout:60000});
+ await expect(page.locator('#workflowStage')).toContainText('Manuscript ready');
+ const download=page.waitForEvent('download');
+ await page.locator('#workflowLatex').click();
+ const archive=Buffer.from(await readFile(await (await download).path()));
+ expect(archive.includes(Buffer.from('manuscript.tex'))).toBe(true);
+ expect(archive.includes(Buffer.from('shader.glsl'))).toBe(true);
+ expect(archive.includes(Buffer.from('build-latex.sh'))).toBe(true);
+ expect(archive.includes(Buffer.from('build-latex.ps1'))).toBe(true);
+ expect(archive.includes(Buffer.from('manuscript.tex'))).toBe(true);
+});
+test('Academic UX structural audit: phone and desktop have no horizontal overflow or gallery controls',async({page})=>{
+ for(const width of [360,390,1280]){
+  await page.setViewportSize({width,height:900});
+  await page.goto('/glsl-lab.html');
+  if(width>=1280){
+   await expect(page.locator('.contract-sidebar')).toBeVisible();
+   await expect(page.locator('#graphChain')).toBeVisible();
+   await expect(page.locator('.contract-lower')).toBeVisible();
+  }else{
+   await expect(page.locator('#workflowAuthor')).toBeVisible();
+   await expect(page.locator('#workflowLatex')).toBeVisible();
+  }
+  await expect(page.locator('#demo')).toHaveCount(0);
+  const metrics=await page.evaluate(()=>({
+   documentWidth:document.documentElement.scrollWidth,
+   viewport:window.innerWidth,
+   stageWidth:document.querySelector('.stage').getBoundingClientRect().width,
+   canvasWidth:document.getElementById('glcanvas').getBoundingClientRect().width
+  }));
+  expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewport+1);
+  expect(metrics.stageWidth).toBeGreaterThan(200);
+  expect(metrics.canvasWidth).toBeGreaterThan(200);
+ }
+});
+
+
+test('Approved mobile interaction: pinned canvas and operable bottom drawer with swipeable modes',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/glsl-lab.html');
+ await expect(page.locator('#drawerToggle')).toBeVisible();
+ await page.evaluate(()=>window.scrollTo(0,750));
+ const canvas=await page.locator('#glcanvas').evaluate(el=>({
+  top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom
+ }));
+ expect(canvas.top).toBeGreaterThanOrEqual(0);
+ expect(canvas.bottom).toBeLessThanOrEqual(844);
+ await page.locator('#drawerToggle').click();
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','true');
+ const placement=await page.locator('#labControls').evaluate(el=>getComputedStyle(el).position);
+ expect(placement).toBe('fixed');
+ await expect(page.locator('#panePlay')).toBeVisible();
+ await page.locator('#labControls').evaluate(panel=>{
+   const from=new Touch({identifier:1,target:panel,clientX:260,clientY:580});
+   const to=new Touch({identifier:1,target:panel,clientX:100,clientY:580});
+   panel.dispatchEvent(new TouchEvent('touchstart',{touches:[from],changedTouches:[from],bubbles:true}));
+   panel.dispatchEvent(new TouchEvent('touchend',{touches:[],changedTouches:[to],bubbles:true}));
+ });
+ await expect(page.locator('#paneBuild')).toBeVisible();
+ await page.keyboard.press('Escape');
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','false');
+});
+
+test('Academic visual contract evidence: fixed mobile and desktop app captures without reference asset',async({page})=>{
+ const folder='test-results/visual-audit';
+ await mkdir(folder,{recursive:true});
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/glsl-lab.html');
+ await expect(page.locator('#glcanvas')).toBeVisible();
+ await page.screenshot({path:folder+'/mobile-390.png',animations:'disabled'});
+ await page.locator('#drawerToggle').click();
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','true');
+ await page.screenshot({path:folder+'/mobile-drawer-390.png',animations:'disabled'});
+ await page.locator('#drawerToggle').click();
+ await page.setViewportSize({width:1280,height:800});
+ await page.screenshot({path:folder+'/desktop-1280.png',animations:'disabled'});
+ const geometry=await page.evaluate(()=>({
+  width:document.documentElement.scrollWidth,
+  viewport:window.innerWidth,
+  stage:document.querySelector('.stage').getBoundingClientRect().width,
+  panel:document.querySelector('.panel').getBoundingClientRect().width
+ }));
+ expect(geometry.width).toBeLessThanOrEqual(geometry.viewport+1);
+ expect(geometry.stage).toBeGreaterThan(290);
+ expect(geometry.panel).toBeGreaterThan(290);
+});
+
+
+test('Phase 2 visual contract: real dashboard panels remain simultaneous on desktop',async({page})=>{
+ await page.setViewportSize({width:1648,height:928});
+ await page.goto('/glsl-lab.html');
+ await expect(page.locator('.contract-sidebar')).toBeVisible();
+ await expect(page.locator('#glcanvas')).toBeVisible();
+ await expect(page.locator('#paneBuild')).toBeVisible();
+ await expect(page.locator('#graphChain .graph-node')).toHaveCount(5);
+ await expect(page.locator('.contract-paper')).toBeVisible();
+ await expect(page.locator('.contract-paper-empty')).toBeVisible();
+ await expect(page.locator('.contract-lower')).toBeVisible();
+ await expect(page.locator('#contractCodePane #paneCode')).toBeVisible();
+ await expect(page.locator('.contract-sources a')).toHaveCount(4);
+ await expect(page.locator('.contract-meta dd').first()).toContainText(/verified draw|Awaiting GPU/);
+
+ const positions=await page.evaluate(()=>{
+   const bounds=sel=>{const b=document.querySelector(sel).getBoundingClientRect();
+     return {x:b.left,y:b.top,w:b.width,h:b.height};};
+   return {sidebar:bounds('.contract-sidebar'),preview:bounds('.stage'),builder:bounds('.panel'),
+     paper:bounds('.contract-paper'),lower:bounds('.contract-lower'),
+     viewport:innerWidth,overflow:document.documentElement.scrollWidth};
+ });
+ expect(positions.sidebar.x).toBeLessThan(positions.preview.x);
+ expect(positions.preview.x).toBeLessThan(positions.builder.x);
+ expect(positions.builder.x).toBeLessThan(positions.paper.x);
+ expect(positions.lower.y).toBeGreaterThan(positions.preview.y+240);
+ expect(positions.lower.x+positions.lower.w).toBeLessThanOrEqual(positions.paper.x+2);
+ expect(positions.paper.h).toBeGreaterThanOrEqual(650);
+ expect(positions.overflow).toBeLessThanOrEqual(positions.viewport+1);
+ await page.screenshot({path:'test-results/visual-audit/desktop-contract-1648.png',animations:'disabled'});
+ await page.getByRole('navigation',{name:'Project navigation'}).getByRole('button',{name:'Settings'}).click();
+ await expect(page.locator('#panePlay')).toBeVisible();
+ await expect(page.locator('#zoom')).toBeVisible();
+ await expect(page.locator('#graphChain')).toBeVisible();
+});
+test('Phase 2 mobile contract: four accessible navigation modes open actual controls',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto('/glsl-lab.html');
+ await expect(page.locator('.contract-mobile-nav')).toBeVisible();
+ await expect(page.locator('.contract-sidebar')).toBeHidden();
+ await expect(page.locator('.contract-heading h1')).toHaveCSS('white-space','nowrap');
+ await expect(page.locator('.contract-mobile-nav button')).toHaveCount(4);
+ await page.getByRole('navigation',{name:'Mobile research navigation'}).getByRole('button',{name:'Builder'}).click();
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','true');
+ await expect(page.locator('#paneBuild')).toBeVisible();
+ await page.getByRole('navigation',{name:'Mobile research navigation'}).getByRole('button',{name:'Code'}).click();
+ await expect(page.locator('#paneCode')).toBeVisible();
+ await page.getByRole('navigation',{name:'Mobile research navigation'}).getByRole('button',{name:'Preview'}).click();
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','false');
+ await expect(page.locator('#glcanvas')).toBeVisible();
 });

@@ -17,8 +17,8 @@ function dl(name,content,type){
   setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 const summary=bibliographicReadiness();
-$('referenceStatus').textContent=summary.verifiedCount+' metadata-checked sources; '+
-  summary.pendingIds.length+' pending primary-source checks. External manuscript review has not occurred.';
+$('referenceStatus').textContent=summary.verifiedCount+' sources in the reference registry; '+
+  summary.pendingIds.length+' source '+(summary.pendingIds.length===1?'record':'records')+' awaiting reconciliation.';
 for(const ref of REFERENCES){
   const outer=document.createElement('div');outer.className='audit-source';
   const strong=document.createElement('strong');strong.textContent=ref.title+' ('+ref.year+')';
@@ -37,29 +37,48 @@ $('auditBibtex').addEventListener('click',()=>{
     state('Exported sources with verified metadata and applicable claim scopes. Pending entries excluded.');
   }catch(e){state('Bibliography export rejected: '+String(e.message||e),true);}
 });
+async function verifyAndDisplay(candidate){
+  const result=await auditMethodology(candidate);
+  await verifyMethodologyAudit(result,candidate);
+  const b=bibliographyForAudit(result);
+  study=candidate;audit=result;
+  $('auditResults').textContent=[
+    'Original experiment SHA-256: '+result.experimentSha256,
+    'Methodology report SHA-256: '+result.sha256,
+    'Observed GPU draws: '+result.measurements.observedGpuDraws,
+    'Draws per treatment: '+result.measurements.observedDrawsPerTreatment,
+    'Bibliographic basis: '+b.references.length+' applicable metadata-checked sources',
+    ...result.findings.map(x=>x.code+' ['+x.status+']: '+x.detail),
+    ...result.release.reasons.map(x=>'- '+x)
+  ].join('\n');
+  $('auditExport').disabled=false;
+  notify();
+  state('Methodology audit complete: archived measurements and citations verified.');
+}
+$('auditCurrentStudy').addEventListener('click',async()=>{
+  if(busy||!window.glslLabLatestExperiment)return;
+  busy=true;$('auditCurrentStudy').disabled=true;
+  state('Verifying the current GPU study and its source evidence.');
+  try{
+    await verifyAndDisplay(window.glslLabLatestExperiment);
+    state('Study audit complete. Generate the manuscript from the verified evidence.');
+  }catch(error){
+    audit=null;study=null;$('auditExport').disabled=true;notify();
+    state('Audit rejected: '+String(error.message||error),true);
+  }finally{
+    busy=false;$('auditCurrentStudy').disabled=!window.glslLabLatestExperiment;
+  }
+});
+window.addEventListener('glsl-lab-study-ready',()=>{
+ $('auditCurrentStudy').disabled=false;
+});
 $('auditStudyImport').addEventListener('change',async event=>{
   if(busy)return;const file=event.target.files?.[0];if(!file)return;
   busy=true;$('auditExport').disabled=true;state('Verifying source hashes and recomputing study metrics.');
   try{
     if(file.size>28000000)throw new Error('Research study JSON exceeds 28 MB');
     const candidate=JSON.parse(await file.text());
-    const result=await auditMethodology(candidate);
-    await verifyMethodologyAudit(result,candidate);
-    const b=bibliographyForAudit(result);
-    study=candidate;audit=result;
-    $('auditResults').textContent=[
-      'Original experiment SHA-256: '+result.experimentSha256,
-      'Methodology report SHA-256: '+result.sha256,
-      'Observed GPU draws: '+result.measurements.observedGpuDraws,
-      'Draws per treatment: '+result.measurements.observedDrawsPerTreatment,
-      'Bibliographic basis: '+b.references.length+' applicable metadata-checked sources',
-      ...result.findings.map(x=>x.code+' ['+x.status+']: '+x.detail),
-      'Academic manuscript gate: LOCKED',
-      ...result.release.reasons.map(x=>'- '+x)
-    ].join('\n');
-    $('auditExport').disabled=false;
-    notify();
-    state('Experiment and methodology findings independently recomputed from archived bytes. No publication authorization granted.');
+    await verifyAndDisplay(candidate);
   }catch(e){
     audit=null;study=null;$('auditExport').disabled=true;
     notify();
@@ -81,4 +100,4 @@ $('auditExport').addEventListener('click',async()=>{
   }catch(e){state('Methodology export rejected: '+String(e.message||e),true);}
   finally{busy=false;$('auditExport').disabled=!audit;}
 });
-state('Bibliography metadata loaded. Import an experiment JSON for a reproducible methods audit.');
+state('Reference registry loaded. Import a study or select Audit current study.');

@@ -48,7 +48,7 @@ async function fixture(){
    const pixels=Uint8Array.from({length:48},(_,j)=>j%4===3?255:(j+i*11)%256);
    const receipt=await createBuildReceipt({
      shaderBody:'o.rgb=vec3(.5);',expandedShader:'#version 300 es\nvoid main(){o.rgb=vec3(.5);}',
-     demoId:'original',attribution:'@YoheiNishitsuji',
+     demoId:'research_fixture',attribution:'Synthetic QA fixture',
      checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
      viewport:{width:4,height:3},parameters:{...params(),zoom:protocol.levels[i]},
      shaderTimeSeconds:2

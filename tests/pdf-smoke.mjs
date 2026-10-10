@@ -2,21 +2,28 @@
 // Uses synthetic pixels only; not empirical evidence.
 import {webcrypto} from 'node:crypto';
 import {mkdir,writeFile} from 'node:fs/promises';
+import {renderLaTeXManuscript} from '../src/manuscript-latex.mjs';
+import {latexBuildScripts} from '../src/latex-build-scripts.mjs';
 import {createBuildReceipt} from '../src/build-evidence.mjs';
 import {createResearchCapture} from '../src/research-capture.mjs';
 import {createFigureEvidence} from '../src/research-figures.mjs';
 import {createSweepProtocol,createSweepSession} from '../src/research-experiments.mjs';
+import {createReplicatedProtocol,createReplicatedSession} from '../src/research-replications.mjs';
 import {auditMethodology} from '../src/methodology-audit.mjs';
 import {assembleManuscript} from '../src/manuscript-engine.mjs';
 import {createDirectPdf} from '../src/research-pdf.mjs';
-const subtle=webcrypto.subtle,dir='test-results/pdf-render';
+const subtle=webcrypto.subtle,repeat=process.argv.includes('--repeat'),
+  dir='test-results/pdf-render'+(repeat?'-repeat':'');
 globalThis.btoa??=s=>Buffer.from(s,'binary').toString('base64');
 globalThis.atob??=s=>Buffer.from(s,'base64').toString('binary');
 const params={zoom:1,angle:0,speed:1,hue:0,brightness:1};
-const protocol=createSweepProtocol(params,'zoom',.2,2);
+const protocol=repeat?createReplicatedProtocol(params,'zoom',.2,2,0):createSweepProtocol(params,'zoom',.2,2);
+const levels=repeat?protocol.sweep.levels:protocol.levels;
+const sequence=repeat?protocol.sequence:[0,1,2].map(levelIndex=>({levelIndex}));
 const time=i=>()=>new Date(Date.UTC(2026,9,10,10,0,i)).toISOString();
 const figures=[];
-for(let i=0;i<3;i++){
+for(let i=0;i<sequence.length;i++){
+  const levelIndex=sequence[i].levelIndex;
   const w=64,h=40,pixels=new Uint8Array(w*h*4);
   for(let y=0;y<h;y++)for(let x=0;x<w;x++){
     const at=(y*w+x)*4;
@@ -26,9 +33,9 @@ for(let i=0;i<3;i++){
   const receipt=await createBuildReceipt({
     shaderBody:'o.rgb = vec3(.5);',
     expandedShader:'#version 300 es\nvoid main(){o.rgb = vec3(.5);}',
-    demoId:'original',attribution:'@YoheiNishitsuji',
+    demoId:'research_fixture',attribution:'Synthetic QA fixture',
     checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
-    viewport:{width:w,height:h},parameters:{...params,zoom:protocol.levels[i]},shaderTimeSeconds:2
+    viewport:{width:w,height:h},parameters:{...params,zoom:levels[levelIndex]},shaderTimeSeconds:2
   },{subtle,clock:time(i)});
   const capture=await createResearchCapture(receipt,pixels,{subtle,clock:time(i)});
   const fig=await createFigureEvidence(receipt,capture,pixels,{
@@ -36,12 +43,25 @@ for(let i=0;i<3;i++){
   });
   figures.push({...fig,receipt,capture});
 }
-const study=await createSweepSession(protocol,figures,{
-  sessionId:'pdf_smoke_001',clock:time(0),subtle
-});
+const platform={api:'WebGL2',webglVersion:'WebGL 2.0 test',
+ shadingLanguageVersion:'WebGL GLSL ES 3.00',vendor:'WebGL vendor',renderer:'WebGL renderer',
+ maxTextureSize:4096,maxRenderbufferSize:4096,maxVertexAttribs:16,
+ fragmentHighpPrecision:23,devicePixelRatio:1};
+const study=repeat?
+ await createReplicatedSession(protocol,figures,platform,{sessionId:'pdf_repeat_001',clock:time(0),subtle}):
+ await createSweepSession(protocol,figures,{sessionId:'pdf_smoke_001',clock:time(0),subtle});
 const audit=await auditMethodology(study,{subtle,clock:time(0)});
 const manuscript=await assembleManuscript(study,{audit,subtle,clock:time(0)});
 const pdf=await createDirectPdf(manuscript,{subtle});
 await mkdir(dir,{recursive:true});
 await writeFile(dir+'/shader-study.pdf',pdf);
+const latex=await renderLaTeXManuscript(manuscript,subtle);
+const scripts=latexBuildScripts(manuscript.record);
+await writeFile(dir+'/manuscript.tex',latex);
+await writeFile(dir+'/shader.glsl',manuscript.shader);
+await writeFile(dir+'/build-latex.sh',scripts.bash);
+await writeFile(dir+'/build-latex.ps1',scripts.powershell);
+await mkdir(dir+'/figures',{recursive:true});
+for(const figure of manuscript.figures)await writeFile(dir+'/'+figure.path,figure.png);
+process.stdout.write('Wrote reproducible LaTeX source and original PNGs into '+dir+'\\n');
 process.stdout.write('Wrote '+dir+'/shader-study.pdf ('+pdf.length+' bytes)\n');

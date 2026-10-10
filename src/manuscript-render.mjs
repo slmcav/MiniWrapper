@@ -2,7 +2,8 @@
 import {canonicalJson} from './build-evidence.mjs';
 import {verifyManuscript,MANUSCRIPT_SCHEMA} from './manuscript-engine.mjs';
 import {zipStored} from './research-figures.mjs';
-import {createDirectPdf} from './research-pdf.mjs';
+import {renderLaTeXManuscript} from './manuscript-latex.mjs';
+import {latexBuildScripts} from './latex-build-scripts.mjs';
 import {prepareEditorialPacket} from './scholarly-review.mjs';
 import {exportSourceLineage} from './source-lineage.mjs';
 const ok=(p,m)=>{if(!p)throw new TypeError(m);};
@@ -145,6 +146,8 @@ export async function exportManuscriptBundle(bundle,{
   subtle=globalThis.crypto?.subtle
 }={}){
   await verifyManuscript(bundle,subtle);
+  const latex=await renderLaTeXManuscript(bundle,subtle);
+  const texBuild=latexBuildScripts(bundle.record);
   const files=[
     {name:'manuscript.html',data:enc.encode(renderManuscriptHTML(bundle,{embedImages:false}))},
     {name:'study.json',data:enc.encode(JSON.stringify(bundle.study,null,2)+'\n')},
@@ -152,7 +155,9 @@ export async function exportManuscriptBundle(bundle,{
     {name:'references.bib',data:enc.encode(bundle.bibtex)},
     {name:'shader.glsl',data:enc.encode(bundle.shader)},
     {name:'source-lineage.json',data:enc.encode(JSON.stringify(exportSourceLineage(),null,2)+'\n')},
-    {name:'manuscript.pdf',data:await createDirectPdf(bundle,{subtle})},
+    {name:'manuscript.tex',data:enc.encode(latex)},
+    {name:'build-latex.sh',data:enc.encode(texBuild.bash)},
+    {name:'build-latex.ps1',data:enc.encode(texBuild.powershell)},
     {name:'review-packet.json',data:enc.encode(JSON.stringify(await prepareEditorialPacket(bundle,{subtle,clock:()=>bundle.record.generatedAt}),null,2)+'\n')}
   ];
   for(const fig of bundle.figures)files.push({name:fig.path,data:fig.png});
@@ -160,9 +165,11 @@ export async function exportManuscriptBundle(bundle,{
   for(const file of files)fileInventory.push({path:file.name,bytes:file.data.length,
     sha256:await hash(file.data,subtle)});
   const manifest={
-    schema:'glsl-lab/manuscript-bundle/1',manuscript:bundle.record,
+    schema:'glsl-lab/manuscript-bundle/2',manuscript:bundle.record,
     verification:{studySha256:bundle.study.sha256,auditSha256:bundle.audit.sha256,
       manuscriptReviewCompleted:false,academicManuscriptUnlocked:false},
+    typesetting:{engine:'pdfLaTeX',input:'manuscript.tex',compiledPdfIncluded:false,
+      pdfNaming:'GLSL-{manuscriptSha256First32}_{compiledPdfSha256}.pdf'},
     fileInventory
   };
   files.unshift({name:'manifest.json',data:enc.encode(JSON.stringify(manifest,null,2)+'\n')});

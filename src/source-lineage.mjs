@@ -3,11 +3,11 @@
 // The matching-file regression gate must be updated whenever the generator changes.
 export const SOURCE_LINEAGE_SCHEMA='glsl-lab/source-lineage/1';
 export const PINNED_REPOSITORY='slmcav/MiniWrapper';
-export const SOURCE_SNAPSHOT_COMMIT='3810b1d9501e753902856a194fb9b0b9a147fedb';
+export const SOURCE_SNAPSHOT_COMMIT='10c4ff155c5767312ccbaaa9215d02bce4b796b2';
 export const PINNED_SOURCE_BLOBS=Object.freeze([
   {
     "path": "glsl-lab.html",
-    "gitBlobSha1": "f9a277a37fb723809d815feeb14b34afe39a141e"
+    "gitBlobSha1": "186f028a673e4c54fdd0f72321e8d48edbf15625"
   },
   {
     "path": "src/build-evidence.mjs",
@@ -23,11 +23,11 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
   },
   {
     "path": "src/research-experiments.mjs",
-    "gitBlobSha1": "5d4f392f58434e89ec84509597d4c2dc3288b1bb"
+    "gitBlobSha1": "e156ef5676866d2e74b53e5168600eb2ae3baa6f"
   },
   {
     "path": "src/research-replications.mjs",
-    "gitBlobSha1": "4a6232ebde9cab1f1d5894d829401ac96c738d27"
+    "gitBlobSha1": "61c300d074115c83c42f2a9805d1e7dcc501c04f"
   },
   {
     "path": "src/reference-registry.mjs",
@@ -35,15 +35,15 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
   },
   {
     "path": "src/methodology-audit.mjs",
-    "gitBlobSha1": "511168cfe193d6424ba64afd6d754325950a87d1"
+    "gitBlobSha1": "5f4c2d95e9c1358d5b3b644929d5c2b376f9c4ef"
   },
   {
     "path": "src/manuscript-engine.mjs",
-    "gitBlobSha1": "69bbacddbc32187d12cb31fac507bf4d0cbaeda9"
+    "gitBlobSha1": "baa7a84de20e434d174f3147ee05e3544ea0aaac"
   },
   {
     "path": "src/manuscript-render.mjs",
-    "gitBlobSha1": "c96b3bab39b3d50ef9d06d4945f55939d5528e69"
+    "gitBlobSha1": "2d2cda4375cc7e4f90ddada4af06fe1de822f042"
   },
   {
     "path": "src/research-pdf.mjs",
@@ -55,19 +55,19 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
   },
   {
     "path": "src/manuscript-verify.mjs",
-    "gitBlobSha1": "dfadb7a2ff0048ec6c1fb887d89d762f86076c14"
+    "gitBlobSha1": "f2accb95a15f380b00f412cc098363777ab3ecd9"
   },
   {
     "path": "src/lab-manuscript.mjs",
-    "gitBlobSha1": "059e34e270a8005d1da4883dd2156b1d9ae5c69e"
+    "gitBlobSha1": "1445b238db95ca11d2c9db9f586aa147a8010030"
   },
   {
     "path": "src/lab-methodology.mjs",
-    "gitBlobSha1": "e5e41f5678a0adf827ae631191dcccbd79535d18"
+    "gitBlobSha1": "344987f57c86f5e433ac8abb23b14c54633c6554"
   },
   {
     "path": "src/lab-bundle-verify.mjs",
-    "gitBlobSha1": "ebe31d4120bec0a72734029ed878d65b88af0552"
+    "gitBlobSha1": "cd9a80548de8ec9ce3a37a450b96aacb9fb24184"
   },
   {
     "path": "scripts/verify-research-zip.mjs",
@@ -79,7 +79,7 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
   },
   {
     "path": "package.json",
-    "gitBlobSha1": "bcff00ca93f79e5a607288dd47e0f77ce0e5228a"
+    "gitBlobSha1": "806e1aa355fc4fbc35b9065fa6dec53482dd1970"
   },
   {
     "path": "src/source-review-dossier.mjs",
@@ -87,7 +87,7 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
   },
   {
     "path": "src/lab-source-review.mjs",
-    "gitBlobSha1": "c60c26a5587e877739abc42bd182168ebb4ae60b"
+    "gitBlobSha1": "19d8905a23a55fe0dc2cd3a00028ab1d042f869a"
   },
   {
     "path": "src/p8-methods-evidence.mjs",
@@ -95,12 +95,53 @@ export const PINNED_SOURCE_BLOBS=Object.freeze([
   },
   {
     "path": "src/lab-p8-methods.mjs",
-    "gitBlobSha1": "147eb124f1e85ee4750b96e0088f9ec7d527bda7"
+    "gitBlobSha1": "786a1a9b73b1fead0b3a613ca4de8128121af5bb"
   },
   {
     "path": "docs/P8_EVIDENCE_REGISTER.json",
     "gitBlobSha1": "a9a16c8ce785cf42a21cd22052342d51e1af816f"
   }
+,
+  {
+    "path": "src/graph-ui.mjs",
+    "gitBlobSha1": "63d49666b8a42e2a1e83cc11c0ff44a213e301e9"
+  },
+  {
+    "path": "src/lab-experiments.mjs",
+    "gitBlobSha1": "6178925d032a4467550129213d11c5bc8fb51d41"
+  },
+  {
+    "path": "src/lab-replications.mjs",
+    "gitBlobSha1": "de30b36465c43a36b19d788ac859db00458cab02"
+  },
+  {
+    "path": "src/research-source-policy.mjs",
+    "gitBlobSha1": "e3a9c46c067053ac7aa8fe848a2d855595b29b38"
+  },
+  {
+    "path": "src/manuscript-latex.mjs",
+    "gitBlobSha1": "a0bf2fc69cf62f49bdb0229cdd28c69740fd146a"
+  },
+  {
+    "path": "src/latex-build-scripts.mjs",
+    "gitBlobSha1": "3b329841711b389c5162866dddf4c6826f8c61ff"
+  },
+  {
+    "path": "src/pdf-filename.mjs",
+    "gitBlobSha1": "0a2608262946f0f36964c2ce704f0df04202e6f1"
+  },
+  {
+    "path": "src/lab-workflow-guide.mjs",
+    "gitBlobSha1": "8ee42c0fedcb93a11bdbed930ce5abd2acdc8b50"
+  },
+  {
+    "path": "src/lab-drawer.mjs",
+    "gitBlobSha1": "a20bacc06f8a5d7f9d3e8fdf6c5aa7a76ecab1ff"
+  },
+  { "path": "src/lab-visual-contract.css", "gitBlobSha1": "9be9a7453a165a3c11a05f29daa22b07d082f256" },
+  { "path": "src/lab-visual-contract.mjs", "gitBlobSha1": "12c290ae1a51deaa8eafecd726aeb7424eaa11b0" }
+,
+  { "path": "package-lock.json", "gitBlobSha1": "f3326eea3373da624c935060a1db5e9ca95cae11" }
 ].map(record=>Object.freeze(record)));
 export function exportSourceLineage(){
   return {schema:SOURCE_LINEAGE_SCHEMA,repository:PINNED_REPOSITORY,

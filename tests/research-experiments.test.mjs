@@ -12,13 +12,13 @@ globalThis.atob??=s=>Buffer.from(s,'base64').toString('binary');
 const baseline=()=>({zoom:1,angle:0,speed:1,hue:0,brightness:1});
 const when=i=>()=>new Date(Date.UTC(2026,9,10,8,0,i)).toISOString();
 const protocol=()=>createSweepProtocol(baseline(),'zoom',.2,2);
-async function make(id,add=0,p=protocol()){
+async function make(id,add=0,p=protocol(),source={identifier:'research_fixture',attribution:'Synthetic QA fixture'}){
  const figures=[];
  for(let i=0;i<3;i++){
    const rgba=Uint8Array.from({length:48},(_,k)=>k%4===3?255:(k+i*9+add)%256);
    const receipt=await createBuildReceipt({
      shaderBody:'o.rgb=vec3(.2);',expandedShader:'#version 300 es\nvoid main(){o.rgb=vec3(.2);}',
-     demoId:'original',attribution:'@YoheiNishitsuji',
+     demoId:source.identifier,attribution:source.attribution,
      checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
      viewport:{width:4,height:3},
      parameters:{...p.baseline,[p.parameter]:p.levels[i]},shaderTimeSeconds:p.shaderTimeSeconds,
@@ -72,4 +72,8 @@ test('P3 archive exports complete verified experiment JSON and all PNGs as ZIP',
  assert.ok(zip.includes(Buffer.from('experiment.json')));
  assert.ok(zip.includes(Buffer.from('figures/treatment-3.png')));
  assert.equal(zip.readUInt16LE(zip.length-12),4);
+});
+
+test('Gallery source identifiers cannot enter a three-condition scientific session',async()=>{
+ await assert.rejects(()=>make('no-gallery',0,protocol(),{identifier:'original',attribution:'Independent researcher'}),/excluded from research/);
 });

@@ -13,6 +13,7 @@ import {createReplicatedProtocol,createReplicatedSession} from '../src/research-
 import {auditMethodology} from '../src/methodology-audit.mjs';
 import {assembleManuscript,verifyManuscript,manuscriptRows} from '../src/manuscript-engine.mjs';
 import {renderManuscriptHTML,exportManuscriptBundle} from '../src/manuscript-render.mjs';
+import {renderLaTeXManuscript} from '../src/manuscript-latex.mjs';
 import {createDirectPdf} from '../src/research-pdf.mjs';
 import {verifyManuscriptZip,BUNDLE_VERIFICATION_SCHEMA} from '../src/manuscript-verify.mjs';
 import {prepareEditorialPacket,verifyEditorialPacket} from '../src/scholarly-review.mjs';
@@ -29,7 +30,7 @@ async function observed(settings,i,shader='o.rgb = vec3(.5);'){
   const pixels=Uint8Array.from({length:48},(_,x)=>x%4===3?255:(x+i*17)%256);
   const receipt=await createBuildReceipt({
     shaderBody:shader,expandedShader:'#version 300 es\nvoid main(){o.rgb=vec3(.5);}',
-    demoId:'original',attribution:'@YoheiNishitsuji',
+    demoId:'research_fixture',attribution:'Synthetic QA fixture',
     checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
     viewport:{width:4,height:3},parameters:settings,shaderTimeSeconds:2
   },{subtle,clock:clock(i)});
@@ -104,10 +105,15 @@ test('P4 manuscript export bundles exact study, audit, figures, references and s
   assert.equal(zip.readUInt32LE(0),0x04034b50);
   assert.ok(zip.includes(Buffer.from('manuscript.html')));
   assert.ok(zip.includes(Buffer.from('references.bib')));
+  assert.ok(zip.includes(Buffer.from('manuscript.tex')));
+  assert.ok(zip.includes(Buffer.from('build-latex.sh')));
+  assert.ok(zip.includes(Buffer.from('build-latex.ps1')));
+  assert.equal(product.manifest.typesetting.engine,'pdfLaTeX');
+  assert.equal(product.manifest.typesetting.compiledPdfIncluded,false);
   assert.ok(zip.includes(Buffer.from('shader.glsl')));
   assert.ok(zip.includes(Buffer.from('source-lineage.json')));
   assert.ok(zip.includes(Buffer.from('figures/frame-03.png')));
-  assert.equal(product.manifest.fileInventory.length,11);
+  assert.equal(product.manifest.fileInventory.length,13);
   assert.ok(product.manifest.fileInventory.every(x=>/^[a-f0-9]{64}$/.test(x.sha256)));
   assert.equal(product.manifest.verification.academicManuscriptUnlocked,false);
   assert.doesNotMatch(renderManuscriptHTML(manuscript,{embedImages:false}),/data:image\/png;base64,/);
@@ -156,7 +162,7 @@ test('P5 PDF generation honors nine-frame treatment statistics and verified sour
   const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
   const pdf=Buffer.from(await createDirectPdf(draft,{subtle}));
   assert.ok(pdf.includes(Buffer.from('Sample SD =')));
-  assert.ok(pdf.includes(Buffer.from('@YoheiNishitsuji')));
+  assert.ok(pdf.includes(Buffer.from('Synthetic QA fixture')));
   assert.ok(pdf.includes(Buffer.from('independent experimental units')));
   assert.ok(pdf.includes(Buffer.from('UNREVIEWED')));
 });
@@ -194,7 +200,7 @@ test('P6 imported manuscript ZIP reproduces every image, PDF, source, citation, 
   assert.equal(proof.archiveSha256,Buffer.from(await subtle.digest('SHA-256',product.zip)).toString('hex'));
   assert.equal(proof.observedGpuDraws,3);
   assert.equal(proof.sourceFiguresVerified,3);
-  assert.equal(proof.inventoryEntries,11);
+  assert.equal(proof.inventoryEntries,13);
   assert.equal(proof.manuscriptReviewCompleted,false);
   assert.equal(proof.publicationAuthorized,false);
 });
@@ -205,7 +211,8 @@ test('P6 independent nine-frame manuscript archive roundtrip verifies every GPU 
   const proof=await verifyManuscriptZip(zip.buffer.slice(zip.byteOffset,zip.byteOffset+zip.byteLength),{subtle});
   assert.equal(proof.observedGpuDraws,9);
   assert.equal(proof.sourceFiguresVerified,9);
-  assert.equal(proof.pdfVerified,true);
+  assert.equal(proof.latexSourceVerified,true);
+  assert.equal(proof.pdfVerified,false);
 });
 test('P6 file tampering, ZIP truncation, and unsupported compression cannot pass imported archive check',async()=>{
   const {session,audit}=await fixture();
@@ -264,4 +271,14 @@ test('P6 offline Node CLI independently replays exported study and exits nonzero
   }finally{
     await rm(dir,{recursive:true,force:true});
   }
+});
+
+test('Replicated nine-frame scientific PDF typesets every original study image',async()=>{
+ const {session,audit}=await fixture(true);
+ const manuscript=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+ const latex=await renderLaTeXManuscript(manuscript,subtle);
+ assert.equal((latex.match(/\\includegraphics\[/g)||[]).length,9);
+ assert.ok(latex.includes('Additional archived observations'));
+ for(let i=1;i<=9;i++)assert.ok(latex.includes('figures/frame-'+String(i).padStart(2,'0')+'.png'));
+ assert.ok(latex.includes('\\lstinputlisting{shader.glsl}'));
 });

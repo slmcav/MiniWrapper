@@ -13,13 +13,13 @@ const time=i=>()=>new Date(Date.UTC(2026,9,10,9,0,i)).toISOString();
 const platform=()=>({api:'WebGL2',webglVersion:'WebGL 2.0 test',shadingLanguageVersion:'WebGL GLSL ES 3.00',
   vendor:'WebGL vendor',renderer:'WebGL renderer',maxTextureSize:4096,
   maxRenderbufferSize:4096,maxVertexAttribs:16,fragmentHighpPrecision:23,devicePixelRatio:1});
-async function make(id,offset=0,phase=0,platformData=platform()){
+async function make(id,offset=0,phase=0,platformData=platform(),source={identifier:'research_fixture',attribution:'Synthetic QA fixture'}){
   const protocol=createReplicatedProtocol(params(),'zoom',.2,2,phase),figures=[];
   for(const [i,slot] of protocol.sequence.entries()){
     const rgba=Uint8Array.from({length:4*3*4},(_,index)=>index%4===3?255:(index+slot.levelIndex*12+slot.block+offset)%256);
     const receipt=await createBuildReceipt({
       shaderBody:'o.rgb=vec3(.5);',expandedShader:'#version 300 es\nvoid main(){o.rgb=vec3(.5);}',
-      demoId:'original',attribution:'@YoheiNishitsuji',
+      demoId:source.identifier,attribution:source.attribution,
       checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
       viewport:{width:4,height:3},
       parameters:{...protocol.sweep.baseline,zoom:protocol.sweep.levels[slot.levelIndex]},
@@ -93,4 +93,8 @@ test('P3 reproducible ZIP archive contains JSON and nine lossless PNG figures',a
  assert.ok(archive.includes(Buffer.from('experiment.json')));
  assert.ok(archive.includes(Buffer.from('figures/trial-09.png')));
  assert.equal(archive.readUInt16LE(archive.length-12),10);
+});
+
+test('Gallery source identifiers cannot enter a nine-draw scientific session',async()=>{
+ await assert.rejects(()=>make('no-gallery',0,0,platform(),{identifier:'demo17',attribution:'Independent researcher'}),/excluded from research/);
 });
