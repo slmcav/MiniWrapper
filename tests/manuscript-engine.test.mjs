@@ -104,10 +104,15 @@ test('P4 manuscript export bundles exact study, audit, figures, references and s
   assert.equal(zip.readUInt32LE(0),0x04034b50);
   assert.ok(zip.includes(Buffer.from('manuscript.html')));
   assert.ok(zip.includes(Buffer.from('references.bib')));
+  assert.ok(zip.includes(Buffer.from('manuscript.tex')));
+  assert.ok(zip.includes(Buffer.from('build-latex.sh')));
+  assert.ok(zip.includes(Buffer.from('build-latex.ps1')));
+  assert.equal(product.manifest.typesetting.engine,'pdfLaTeX');
+  assert.equal(product.manifest.typesetting.compiledPdfIncluded,false);
   assert.ok(zip.includes(Buffer.from('shader.glsl')));
   assert.ok(zip.includes(Buffer.from('source-lineage.json')));
   assert.ok(zip.includes(Buffer.from('figures/frame-03.png')));
-  assert.equal(product.manifest.fileInventory.length,11);
+  assert.equal(product.manifest.fileInventory.length,13);
   assert.ok(product.manifest.fileInventory.every(x=>/^[a-f0-9]{64}$/.test(x.sha256)));
   assert.equal(product.manifest.verification.academicManuscriptUnlocked,false);
   assert.doesNotMatch(renderManuscriptHTML(manuscript,{embedImages:false}),/data:image\/png;base64,/);
@@ -156,7 +161,7 @@ test('P5 PDF generation honors nine-frame treatment statistics and verified sour
   const draft=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
   const pdf=Buffer.from(await createDirectPdf(draft,{subtle}));
   assert.ok(pdf.includes(Buffer.from('Sample SD =')));
-  assert.ok(pdf.includes(Buffer.from('@YoheiNishitsuji')));
+  assert.ok(pdf.includes(Buffer.from('Synthetic QA fixture')));
   assert.ok(pdf.includes(Buffer.from('independent experimental units')));
   assert.ok(pdf.includes(Buffer.from('UNREVIEWED')));
 });
@@ -194,7 +199,7 @@ test('P6 imported manuscript ZIP reproduces every image, PDF, source, citation, 
   assert.equal(proof.archiveSha256,Buffer.from(await subtle.digest('SHA-256',product.zip)).toString('hex'));
   assert.equal(proof.observedGpuDraws,3);
   assert.equal(proof.sourceFiguresVerified,3);
-  assert.equal(proof.inventoryEntries,11);
+  assert.equal(proof.inventoryEntries,13);
   assert.equal(proof.manuscriptReviewCompleted,false);
   assert.equal(proof.publicationAuthorized,false);
 });
@@ -205,7 +210,8 @@ test('P6 independent nine-frame manuscript archive roundtrip verifies every GPU 
   const proof=await verifyManuscriptZip(zip.buffer.slice(zip.byteOffset,zip.byteOffset+zip.byteLength),{subtle});
   assert.equal(proof.observedGpuDraws,9);
   assert.equal(proof.sourceFiguresVerified,9);
-  assert.equal(proof.pdfVerified,true);
+  assert.equal(proof.latexSourceVerified,true);
+  assert.equal(proof.pdfVerified,false);
 });
 test('P6 file tampering, ZIP truncation, and unsupported compression cannot pass imported archive check',async()=>{
   const {session,audit}=await fixture();
