@@ -1,0 +1,42 @@
+name: MiniWrapper quality gates
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fast:
+    name: Fast regression and expression graph tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm run test:fast
+
+  browser:
+    name: Mobile browser and WebGL smoke
+    runs-on: ubuntu-latest
+    needs: fast
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: miniwrapper-playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore

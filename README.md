@@ -94,3 +94,12 @@ WebGL2 support and a GPU/driver capable of compiling the provided loops are requ
 ## Deployment
 
 This is a static site. Open `index.html` as a local file or serve the repository with any static web host. If you enable GitHub Pages for this repository, publish the root containing `index.html`. No backend is needed.
+
+## Automated tests and next-step builder contract
+
+The repository includes two test lanes. Run npm run test:fast with Node 22+ for dependency-free regression checks of all 17 original shader expressions, Lab UI contracts, mock WebGL interaction behavior, and the new typed expression graph. For real browser coverage, run npm install, npx playwright install chromium, and npm run test:browser. The full verification command is npm run test:all.
+
+On GitHub, the MiniWrapper quality gates workflow runs fast tests first on main pushes, pull requests, and manual dispatch, then a mobile-sized Chromium/WebGL smoke test. If WebGL2 cannot be created, the GPU-specific test explicitly skips instead of claiming visual verification. Browser failures capture traces/screenshots.
+
+The preliminary graph module (src/expression-graph.mjs) supports five typed nodes: coordinates, rotate, radius, wave, and palette. It checks connections, types, cycles, parameter bounds, deterministic GLSL emission, and JSON round-trip integrity. This is a tested core contract for the future builder, **not yet a drag-and-drop UI**. See docs/TESTING.md for stage gates and the promotion sequence.
+
