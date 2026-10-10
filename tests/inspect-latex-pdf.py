@@ -14,12 +14,12 @@ class BoundsAudit(HTMLParser):
         self.pages = []
 
     def handle_starttag(self, tag, attrs):
-        a = dict(attrs)
+        a = {key.lower(): value for key, value in attrs}
         if tag == "page":
             self.page = {"width": float(a["width"]), "height": float(a["height"]), "words": 0}
             self.pages.append(self.page)
         elif tag == "word" and self.page:
-            x0, y0, x1, y1 = (float(a[k]) for k in ("xMin", "yMin", "xMax", "yMax"))
+            x0, y0, x1, y1 = (float(a[k]) for k in ("xmin", "ymin", "xmax", "ymax"))
             assert 0 <= x0 < x1 <= self.page["width"] + 1, "Horizontal PDF clipping"
             assert 0 <= y0 < y1 <= self.page["height"] + 1, "Vertical PDF clipping"
             self.page["words"] += 1
