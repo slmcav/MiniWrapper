@@ -40,3 +40,16 @@ The original seventeen attributed @YoheiNishitsuji demos remain available only t
 - Knuth, D. E. (1984). *The TeXbook*. Addison-Wesley.
 
 **Release status must follow live CI, not the existence of this document.** The privately approved visual comp is neither in repository source nor in workflow artifacts.
+
+
+## P10.1 recovery hardening — provenance and visual release evidence
+
+The gallery exclusion now operates at three independent points: study creation/reconstruction for both sweep-session/1 and replicated-session/1, methodology auditing, and frozen-manuscript assembly. Exactly **17** credited classic-gallery expressions are registered. The detector uses source fragments distributed throughout the expressions, catching straightforward copied, formatted, embedded and lightly edited variants. It does not attempt to certify independent authorship or catch all semantic rewrites.
+
+The research PDF pathway archives original GLSL, PNG frame evidence and LaTeX source. Three-condition studies contain three representative figures. Nine-draw studies include all nine original GPU frames in the compiled PDF: three treatment panels and six additional appendix observations. Native pdfLaTeX CI checks both formats, all figure XObjects, text bounds, page rasterization and compiler-log diagnostics.
+
+After compiling, both build scripts emit **build-receipt.json** (schema glsl-lab/native-latex-build/1). It records compiler version, SOURCE_DATE_EPOCH, full manuscript SHA-256, 32-character manuscript-derived unique identifier, input TeX and GLSL SHA-256 values, exact compiled PDF SHA-256, and output filename. The independent inspector recomputes these values. The researcher should preserve PDF, build receipt, TeX log and original ZIP as one provenance package.
+
+Playwright also captures only the rendered application at 390 px mobile, mobile drawer expanded, and 1280 px desktop. The academic-ui-visual-audit CI artifact holds these images for comparison with the separately retained approved visual comp. Neither the comp nor its raster stand-in is included in any Git commit. Responsive geometry tests do not establish pixel-perfect comp agreement.
+
+No automated test establishes author rights, novel scientific findings, calibrated hardware equivalence, independent experiment replication, or editorial acceptance. These remain separate provenance and research assessment records.
