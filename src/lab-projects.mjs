@@ -44,6 +44,7 @@ $('saveBuild').addEventListener('click',async()=>{
     if(project){
       project=createProject({id:project.id,name:project.name,createdAt:project.createdAt,
         demoId:snap.demoId,parameters:snap.parameters,
+        graph:snap.demoId==='builder'?bridge.getProjectState().graph:undefined,
         buildIds:[...new Set([...project.buildIds,result.sha256])]});
       saveProject(project,storage);refresh();
     }
@@ -63,7 +64,7 @@ $('saveProject').addEventListener('click',()=>{
     const state=bridge.getProjectState();
     project=createProject({id:project?.id,createdAt:project?.createdAt,
       name:$('projectName').value.trim(),demoId:state.demoId,parameters:state.parameters,
-      buildIds:project?.buildIds||[]});
+      graph:state.graph,buildIds:project?.buildIds||[]});
     saveProject(project,storage);refresh();note('Project saved: '+project.name);
   }catch(e){note('Project save failed: '+String(e.message||e),true);}
 });
