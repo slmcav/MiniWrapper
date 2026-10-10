@@ -23,7 +23,7 @@ function buildLab() {
   el('paneCode').hidden=true;
   let compiled=0,draws=0,now=1000,glError=0;
   const uniforms={};
-  const gl={VERTEX_SHADER:35633,FRAGMENT_SHADER:35632,COMPILE_STATUS:35713,LINK_STATUS:35714,ARRAY_BUFFER:34962,STATIC_DRAW:35044,FLOAT:5126,TRIANGLE_STRIP:5,NO_ERROR:0,getError(){return glError;},
+  const gl={VERTEX_SHADER:35633,FRAGMENT_SHADER:35632,COMPILE_STATUS:35713,LINK_STATUS:35714,ARRAY_BUFFER:34962,STATIC_DRAW:35044,FLOAT:5126,TRIANGLE_STRIP:5,NO_ERROR:0,RGBA:6408,UNSIGNED_BYTE:5121,getError(){return glError;},readPixels(x,y,w,h,fmt,type,dest){dest.fill(127);},
     createBuffer:()=>({}),bindBuffer(){},bufferData(){},createVertexArray:()=>({}),bindVertexArray(){},enableVertexAttribArray(){},vertexAttribPointer(){},
     createShader:()=>({}),shaderSource(){},compileShader(){compiled++;},getShaderParameter:()=>true,deleteShader(){},
     createProgram:()=>({}),attachShader(){},linkProgram(){},getProgramParameter:()=>true,deleteProgram(){},
@@ -100,4 +100,20 @@ test('P1 project restoration validates source and creates new render evidence',(
   l.frame();const frame=l.bridge.capture();
   assert.equal(frame.demoId,'rotation');assert.equal(frame.parameters.zoom,1.5);
   assert.notEqual(frame.shaderBody,prior.shaderBody);
+});
+
+test('P3 WebGL readback bridge refuses unvalidated frames and preserves dimensions',()=>{
+  const app=buildLab();
+  assert.throws(()=>app.bridge.readPixelsForResearch(),/verified WebGL draw/);
+  app.frame();
+  const {observation,pixels}=app.bridge.readPixelsForResearch();
+  assert.equal(observation.checks.frameDrawn,true);
+  assert.equal(pixels.length,observation.viewport.width*observation.viewport.height*4);
+  assert.equal(pixels[0],127);
+});
+test('P3 readPixels GL errors invalidate research and shader-build eligibility',()=>{
+  const app=buildLab();app.frame();
+  app.failGL(1282);
+  assert.throws(()=>app.bridge.readPixelsForResearch(),/readPixels failed/);
+  assert.throws(()=>app.bridge.capture(),/successfully drawn frame/);
 });
