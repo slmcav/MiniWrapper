@@ -591,6 +591,8 @@ test('Master/PhD/postdoc journey: author, experiment, audit, manuscript and TeX 
  const available=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
  test.skip(!available,'Real WebGL2 context required for study journey');
  await expect(page.locator('#saveBuild')).toBeEnabled({timeout:30000});
+ await page.locator('#drawerToggle').click();
+ await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','false');
  await page.locator('#workflowStudy').click();
  await page.locator('#sweepRun').click();
  await expect(page.locator('#sweepStatus')).toContainText('Experiment verified',{timeout:60000});
