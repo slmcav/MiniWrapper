@@ -178,7 +178,8 @@ if (!gl) {
       .replace(/\bfloat\s+i\s*,\s*e\s*,\s*R\s*,\s*s\s*;/, 'float i=0.,e=1.,R=1.,s=4.;')
       .replace(/\bvec3\s+q\s*,\s*p\s*,\s*d\s*=/, 'vec3 q=vec3(0.),p=vec3(0.),d=')
       .replace(/\bfor\s*\(\s*float\s+i\s*,\s*g\s*,\s*e\s*,\s*s\s*;/g, 'for(float i=0.,g=0.,e=0.,s=0.;')
-      .replace(/\bfor\s*\(\s*int\s+i\s*;/g, 'for(int i=0;');
+      .replace(/\bfor\s*\(\s*int\s+i\s*;/g, 'for(int i=0;')
+      .replace(/\bfor\s*\(\s*int\s+j\s*;/g, 'for(int j=0;');
   }
 
   function fragmentSource(body) {
