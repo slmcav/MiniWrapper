@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
+import {mkdtemp,writeFile,rm,readFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {createBuildReceipt} from '../src/build-evidence.mjs';
 import {createResearchCapture} from '../src/research-capture.mjs';
 import {createFigureEvidence} from '../src/research-figures.mjs';
@@ -226,4 +230,34 @@ test('P6 imported research ZIP rejects forged central-directory and publication 
   // Flip the serialized approval value in the manifest: a hash and/or byte check must reject it.
   other[falseOffset]^=1;
   await assert.rejects(()=>verifyManuscriptZip(other,{subtle}),/CRC-32 mismatch|does not reproduce|unreviewed/);
+});
+
+test('P6 offline Node CLI independently replays exported study and exits nonzero for corrupt data',async()=>{
+  const {session,audit}=await fixture();
+  const paper=await assembleManuscript(session,{audit,subtle,clock:clock(0)});
+  const exportData=await exportManuscriptBundle(paper,{subtle});
+  const dir=await mkdtemp(join(tmpdir(),'glsl-bundle-'));
+  const output=join(dir,'research.zip'),receipt=join(dir,'verified.json');
+  try{
+    await writeFile(output,exportData.zip);
+    const cmd=join(process.cwd(),'scripts','verify-research-zip.mjs');
+    const good=spawnSync(process.execPath,[cmd,output,'--receipt',receipt],{
+      cwd:process.cwd(),encoding:'utf8',timeout:30000
+    });
+    assert.equal(good.status,0,good.stderr);
+    assert.match(good.stdout,/PASS: source study/);
+    assert.match(good.stdout,/Scientific publication clearance: NOT ESTABLISHED/);
+    const detail=JSON.parse(await readFile(receipt,'utf8'));
+    assert.equal(detail.manuscriptSha256,paper.record.sha256);
+    assert.equal(detail.publicationAuthorized,false);
+    const badBytes=new Uint8Array(exportData.zip);badBytes[130]^=1;
+    await writeFile(output,badBytes);
+    const bad=spawnSync(process.execPath,[cmd,output],{
+      cwd:process.cwd(),encoding:'utf8',timeout:30000
+    });
+    assert.equal(bad.status,1);
+    assert.match(bad.stderr,/FAIL:/);
+  }finally{
+    await rm(dir,{recursive:true,force:true});
+  }
 });
