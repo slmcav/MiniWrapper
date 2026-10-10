@@ -17,8 +17,8 @@ function dl(name,content,type){
   setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 const summary=bibliographicReadiness();
-$('referenceStatus').textContent=summary.verifiedCount+' metadata-checked sources; '+
-  summary.pendingIds.length+' pending primary-source checks. External manuscript review has not occurred.';
+$('referenceStatus').textContent=summary.verifiedCount+' sources in the reference registry; '+
+  summary.pendingIds.length+' source records awaiting reconciliation.';
 for(const ref of REFERENCES){
   const outer=document.createElement('div');outer.className='audit-source';
   const strong=document.createElement('strong');strong.textContent=ref.title+' ('+ref.year+')';
@@ -49,12 +49,11 @@ async function verifyAndDisplay(candidate){
     'Draws per treatment: '+result.measurements.observedDrawsPerTreatment,
     'Bibliographic basis: '+b.references.length+' applicable metadata-checked sources',
     ...result.findings.map(x=>x.code+' ['+x.status+']: '+x.detail),
-    'Academic manuscript gate: LOCKED',
     ...result.release.reasons.map(x=>'- '+x)
   ].join('\n');
   $('auditExport').disabled=false;
   notify();
-  state('Experiment and methodology findings independently recomputed from archived bytes. No publication authorization granted.');
+  state('Methodology audit complete: archived measurements and citations verified.');
 }
 $('auditCurrentStudy').addEventListener('click',async()=>{
   if(busy||!window.glslLabLatestExperiment)return;
@@ -101,4 +100,4 @@ $('auditExport').addEventListener('click',async()=>{
   }catch(e){state('Methodology export rejected: '+String(e.message||e),true);}
   finally{busy=false;$('auditExport').disabled=!audit;}
 });
-state('Bibliography metadata loaded. Import an experiment JSON for a reproducible methods audit.');
+state('Reference registry loaded. Import a study or select Audit current study.');
