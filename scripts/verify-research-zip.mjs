@@ -17,6 +17,7 @@ if(args.length<1||args.length>3||args.includes('--help')||args.includes('-h')){
     const receipt={...verification,verifiedAt:new Date().toISOString(),
       archivePath:args[0],tool:'MiniWrapper offline research ZIP verifier (Node.js 22+)'};
     process.stdout.write('PASS: source study, complete images, PDF, citations and unsigned review handoff all reproduce.\n');
+    process.stdout.write('Archive SHA-256: '+verification.archiveSha256+'\n');
     process.stdout.write('Manuscript SHA-256: '+verification.manuscriptSha256+'\n');
     process.stdout.write('Study SHA-256: '+verification.studySha256+'\n');
     process.stdout.write('Frames: '+verification.sourceFiguresVerified+
