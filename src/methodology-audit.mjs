@@ -1,6 +1,7 @@
 // P4 preflight: independently recompute experiment evidence and scope bibliography claims.
 // This audit is mechanical, NOT independent scholarly peer review.
 import {canonicalJson,sha256Hex} from './build-evidence.mjs';
+import {assertResearchEligibleShader} from './research-source-policy.mjs';
 import {verifySweepSession} from './research-experiments.mjs';
 import {verifyReplicatedSession} from './research-replications.mjs';
 import {REFERENCES,bibliographicReadiness,vettedReferences,exportBibtex} from './reference-registry.mjs';
@@ -38,6 +39,11 @@ export async function auditMethodology(session,{
   need(replicate||sweep,'Unsupported experiment schema for manuscript audit');
   if(replicate)await verifyReplicatedSession(session,subtle);
   else await verifySweepSession(session,subtle);
+  // Verify every archived trial's source; source IDs and author fields alone are insufficient.
+  for(const trial of session.trials)assertResearchEligibleShader({
+    body:trial.receipt.shader.body,identifier:trial.receipt.shader.identifier,
+    attribution:trial.receipt.shader.attribution
+  });
   const refs=bibliographicReadiness();
   need(!refs.missingRequiredScopes.length,'Bibliography lacks essential technical or methodology references');
   const checkedAt=clock();need(UTC(checkedAt),'UTC audit timestamp required');
