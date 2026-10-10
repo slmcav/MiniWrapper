@@ -26,18 +26,18 @@ export async function renderLaTeXManuscript(bundle,subtle=globalThis.crypto?.sub
  const selected=new Set(r.treatments.map(t=>t.firstTrialIndex));
  const supplemental=bundle.figures.flatMap((image,index)=>{
   if(selected.has(index))return [];
-  if(!/^figures\\/frame-[0-9]{2}\\.png$/.test(image.path))
+  if(!/^figures\/frame-[0-9]{2}\.png$/.test(image.path))
    throw new TypeError('Supplementary frame path is invalid');
   const trial=bundle.study.trials[index];
   if(!trial||!Number.isInteger(trial.levelIndex)||trial.levelIndex<0||trial.levelIndex>=r.levels.length)
    throw new TypeError('Supplementary frame has no verified treatment');
   return [
-    '\\\\begin{figure}[htbp]',
-    '\\\\centering',
-    '\\\\includegraphics[width=.74\\\\linewidth,height=61mm,keepaspectratio]{'+image.path+'}',
-    '\\\\caption{Archived GPU draw '+(index+1)+'; '+esc(r.parameter)+' = '+
+    '\\begin{figure}[htbp]',
+    '\\centering',
+    '\\includegraphics[width=.74\\linewidth,height=61mm,keepaspectratio]{'+image.path+'}',
+    '\\caption{Archived GPU draw '+(index+1)+'; '+esc(r.parameter)+' = '+
      fixed(r.levels[trial.levelIndex])+'.}',
-    '\\\\end{figure}'
+    '\\end{figure}'
   ];
  });
  const rows=r.treatments.map(t=>fixed(t.value)+' & '+t.n+' & '+fixed(t.meanLuma8)+
