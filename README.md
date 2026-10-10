@@ -206,3 +206,5 @@ node scripts/verify-research-zip.mjs path/to/manuscript.zip --receipt path/to/ve
 ```
 
 This verification can be repeated on another computer without network access, but it is an internal evidence-consistency test—not proof of original hardware conditions, human identity, independent replication or academic publication. Keep the Git revision that produced the archive, because evolving bibliography/layout code can legitimately require the original version for byte-identical reconstruction. See `docs/REPRODUCIBILITY.md` for the complete protocol and claim-level citation audit.
+
+The P6 independent ZIP verifier includes an exact `archiveSha256` in its verification receipt, visibly and through the offline CLI. This is the digest of the supplied ZIP byte stream, distinct from the study SHA-256, manuscript SHA-256, and the per-file inventory. Keep the corresponding Git checkout to reproduce source-dependent rendering. It is not a signature or publication approval.

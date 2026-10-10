@@ -38,3 +38,7 @@ Three fixed treatment levels, or nine serial framebuffer draws in a cyclic order
 A future claim of PhD-quality original research requires a stated research question, appropriate prior-art analysis, independent experimental design, documented hardware/software conditions, inferential framework when warranted, explicit source-level reviewer signoff, and publication-format verification. The generator must not provide these claims by implication.
 
 The approved final-product visual comp stays entirely outside GitHub.
+
+## Exact-byte archive identification
+
+A PASS receipt includes `archiveSha256`, the SHA-256 digest of the **original unmodified ZIP bytes** (in addition to the separately content-addressed study, audit and manuscript). This makes it possible to identify which exact exported archive a machine verification checked. The offline CLI prints the digest and includes it in `--receipt` JSON; the browser verification view also displays it. The digest is an alteration detector, **not** a digital signature, identity attestation, or a proof that the underlying GPU observations actually took place.
