@@ -29,7 +29,7 @@ async function observed(settings,i,shader='o.rgb = vec3(.5);'){
   const pixels=Uint8Array.from({length:48},(_,x)=>x%4===3?255:(x+i*17)%256);
   const receipt=await createBuildReceipt({
     shaderBody:shader,expandedShader:'#version 300 es\nvoid main(){o.rgb=vec3(.5);}',
-    demoId:'original',attribution:'@YoheiNishitsuji',
+    demoId:'research_fixture',attribution:'Synthetic QA fixture',
     checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
     viewport:{width:4,height:3},parameters:settings,shaderTimeSeconds:2
   },{subtle,clock:clock(i)});
