@@ -43,6 +43,7 @@
     .hint { position: absolute; right: 13px; bottom: 11px; pointer-events: none; color: #a8b8c8; background: #0b1016b8; border-radius: 4px; padding: 4px 7px; font-size: 11px; }
     footer { padding: 10px clamp(16px, 3vw, 28px) 18px; color: #7f8c99; font-size: 11px; }
     footer a { color: inherit; }
+    @media (max-width: 820px) { label[for="perfMode"], #perfMode, #perfMetrics { display:none; } }
     @media (max-width: 600px) {
       textarea { height: 175px; }
       main { grid-template-rows: auto auto minmax(300px, 1fr) auto; }
@@ -72,6 +73,11 @@
         <option value="0.75" selected>75%</option>
         <option value="1">100%</option>
       </select>
+      <label for="perfMode">Preview load</label>
+      <select id="perfMode" aria-label="Live preview performance profile">
+        <option value="auto" selected>Balanced (recommended)</option>
+        <option value="full">Full detail (costly)</option>
+      </select>
     </div>
     <div id="status" role="status" aria-live="polite"></div>
     <div class="downloads" aria-label="Downloads">
@@ -79,6 +85,7 @@
       <button id="record-video" type="button" aria-pressed="false">Record video</button>
       <span id="recording-indicator" class="recording-indicator" role="status" aria-label="Recording in progress" hidden></span>
       <small>Native exports: still frame as PNG, animation as WebM or MP4 depending on browser support.</small>
+      <small id="perfMetrics" title="Preview dimensions, observed drawing rate, and WebGL renderer" aria-live="off"></small>
     </div>
   </section>
   <div class="viewport">
@@ -248,6 +255,18 @@ void main() {
   let paused = false;
   let mediaRecorder = null;
   let recordedChunks = [];
+  const perfMode = document.getElementById('perfMode');
+  const isDesktop = () => window.matchMedia('(min-width: 821px)').matches;
+  const LIVE_PIXEL_BUDGET = 520000;
+  const FRAME_INTERVAL_MS = 1000 / 60;
+  let lastDrawAt = -Infinity;
+  let previewVisible = true;
+  let forceNextFrame = true;
+  let lastSizeLabel = '';
+  const metrics = document.getElementById('perfMetrics');
+  const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+  const gpuBackend = String(debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)).slice(0,130);
+  let rateStart = 0, rateFrames = 0;
 
   const supportedVideoType = [
     'video/webm;codecs=vp9',
@@ -272,15 +291,23 @@ void main() {
 
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2) * Number(scaleEl.value);
-    const width = Math.max(1, Math.round(canvas.clientWidth * dpr));
-    const height = Math.max(1, Math.round(canvas.clientHeight * dpr));
+    let width = Math.max(1, Math.round(canvas.clientWidth * dpr));
+    let height = Math.max(1, Math.round(canvas.clientHeight * dpr));
+    // Mobile keeps the original 100% presentation. Desktop raymarchers
+    // run at a bounded fragment count unless the user opts into full detail.
+    if (isDesktop() && perfMode.value === 'auto' && width * height > LIVE_PIXEL_BUDGET) {
+      const factor = Math.sqrt(LIVE_PIXEL_BUDGET / (width * height));
+      width = Math.max(1, Math.floor(width * factor));
+      height = Math.max(1, Math.floor(height * factor));
+    }
     if (width !== canvas.width || height !== canvas.height) {
       canvas.width = width;
       canvas.height = height;
+      gl.viewport(0, 0, width, height);
+      lastSizeLabel = width + ' × ' + height;
     }
-    gl.viewport(0, 0, width, height);
+    return lastSizeLabel;
   }
-
   function draw(now = performance.now()) {
     if (!program) return;
     resize();
@@ -289,19 +316,38 @@ void main() {
     gl.uniform2f(uniforms.r, canvas.width, canvas.height);
     gl.uniform1f(uniforms.t, currentTimeSeconds(now));
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    rateFrames++;
+    if (!rateStart) rateStart = now;
+    if (now-rateStart >= 1000) {
+      const fps = Math.round(rateFrames*1000/(now-rateStart));
+      metrics.textContent = canvas.width+'×'+canvas.height+' · '+fps+' fps' + (/swiftshader|llvmpipe|software/i.test(gpuBackend) ? ' · Software WebGL' : '');
+      metrics.title = 'WebGL renderer: '+gpuBackend+'; preview output is bounded only in Balanced desktop mode.';
+      rateFrames=0;rateStart=now;
+    }
   }
-
   function frame(now) {
     raf = 0;
-    if (!program) return;
-    draw(now);
-    if (!paused && !document.hidden) raf = requestAnimationFrame(frame);
+    if (!program || document.hidden || !previewVisible) return;
+    // A 144/240 Hz desktop monitor must not multiply expensive GPU draws.
+    // Keep the animation clock wall-time based even when a frame is skipped.
+    if (forceNextFrame || now - lastDrawAt >= FRAME_INTERVAL_MS - 1) {
+      forceNextFrame = false;
+      lastDrawAt = now;
+      draw(now);
+    }
+    if (!paused && !document.hidden && previewVisible) raf = requestAnimationFrame(frame);
   }
-
-  function requestFrame() {
-    if (!raf && program) raf = requestAnimationFrame(frame);
+  function requestFrame(force = false) {
+    if (force) forceNextFrame = true;
+    if (!raf && program && !document.hidden && previewVisible) raf = requestAnimationFrame(frame);
   }
-
+  new IntersectionObserver(entries => {
+    previewVisible = entries[0]?.isIntersecting ?? true;
+    if (!previewVisible && raf) {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    } else if (previewVisible) requestFrame(true);
+  }, {threshold:0}).observe(canvas);
   function compile() {
     let vertex;
     let fragment;
@@ -324,8 +370,9 @@ void main() {
       pausedAt = 0;
       paused = false;
       pauseButton.textContent = 'Pause';
-      status('Shader compiled. Rendering at ' + Math.round(Number(scaleEl.value) * 100) + '% resolution.');
-      requestFrame();
+      status('Shader compiled. Live preview: ' + Math.round(Number(scaleEl.value) * 100) + '% requested; ' + (isDesktop() && perfMode.value === 'auto' ? 'desktop fragment budget 520k.' : 'full selected detail.'));
+      lastDrawAt = -Infinity;
+      requestFrame(true);
     } catch (error) {
       status(String(error.message || error), true);
     } finally {
@@ -373,8 +420,12 @@ void main() {
     requestFrame();
   });
   scaleEl.addEventListener('change', () => {
-    status('Resolution: ' + Math.round(Number(scaleEl.value) * 100) + '%.');
-    requestFrame();
+    status('Resolution: ' + Math.round(Number(scaleEl.value) * 100) + '% requested; actual framebuffer appears in canvas dimensions.');
+    requestFrame(true);
+  });
+  perfMode.addEventListener('change', () => {
+    status(perfMode.value === 'auto' ? 'Balanced preview enabled (desktop 520k fragment budget).' : 'Full-detail preview enabled; complex shaders may render slowly.');
+    requestFrame(true);
   });
   downloadImageButton.addEventListener('click', () => {
     if (!program) return;
@@ -447,8 +498,8 @@ void main() {
       status('Video recording failed: ' + String(error.message || error), true);
     }
   });
-  window.addEventListener('resize', requestFrame);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) requestFrame(); });
+  window.addEventListener('resize', () => requestFrame(true));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) requestFrame(true); });
   canvas.addEventListener('webglcontextlost', event => {
     event.preventDefault();
     if (raf) cancelAnimationFrame(raf);

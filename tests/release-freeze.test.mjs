@@ -28,9 +28,9 @@ test('The exact browser dependency tree is frozen by integrity-checked npm lockf
  }
 });
 
-test('Release source tree names 36 exact producer blobs, with no duplicate or missing bytes',async()=>{
+test('Release source tree names 37 exact producer blobs, with no duplicate or missing bytes',async()=>{
  assert.match(SOURCE_SNAPSHOT_COMMIT,/^[a-f0-9]{40}$/);
- assert.equal(PINNED_SOURCE_BLOBS.length,36);
+ assert.equal(PINNED_SOURCE_BLOBS.length,37);
  const seen=new Set();
  for(const {path,gitBlobSha1} of PINNED_SOURCE_BLOBS){
   assert.ok(!seen.has(path),'Duplicate producer: '+path);seen.add(path);
@@ -38,7 +38,7 @@ test('Release source tree names 36 exact producer blobs, with no duplicate or mi
   const digest=createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
   assert.equal(digest,gitBlobSha1,'A producer mutated after its freeze: '+path);
  }
- for(const mandatory of ['package-lock.json','glsl-lab.html','src/manuscript-latex.mjs','src/research-source-policy.mjs',
+ for(const mandatory of ['package-lock.json','index.html','glsl-lab.html','src/manuscript-latex.mjs','src/research-source-policy.mjs',
    'src/lab-visual-contract.css','src/lab-visual-contract.mjs','src/manuscript-verify.mjs'])
   assert.ok(seen.has(mandatory),'Unfrozen research producer: '+mandatory);
 });

@@ -2,6 +2,10 @@
 
 A **single-file browser wrapper** for compact GLSL fragment-shader expressions. Open `index.html` in a browser with **WebGL2** enabled; the supplied demos are preloaded in the selector and render automatically. No build system, external libraries, accounts, or server are required.
 
+## Desktop WebGL performance (classic editor and GLSL Lab)
+
+Both tools now default to bounded **Balanced** desktop rendering (classic: 520k pixels/frame; Lab: 390k pixels/frame) with high-refresh frame pacing, offscreen GPU pause, and actual framebuffer/FPS diagnostics. Select **Full detail** for uncapped preview when required. Phone presentation remains unchanged. The scientific observation pipeline still captures actual framebuffer bytes, validates GL status, and archives original pixel dimensions/hashes. See [desktop-performance method and QA](docs/DESKTOP_PERFORMANCE_QA.md).
+
 ## GLSL Lab — computational graphics research
 
 [Open GLSL Lab](glsl-lab.html) for an authored shader, controlled WebGL2 experiment, reproducible measurements and a LaTeX research manuscript. The gallery remains in [the classic shader editor](index.html): all 17 supplied shaders retain their original @YoheiNishitsuji attribution **outside** the scientific Lab. Gallery sources cannot be promoted into scientific study or manuscript exports, including direct pasted copies and straightforward formatting variants.

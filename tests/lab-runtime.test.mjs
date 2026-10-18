@@ -23,7 +23,7 @@ function buildLab() {
   el('paneCode').hidden=true;
   let compiled=0,draws=0,now=1000,glError=0;
   const uniforms={};
-  const gl={VERTEX_SHADER:35633,FRAGMENT_SHADER:35632,COMPILE_STATUS:35713,LINK_STATUS:35714,ARRAY_BUFFER:34962,STATIC_DRAW:35044,FLOAT:5126,TRIANGLE_STRIP:5,NO_ERROR:0,RGBA:6408,UNSIGNED_BYTE:5121,getError(){return glError;},readPixels(x,y,w,h,fmt,type,dest){dest.fill(127);},
+  const gl={VERTEX_SHADER:35633,FRAGMENT_SHADER:35632,COMPILE_STATUS:35713,LINK_STATUS:35714,ARRAY_BUFFER:34962,STATIC_DRAW:35044,FLOAT:5126,TRIANGLE_STRIP:5,NO_ERROR:0,RGBA:6408,UNSIGNED_BYTE:5121,getError(){return glError;},getExtension(){return null;},getParameter(){return 'Mock WebGL2 Renderer';},readPixels(x,y,w,h,fmt,type,dest){dest.fill(127);},
     createBuffer:()=>({}),bindBuffer(){},bufferData(){},createVertexArray:()=>({}),bindVertexArray(){},enableVertexAttribArray(){},vertexAttribPointer(){},
     createShader:()=>({}),shaderSource(){},compileShader(){compiled++;},getShaderParameter:()=>true,deleteShader(){},
     createProgram:()=>({}),attachShader(){},linkProgram(){},getProgramParameter:()=>true,deleteProgram(){},
@@ -35,7 +35,9 @@ function buildLab() {
   vm.runInNewContext(js,{document:doc,window:win,devicePixelRatio:1,performance:{now:()=>now},
     requestAnimationFrame:fn=>(queue.push(fn),queue.length),cancelAnimationFrame(){},setTimeout(){},
     URL:{createObjectURL:()=>'',revokeObjectURL(){}},navigator:{clipboard:{writeText:async()=>{}}},
-    Float32Array,console},{timeout:1000});
+    Float32Array,console,matchMedia:()=>({matches:false}),
+     ResizeObserver:class{observe(){}},IntersectionObserver:class{observe(){}},
+     crypto:{subtle:null}},{timeout:1000});
   // External graph-ui module compiles a typed graph on initial load.
   // Model that explicit module handoff in the isolated inline-runtime fixture.
   win.glslLabBridge.compileGraph({version:1,nodes:[{id:'research-node'}],output:'research-node'},
