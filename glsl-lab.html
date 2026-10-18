@@ -214,6 +214,8 @@
           <button type="button" id="savePng">Save PNG</button>
         </div>
         <span class="state" id="state" role="status" aria-live="polite">Starting…</span>
+        <label for="previewProfile" class="preview-profile-label">Preview <select id="previewProfile" aria-label="Shader preview detail"><option value="auto" selected>Balanced</option><option value="full">Full detail</option></select></label>
+        <span id="previewHealth" class="state" aria-live="off" title="Actual live framebuffer and achieved preview frame rate">Waiting for first frame</span>
       </div>
       <div id="error" role="alert"></div>
       </div>
@@ -585,6 +587,14 @@ let activeBody='', activeAttribution='Authored in GLSL Lab', activeGraph=null;
 let activeTab='play';
 let expandedSource='', compileCpuMs=null, compiledOK=false, validFrame=null, frameNumber=0;
 const frameListeners=new Set();
+const previewProfile=$('previewProfile');
+const previewHealth=$('previewHealth');
+const desktopPreview=()=>matchMedia('(min-width:821px)').matches;
+const LIVE_PREVIEW_PIXEL_BUDGET=390000;
+const MAX_LIVE_FPS=60;
+let canvasSizeDirty=true,previewVisible=true,nextFrameForced=true,lastRenderedAt=-Infinity;
+let fpsStart=0,fpsFrames=0;
+const rendererInfo=(()=>{if(!gl)return 'WebGL2 unavailable';const extension=gl.getExtension('WEBGL_debug_renderer_info');return String(extension?gl.getParameter(extension.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)).slice(0,100);})();
 function broadcastBuildState(valid){for(const listener of frameListeners)listener(valid);}
 function invalidateBuild(){const had=validFrame!==null;validFrame=null;if(had)broadcastBuildState(false);}
 window.glslLabBridge={
@@ -618,7 +628,7 @@ window.glslLabBridge={
     for(const [key,[min,max]] of Object.entries(limits))
       if(!Number.isFinite(parameters[key])||parameters[key]<min||parameters[key]>max)
         throw new Error('Invalid experimental parameter '+key);
-    sizeCanvas();
+    sizeCanvas(true);
     const width=canvas.width,height=canvas.height;
     if(width*height>500000)throw new Error('Experiment framebuffer exceeds 500,000 pixels; use a smaller viewport');
     invalidateBuild();
@@ -778,18 +788,34 @@ function compileSource(name,body,attribution,graph=null) {
   } catch(e){compiledOK=false;invalidateBuild();setStatus('',String(e.message||e));}
   finally {if(vert)gl.deleteShader(vert);if(frag)gl.deleteShader(frag);if(next)gl.deleteProgram(next);}
 }
-function sizeCanvas() {
+function sizeCanvas(force=false) {
+  if(!canvasSizeDirty&&!force)return;
+  canvasSizeDirty=false;
   const rect=canvas.getBoundingClientRect();
   const density=Math.min(devicePixelRatio||1,1.5)*.8;
-  const width=Math.max(1,Math.round(rect.width*density));
-  const height=Math.max(1,Math.round(rect.height*density));
-  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+  let width=Math.max(1,Math.round(rect.width*density));
+  let height=Math.max(1,Math.round(rect.height*density));
+  if(desktopPreview()&&previewProfile.value==='auto'&&width*height>LIVE_PREVIEW_PIXEL_BUDGET){
+    const shrink=Math.sqrt(LIVE_PREVIEW_PIXEL_BUDGET/(width*height));
+    width=Math.max(1,Math.floor(width*shrink));
+    height=Math.max(1,Math.floor(height*shrink));
+  }
+  if(canvas.width!==width||canvas.height!==height){
+    canvas.width=width;canvas.height=height;
+    invalidateBuild();
+  }
   gl.viewport(0,0,width,height);
 }
 function draw(now) {
   animationId=0;
-  if(!gl||!program)return;
-  if(running && lastStamp>0)elapsed+=Math.min((now-lastStamp)/1000,.1)*settings.speed;
+  if(!gl||!program||document.hidden||!previewVisible)return;
+  // No redundant draws on 144/240 Hz monitors, while UI changes remain immediate.
+  if(!nextFrameForced&&now-lastRenderedAt<1000/MAX_LIVE_FPS-1){
+    if(running)animationId=requestAnimationFrame(draw);
+    return;
+  }
+  nextFrameForced=false;lastRenderedAt=now;
+  if(running&&lastStamp>0)elapsed+=Math.min((now-lastStamp)/1000,.1)*settings.speed;
   lastStamp=now;
   sizeCanvas();
   gl.useProgram(program);gl.bindVertexArray(vao);
@@ -800,24 +826,47 @@ function draw(now) {
   gl.uniform1f(loc.hue,settings.hue/360);
   gl.uniform1f(loc.brightness,settings.brightness);
   if(!compiledOK)return;
-  try {
+  try{
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    // Retain explicit GL validation for verified research captures.
     const code=gl.getError();
     if(code!==gl.NO_ERROR)throw new Error('WebGL drawing failed, error '+String(code));
     frameNumber++;
     const fresh=validFrame===null;
     validFrame={
       shaderBody:activeBody,expandedShader:expandedSource,demoId:current,attribution:activeAttribution,
-      ...(current==='builder'&&activeGraph?{graph:JSON.parse(JSON.stringify(activeGraph))}:{}),
+      ...(current==='builder'&&activeGraph?{graph:activeGraph}:{}),
       checks:{vertexCompiled:true,fragmentCompiled:true,linked:true,frameDrawn:true,glError:0},
       viewport:{width:canvas.width,height:canvas.height},parameters:{...settings},
       shaderTimeSeconds:elapsed,compileCpuMs
     };
     if(fresh)broadcastBuildState(true);
+    fpsFrames++;
+    if(!fpsStart)fpsStart=now;
+    if(now-fpsStart>=1000){
+      const fps=Math.round(fpsFrames*1000/(now-fpsStart));
+      previewHealth.textContent=canvas.width+'×'+canvas.height+' · '+fps+' fps';
+      previewHealth.title='Live renderer: '+rendererInfo+'. Scientific captures independently verify source pixels.';
+      fpsStart=now;fpsFrames=0;
+    }
   }catch(e){compiledOK=false;invalidateBuild();setStatus('',String(e.message||e));return;}
-  if(running && !document.hidden)animationId=requestAnimationFrame(draw);
+  if(running&&!document.hidden&&previewVisible)animationId=requestAnimationFrame(draw);
 }
-function requestDraw(){if(!animationId&&gl&&program&&!document.hidden)animationId=requestAnimationFrame(draw);}
+function requestDraw(force=false){
+  if(force)nextFrameForced=true;
+  if(!animationId&&gl&&program&&!document.hidden&&previewVisible)animationId=requestAnimationFrame(draw);
+}
+if(gl){
+  new ResizeObserver(()=>{canvasSizeDirty=true;requestDraw(true);}).observe(canvas);
+  new IntersectionObserver(entries=>{
+    previewVisible=entries[0]?.isIntersecting??true;
+    if(!previewVisible&&animationId){cancelAnimationFrame(animationId);animationId=0;}
+    if(previewVisible)requestDraw(true);
+  },{threshold:0}).observe(canvas);
+}
+previewProfile.addEventListener('change',()=>{
+  canvasSizeDirty=true;invalidateBuild();requestDraw(true);
+});
 function updateValues(){
   $('zoomValue').textContent=Math.round(settings.zoom*100)+'%';
   $('angleValue').textContent=Math.round(settings.angle)+'°';
@@ -875,8 +924,8 @@ $('savePng').addEventListener('click',()=>{
   };
   canvas.toBlob(after,'image/png');
 });
-window.addEventListener('resize',requestDraw);
-document.addEventListener('visibilitychange',()=>{lastStamp=0;if(!document.hidden)requestDraw();});
+window.addEventListener('resize',()=>{canvasSizeDirty=true;requestDraw(true);});
+document.addEventListener('visibilitychange',()=>{lastStamp=0;if(!document.hidden)requestDraw(true);});
 canvas.addEventListener('webglcontextlost',event=>{
   event.preventDefault();if(animationId)cancelAnimationFrame(animationId);animationId=0;
   compiledOK=false;invalidateBuild();
