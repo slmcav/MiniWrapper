@@ -599,7 +599,14 @@ function broadcastBuildState(valid){for(const listener of frameListeners)listene
 function invalidateBuild(){const had=validFrame!==null;validFrame=null;if(had)broadcastBuildState(false);}
 window.glslLabBridge={
   onValidationChange(listener){frameListeners.add(listener);listener(validFrame!==null);return ()=>frameListeners.delete(listener);},
-  capture(){if(!validFrame)throw new Error('No successfully drawn frame to capture');return JSON.parse(JSON.stringify(validFrame));},
+  capture(){
+    if(!validFrame)throw new Error('No successfully drawn frame to capture');
+    // Export-time evidence checks always validate the current GL error state;
+    // the high-frequency preview need not query the driver on every draw.
+    const error=gl.getError();
+    if(error!==gl.NO_ERROR){invalidateBuild();throw new Error('GPU validation failed, error '+String(error));}
+    return JSON.parse(JSON.stringify(validFrame));
+  },
   getFrameNumber(){return validFrame?frameNumber:-1;},
   getGraphicsPlatform(){
     if(!gl||gl.isContextLost?.())throw new Error('WebGL2 graphics context unavailable');
@@ -828,11 +835,14 @@ function draw(now) {
   if(!compiledOK)return;
   try{
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
-    // Retain explicit GL validation for verified research captures.
-    const code=gl.getError();
-    if(code!==gl.NO_ERROR)throw new Error('WebGL drawing failed, error '+String(code));
-    frameNumber++;
+    // First draw and periodic health checks validate the preview. Export
+    // and every controlled GPU observation additionally verify GL errors.
     const fresh=validFrame===null;
+    if(fresh||frameNumber%90===0){
+      const code=gl.getError();
+      if(code!==gl.NO_ERROR)throw new Error('WebGL drawing failed, error '+String(code));
+    }
+    frameNumber++;
     validFrame={
       shaderBody:activeBody,expandedShader:expandedSource,demoId:current,attribution:activeAttribution,
       ...(current==='builder'&&activeGraph?{graph:activeGraph}:{}),
