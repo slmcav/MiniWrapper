@@ -3,11 +3,11 @@
 // The matching-file regression gate must be updated whenever the generator changes.
 export const SOURCE_LINEAGE_SCHEMA='glsl-lab/source-lineage/1';
 export const PINNED_REPOSITORY='slmcav/MiniWrapper';
-export const SOURCE_SNAPSHOT_COMMIT='2268e4bece9f6a1e29313ee194c4c4a494e963fd';
+export const SOURCE_SNAPSHOT_COMMIT='7451a35aff3bf36de82aa5566dd038841467bac2';
 export const PINNED_SOURCE_BLOBS=Object.freeze([
   {
     "path": "glsl-lab.html",
-    "gitBlobSha1": "da3e256761eec26454297d2c9189a2052600b582"
+    "gitBlobSha1": "30662d65df0a3652ea2c52495a6b214bbf6863e6"
   },
   {
     "path": "src/build-evidence.mjs",
