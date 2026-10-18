@@ -43,6 +43,7 @@
     .hint { position: absolute; right: 13px; bottom: 11px; pointer-events: none; color: #a8b8c8; background: #0b1016b8; border-radius: 4px; padding: 4px 7px; font-size: 11px; }
     footer { padding: 10px clamp(16px, 3vw, 28px) 18px; color: #7f8c99; font-size: 11px; }
     footer a { color: inherit; }
+    @media (max-width: 820px) { label[for="perfMode"], #perfMode { display:none; } }
     @media (max-width: 600px) {
       textarea { height: 175px; }
       main { grid-template-rows: auto auto minmax(300px, 1fr) auto; }
