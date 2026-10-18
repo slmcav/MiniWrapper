@@ -738,3 +738,81 @@ test('Phase 2 mobile contract: four accessible navigation modes open actual cont
  await expect(page.locator('#drawerToggle')).toHaveAttribute('aria-expanded','false');
  await expect(page.locator('#glcanvas')).toBeVisible();
 });
+
+
+test('Desktop classic shader honors fragment budget and avoids high-refresh draw overload',async({page})=>{
+ test.setTimeout(90000);
+ await page.addInitScript(()=>{
+  window.__classicDrawCount=0;
+  if(typeof WebGL2RenderingContext==='undefined')return;
+  const original=WebGL2RenderingContext.prototype.drawArrays;
+  WebGL2RenderingContext.prototype.drawArrays=function(...args){
+   window.__classicDrawCount++;
+   return original.apply(this,args);
+  };
+ });
+ await page.setViewportSize({width:2500,height:1400});
+ await page.goto('/index.html');
+ await expect(page.locator('#perfMode')).toHaveValue('auto');
+ const gl=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+ test.skip(!gl,'Real WebGL2 unavailable');
+ await page.waitForFunction(()=>{
+  const c=document.getElementById('glcanvas');
+  return c.width*c.height>1000 && c.width*c.height<=520000;
+ },{timeout:30000});
+ const baseline=await page.evaluate(()=>{
+  const c=document.getElementById('glcanvas');
+  return {pixels:c.width*c.height,clientWidth:c.clientWidth,draws:window.__classicDrawCount};
+ });
+ expect(baseline.pixels).toBeLessThanOrEqual(520000);
+ expect(baseline.clientWidth).toBeGreaterThan(1200);
+ await page.waitForTimeout(550);
+ const frames=await page.evaluate(()=>window.__classicDrawCount);
+ expect(frames-baseline.draws).toBeLessThanOrEqual(37);
+ await page.setViewportSize({width:390,height:844});
+ await page.waitForFunction(()=>{
+  const c=document.getElementById('glcanvas');
+  return c.width===Math.round(c.clientWidth*Math.min(devicePixelRatio||1,2)*Number(document.getElementById('scale').value));
+ });
+});
+test('GLSL Lab desktop preview monitors real frames and pauses GPU work when offscreen',async({page})=>{
+ test.setTimeout(90000);
+ await page.setViewportSize({width:1680,height:940});
+ await page.goto('/glsl-lab.html');
+ const gl=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+ test.skip(!gl,'Real WebGL2 unavailable');
+ await expect(page.locator('#saveBuild')).toBeEnabled({timeout:30000});
+ await expect(page.locator('#previewProfile')).toHaveValue('auto');
+ await expect(page.locator('#previewHealth')).toContainText('fps',{timeout:30000});
+ const initial=await page.evaluate(()=>{
+  const canvas=document.getElementById('glcanvas');
+  return {pixels:canvas.width*canvas.height,frame:window.glslLabBridge.getFrameNumber()};
+ });
+ expect(initial.pixels).toBeLessThanOrEqual(390000);
+ await page.evaluate(()=>{
+  const tail=document.createElement('div');tail.id='performance-test-tail';tail.style.height='3000px';document.body.append(tail);
+  window.scrollTo({top:document.documentElement.scrollHeight,behavior:'instant'});
+ });
+ await page.waitForTimeout(220);
+ const stopped=await page.evaluate(()=>window.glslLabBridge.getFrameNumber());
+ await page.waitForTimeout(250);
+ expect(await page.evaluate(()=>window.glslLabBridge.getFrameNumber())).toBe(stopped);
+ await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+ await page.waitForFunction(count=>window.glslLabBridge.getFrameNumber()>count,stopped,{timeout:20000});
+ const capture=await page.evaluate(()=>window.glslLabBridge.capture());
+ expect(capture.checks.glError).toBe(0);
+ expect(capture.viewport.width*capture.viewport.height).toBeLessThanOrEqual(390000);
+});
+test('Balanced and full-detail preview settings do not modify compiled research shader',async({page})=>{
+ await page.setViewportSize({width:1280,height:850});
+ await page.goto('/glsl-lab.html');
+ const gl=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+ test.skip(!gl,'Real WebGL2 unavailable');
+ await expect(page.locator('#saveBuild')).toBeEnabled({timeout:30000});
+ const original=await page.evaluate(()=>window.glslLabBridge.capture().shaderBody);
+ await page.locator('#previewProfile').selectOption('full');
+ await expect(page.locator('#saveBuild')).toBeEnabled({timeout:30000});
+ const after=await page.evaluate(()=>window.glslLabBridge.capture());
+ expect(after.shaderBody).toBe(original);
+ expect(after.checks.glError).toBe(0);
+});
