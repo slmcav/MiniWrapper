@@ -816,3 +816,32 @@ test('Balanced and full-detail preview settings do not modify compiled research 
  expect(after.shaderBody).toBe(original);
  expect(after.checks.glError).toBe(0);
 });
+
+
+test('Live Lab uses sampled GL validation while research capture verifies the current GPU state',async({page})=>{
+ await page.addInitScript(()=>{
+  window.__errorQueries=0;
+  if(typeof WebGL2RenderingContext==='undefined')return;
+  const old=WebGL2RenderingContext.prototype.getError;
+  WebGL2RenderingContext.prototype.getError=function(...args){
+   window.__errorQueries++;return old.apply(this,args);
+  };
+ });
+ await page.setViewportSize({width:1450,height:850});
+ await page.goto('/glsl-lab.html');
+ const gl=await page.evaluate(()=>!!document.getElementById('glcanvas').getContext('webgl2'));
+ test.skip(!gl,'WebGL2 unavailable');
+ await expect(page.locator('#saveBuild')).toBeEnabled({timeout:30000});
+ const before=await page.evaluate(()=>({count:window.__errorQueries,frame:window.glslLabBridge.getFrameNumber()}));
+ await page.waitForTimeout(550);
+ const live=await page.evaluate(()=>({count:window.__errorQueries,frame:window.glslLabBridge.getFrameNumber()}));
+ expect(live.frame).toBeGreaterThan(before.frame);
+ expect(live.count-before.count).toBeLessThan(8);
+ const current=await page.evaluate(()=>{
+  const count=window.__errorQueries;
+  const receipt=window.glslLabBridge.capture();
+  return {errorQueries:window.__errorQueries-count,receipt};
+ });
+ expect(current.errorQueries).toBe(1);
+ expect(current.receipt.checks.glError).toBe(0);
+});
