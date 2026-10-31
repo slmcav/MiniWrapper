@@ -2,21 +2,13 @@
 
 A **single-file browser wrapper** for compact GLSL fragment-shader expressions. Open `index.html` in a browser with **WebGL2** enabled; the supplied demos are preloaded in the selector and render automatically. No build system, external libraries, accounts, or server are required.
 
-## Desktop WebGL performance (classic editor and GLSL Lab)
+## Desktop WebGL performance
 
-Both tools now default to bounded **Balanced** desktop rendering (classic: 520k pixels/frame; Lab: 390k pixels/frame) with high-refresh frame pacing, offscreen GPU pause, and actual framebuffer/FPS diagnostics. Select **Full detail** for uncapped preview when required. Phone presentation remains unchanged. The scientific observation pipeline still captures actual framebuffer bytes, validates GL status, and archives original pixel dimensions/hashes. See [desktop-performance method and QA](docs/DESKTOP_PERFORMANCE_QA.md).
+On desktop the editor defaults to a bounded **Balanced** preview (about 520k pixels per frame) with high-refresh frame pacing, an offscreen GPU pause and a live resolution/FPS readout under the downloads. Choose **Full detail** in **Preview load** for an uncapped preview. Phone presentation is unchanged.
 
-## GLSL Lab — computational graphics research
+## GLSL Lab has moved
 
-[Open GLSL Lab](glsl-lab.html) for an authored shader, controlled WebGL2 experiment, reproducible measurements and a LaTeX research manuscript. The gallery remains in [the classic shader editor](index.html): all 17 supplied shaders retain their original @YoheiNishitsuji attribution **outside** the scientific Lab. Gallery sources cannot be promoted into scientific study or manuscript exports, including direct pasted copies and straightforward formatting variants.
-
-The mobile Lab keeps the animated canvas pinned while the research controls scroll, with an accessible bottom drawer containing **Play**, **Build**, and **Code**. Swipe horizontally inside the expanded drawer to switch modes. Desktop layouts retain the two-column workspace. Start with an editable typed shader graph; only successfully compiled and drawn sources can enter the evidence pathway.
-
-**Research workflow:** Author a graph → run a controlled 3-point or 9-draw experiment → **Audit current study** → generate the evidence-backed manuscript → **Export LaTeX research package**. Export contains `manuscript.tex`, `build-latex.sh`, `build-latex.ps1`, original shader GLSL, original framebuffer PNG figures, complete experimental JSON, methodology JSON, BibTeX, unsigned source-review packet, source-lineage inventory and SHA-256 manifest. Native TeX Live compilation generates an A4 PDF named `GLSL-{UniqueID}_{PDFSHA256}.pdf`; the final 64-digit hash is computed from the exact compiled PDF bytes.
-
-**Reproducible compiled-PDF handoff:** Run the packaged native TeX script (Bash or PowerShell). It writes the final content-hash-named PDF and `build-receipt.json`, recording the TeX engine/version, input SHA-256 digests, manuscript ID and PDF digest. Preserve those files and the TeX log with the source ZIP. The nine-draw manuscript includes all nine original framebuffer images, not only the three representative treatment frames. CI captures mobile/desktop application screenshots for comparison against the private, uncommitted visual contract.
-
-See [P10 academic release QA](docs/ACADEMIC_RELEASE_QA.md) for the nine-phase research quality gates and [P9 independent replication protocol](docs/P9_REPLICATION_PROTOCOL.md) for the experimental-unit design. The historical P1–P7 implementation notes below describe their original release state; this section is the current research-path contract.
+The GLSL Lab (research workflow, typed expression graph, evidence-backed manuscripts) now lives in the Research Center: <https://stellanovaeducation.com/rc/glsl-lab/>. Source: [`slmcav/ResearchCenter`, `glsl-lab/`](https://github.com/slmcav/ResearchCenter/tree/main/glsl-lab). The Lab's full history remains in this repository's git history. The old `glsl-lab.html` page here redirects to the new address.
 
 ## Run
 
@@ -90,7 +82,6 @@ The user-visible textbox retains the original compact expressions. Only these kn
 ## Files
 
 - `index.html` — fully standalone editor, GLSL compiler, WebGL2 canvas, animation loop, demo selector, and export controls.
-- `glsl-lab.html` — research-only typed expression builder, live WebGL2 canvas, mobile bottom drawer, controlled studies, metadata audit and evidence-backed LaTeX export.
 - `README.md` — usage and explanation of the supplied functions.
 
 ## Browser compatibility and performance
@@ -100,130 +91,3 @@ WebGL2 support and a GPU/driver capable of compiling the provided loops are requ
 ## Deployment
 
 This is a static site. Open `index.html` as a local file or serve the repository with any static web host. If you enable GitHub Pages for this repository, publish the root containing `index.html`. No backend is needed.
-
-## Automated tests and next-step builder contract
-
-The repository includes two test lanes. Run npm run test:fast with Node 22+ for dependency-free regression checks of all 17 original shader expressions, Lab UI contracts, mock WebGL interaction behavior, and the new typed expression graph. For real browser coverage, run npm install, npx playwright install chromium, and npm run test:browser. The full verification command is npm run test:all.
-
-On GitHub, the MiniWrapper quality gates workflow runs fast tests first on main pushes, pull requests, and manual dispatch, then a mobile-sized Chromium/WebGL smoke test. If WebGL2 cannot be created, the GPU-specific test explicitly skips instead of claiming visual verification. Browser failures capture traces/screenshots.
-
-The preliminary graph module (src/expression-graph.mjs) supports five typed nodes: coordinates, rotate, radius, wave, and palette. It checks connections, types, cycles, parameter bounds, deterministic GLSL emission, and JSON round-trip integrity. This is a tested core contract for the future builder, **not yet a drag-and-drop UI**. See docs/TESTING.md for stage gates and the promotion sequence.
-
-
-## First-class application implementation
-
-The staged plan is documented in [docs/IMPLEMENTATION_PHASES.md](docs/IMPLEMENTATION_PHASES.md), with the academic manuscript evidence contract in [docs/PAPER_SCHEMA.md](docs/PAPER_SCHEMA.md). The currently verified WebGL UI is the starting point; planned modules must not be mistaken for shipped features.
-
-Phase P0: restored the Chromium shader build and CI tests.
-Phase P1 foundation: [src/build-evidence.mjs](src/build-evidence.mjs) defines strict, reproducible, SHA-256-identified build receipts with positive compile/link/draw/error requirements. It is implemented and tested but is **not yet wired to the live Lab button**.
-
-The approved visual concept remains **outside GitHub** and must never enter commits, generated assets, documentation, workflow artifacts or releases. Only independently authored textual acceptance criteria are stored in the repository.
-
-
-### P1 live project/build features
-
-GLSL Lab now exposes **Save validated build**, **Export last build JSON**, and a **My projects** panel (save, load, export and import). The build button stays disabled until the active shader has successfully compiled, linked, submitted a draw and passed a WebGL error check. Changing a slider or demo invalidates the previous capture until another frame succeeds. Saved build evidence contains original and compiled source, original attribution, dimensions, exact current control values, shader time, a measured CPU compilation duration, a UTC capture time and a SHA-256 digest. This is a local-browser project and evidence store, not a cloud account or scientific publishing service.
-
-The paper button is intentionally disabled pending P3 measured research data and P4 bibliography/format verification. Browser storage may be cleared by the operating system; **export JSON to preserve copies**. Importing projects creates a new local identity and does not claim that their referenced build hashes are already present or verified. Receipt imports are not yet supported. Project data is stored only on the current browser origin; switching phones or clearing site data does not synchronize it.
-
-
-
-### P2 visual expression builder (working MVP)
-
-GLSL Lab now has a **Build** tab. It provides a touch-friendly connected stack of typed mathematical operations: **Coordinates → Turn → Distance → Wave → Color → Shader output**. Tap an operation to reveal its plain-language description and parameter sliders. Add more **Turn** or **Wave** operations, remove optional operations, reorder compatible adjacent operations, undo/redo edits, inspect generated GLSL, and import/export a graph JSON file. The connections remain mathematically valid because the editor rewires each operation in a validated type-safe chain; it does **not** claim general-purpose freeform node wiring.
-
-Use **Build & preview** to compile the generated shader in real WebGL2. When the preview successfully compiles, links, and draws, the existing **Save validated build** action becomes available. Builder-authored shaders are attributed to the user/editor, **not** to the author of the 17 supplied demos. The graph can also be saved as a named project, exported, imported, and restored on another browser; the original shaders stay unchanged.
-
-### Advanced Wiring — graph version 2
-
-The Build tab also offers **Switch to Advanced Wiring**. This retains Quick Build and adds a separate **typed branching workspace**. Card connections are drawn on a scrollable, zoomable canvas; users can select an operation, choose explicit source nodes for each input port, move cards by touch using their Move handles, nudge positions with accessible arrow buttons, and automatically arrange the layout. The graph has versioned JSON import/export, undo/redo, node addition/removal, and live generated GLSL inspection.
-
-Available operation types are Coordinates, Turn, Distance, Wave, Number, Add, Blend, Color, and Output. Input ports accept **only compatible types**. Cycles, missing upstream sources, and unsafe identifiers are rejected; drafts may contain unconnected nodes, but **Build & preview stays disabled while operations are unused or any input is missing**. Connect each required branch into Output (or remove unused nodes) to promote the expression. Saved project JSON and SHA-256 build receipts retain the complete typed graph and spatial positions. Existing version-1 linear graphs remain supported.
-
-The graph is a directed acyclic graph with explicit port selection, **not** an unconstrained text-to-graph converter. Wires are visually rendered and reconnected using accessible dropdowns rather than dragging wire endpoints; arbitrary shader language syntax, nested reusable subgraphs, and academic-paper generation remain later work. The approved product comp remains entirely outside the GitHub repository.
-
-
-### P3 research capture — reproducible sampled image observations
-
-The Research capture panel reads real RGBA8 pixel data from a *validated* WebGL2 framebuffer using readPixels. A capture creates a matching immutable shader build receipt and preserves a deterministic center-point sampling grid of at most 32 by 24 pixels. Its JSON contains each sampled RGBA byte (WebGL bottom-left origin), the sampling rule, dimensions, independent SHA-256 hashes of the pixels and research record, a UTC timestamp, and the linked original shader or graph build receipt.
-
-All measurements are calculated **only from retained sample bytes**: mean encoded RGB, weighted Rec.709 encoded-channel luma proxy, its population standard deviation, minimum and maximum, 16-bin histogram, clipped-channel fraction, and fraction of alpha below 128. They are reproducible from exported data. This is **not physical linear-light luminance and not a full-frame statistical distribution**. No inference about temporal stability, GPU performance, novelty, or statistical significance follows from one frame.
-
-Export research JSON audits every capture against its linked verified build, then exports captures together with matching shader receipts. A small preview is reconstructed from the sample; it is not a full-resolution research figure. At most 16 captures are stored locally per browser origin. Export files before browser site data are cleared. Independent PNG export remains available. Full-resolution, integrity-linked figure export and controlled repeated-run comparisons remain P3 follow-up tasks. Academic paper generation is still gated. The approved visual design image remains outside GitHub.
-
-
-### P3 full-resolution lossless figures and controlled frame comparisons
-
-The **Full-resolution figures & repeated frames** section in GLSL Lab captures the entire validated WebGL2 RGBA8 drawing buffer. It encodes the bytes as a deterministic, lossless RGBA PNG (flip from WebGL bottom-left coordinates to conventional PNG top-left), with SHA-256 hashes for the raw framebuffer, PNG and figure record. The frozen shader build and P3 center-point sample are retained for each image. Full-frame metrics are computed from all RGBA8 pixels, separately and explicitly distinguished from the earlier 32 × 24 sample metrics.
-
-**Capture 3-frame series** requests three separate successful GPU draws while animation runs and validates unchanged shader source, graph, parameter state and resolution. It records shader time and capture time for each frame, then reports consecutive pairwise mean absolute RGB8 channel differences, maximum channel difference and fraction of pixels whose RGB values changed. Identical images are valid separate observations. These are descriptive *within-session observations*, not statistical independence, FPS/GPU benchmarks, temporal accuracy estimates or significance claims.
-
-**Export figure ZIP** verifies the pixel content, PNG and receipt references, optionally recomputes the comparison, then exports lossless PNG files and an accompanying JSON manifest including figures, research samples, shader receipts and any controlled series. The PNG and ZIP writers use a self-contained deterministic stored-DEFLATE approach, without libraries, conversion to JPEG, or a third-party service. Figure byte arrays are kept **in browser memory only**, up to five per session; the user must export before reload, closing the tab or exhausting device memory. The paper-generation button remains locked pending audited references and paper-format verification. The approved visual contract image is never included in the repository or generated research bundle.
-
-### P3 controlled parameter experiments
-
-The Controlled 3-point experiment panel varies exactly one rendering parameter (Zoom, Hue, Angle, or Brightness) at three values around its original setting. Shader code, graph, all other settings, viewport and GLSL shader time are held fixed. Three real WebGL2 RGBA8 framebuffers are captured. Each is linked to a verified build receipt, center-grid pixel sample, deterministic lossless PNG digest and UTC draw observation. Playback speed affects ordinary animation but not this fixed-time experimental shader uniform.
-
-Export session JSON retains complete raw framebuffer pixels and evidence for independent reconstruction. Export figures ZIP packages that JSON and three lossless PNGs. Import another separately initiated session JSON and the app checks provenance and protocol equivalence before reporting per-level mean absolute RGB8 differences, fraction of changed pixels and mean encoded-luma difference.
-
-This is a three-condition demonstration with one observed frame per condition. Two manually initiated sessions do not establish statistically independent replications, GPU equivalence or significance. No p-values, confidence intervals, performance benchmarks or research-novelty claims are generated. The PhD-style paper button remains gated behind further methods and bibliography review.
-
-### P3 counterbalanced repeated-frame research
-
-The **Counterbalanced repeat study** panel extends the three-level demonstration into three distinct observed WebGL2 draws per treatment (nine total). It uses three cyclically rotated blocks: A/B/C, B/C/A and C/A/B (or a recorded phase rotation), so each treatment occupies each serial position once. This is **positional counterbalancing, not randomization**; no claim of carryover control or independent experimental trials is made.
-
-The app captures browser-reported WebGL2 version, GLSL shading language version, masked vendor and renderer strings, fragment highp precision, relevant GPU limits and pixel ratio. Unmasked GPU identifiers and device serials are not acquired. These observations describe the API-reported environment; matching values do not prove identical underlying hardware or driver conditions.
-
-Every draw holds the shader, graph, viewport, other uniforms and GLSL time fixed, changes only the specified treatment uniform, and retains full RGBA8 pixels, samples, lossless PNG evidence, a verified shader build receipt, draw number and UTC timestamp. The 9-frame study is limited to 180,000 pixels per draw to bound mobile memory use. Per-treatment output includes mean, sample standard deviation and observed min/max of each frame's full-frame encoded-channel luma proxy (n=3). This sample standard deviation is descriptive dispersion, **not an uncertainty interval or significance test**.
-
-Export full study JSON, or a ZIP containing that independently auditable JSON and nine lossless PNGs. Import a previous compatible study to compare mean/dispersion by treatment; the app rejects changed source, protocol or reported WebGL capabilities. The figures remain in browser memory until exported and are not cloud-synced. The manuscript button stays disabled pending independently verified references, formal experiment design and editorial review.
-
-### P4 bibliography and methodology preflight
-
-GLSL Lab now includes a **Bibliography and methodology audit** section after the repeat-study controls. The source registry retains published identifiers, title, author, year, venue, claim applicability, source URLs, review date and metadata-verification status. It distinguishes authoritative standards from scholarly method literature; references checked only through a secondary source remain quarantined and are not included in automated BibTeX export. The detailed register is at `docs/REFERENCES.md`.
-
-The audit accepts an exported 3-point or 9-frame experiment JSON, recomputes the original shader-build, sampled-pixel, full-frame and figure evidence, verifies the archive and source hashes, and produces a separate content-hashed methodology report and scoped bibliography. It records the experimental design and each supportable or unsupported inference. **An integrity audit is not independent scientific peer review.** No reviewer has signed off on novelty, experimental independence, calibration or statistical significance. The Generate Academic Paper button stays disabled.
-
-### P4 evidence-grounded manuscript generator (research draft)
-
-After a 3-point or 9-frame exported study has passed the Bibliography and methodology audit, the **Generate Research Draft** action unlocks. It creates a print-styled, self-contained HTML manuscript with a title and abstract; numbered introduction, methods, results, discussion, limitations and reproducibility sections; exact encoded-channel luma equations; a table of archived frame-wide measurements; representative PNG figures selected by the first-observation-per-treatment rule; linked bibliography; and an appendix containing the original GLSL source. Source attribution comes from the frozen shader receipt; manuscript authorship is deliberately left unspecified rather than fabricated.
-
-The document includes a read-only in-page preview, **Download print-ready HTML**, **Print / Save as PDF** through the browser's native print workflow, and **Export complete research ZIP**. The ZIP contains HTML with relative figure references, all original lossless PNG images, full experiment JSON with pixel data, methodology-audit JSON, scoped BibTeX, exact GLSL and a manifest listing SHA-256 digests for the exported files. The standalone downloaded HTML embeds its representative figures for offline printing. No external network service or runtime CSS dependency is needed.
-
-Before assembling or archiving, the engine recomputes the complete study/audit, original full-resolution frames, figure hashes and citation scope; it refuses altered artifacts. It reports only measurements actually present, labels n=1 SD as *not estimated*, describes n=3 SD as descriptive, preserves underlying authorship credit, and excludes sources pending metadata review. The output explicitly states **UNREVIEWED RESEARCH DRAFT**, not peer reviewed, publication-ready or scientifically novel. PDF creation uses the platform's print dialog and requires selecting a PDF destination; **it is not a direct JavaScript-generated PDF file**. The external scholarly sign-off and publication release gate remain separate.
-
-### P5 — Historical direct-PDF fixture (superseded in the academic pipeline)
-
-The earlier implementation produced a PDF using custom browser JavaScript. Its standalone formatter and Poppler checks remain as a regression fixture for archive compatibility. The **current** scholarly PDF pathway instead generates verifiable `manuscript.tex` and compiles it using native `pdfLaTeX` from the complete research package. Original WebGL2 figures and all evidence receipts are retained. The scientific PDF is compiled after export; the browser does not substitute an HTML printout or the legacy JavaScript PDF for TeX output.
-
-### P10 — Research-only Lab and TeX manuscript export
-
-The research page accepts only user-authored typed expression graphs. The 17 credited classic-gallery demonstrations are excluded at both shader study auditing and manuscript assembly, even if the original source is pasted into a purportedly independent project. The source filter identifies exact and straightforward reformatted copies; the signed-off research rights review remains separate.
-
-Research users can build, save and export a graph; perform controlled GPU captures; audit the current in-memory study or an imported archive; create a cited manuscript; export a source-complete LaTeX ZIP; run the included TeX Live scripts; and reproduce the archived data with the offline ZIP verifier. A4 PDF production is tested using native TeX, Poppler text/image/page extraction and content-hash filename validation. The approved visual contract is private and is not stored in GitHub.
-
-### P6 — Independently verify a completed research ZIP
-
-The Research manuscript draft section now includes **Verify an exported research bundle**. Import the previously exported ZIP to verify the entire experiment, every archived RGBA/PNG figure, the bibliography, the exact manuscript/LaTeX source and the unsigned editorial-review packet. It re-creates the original ZIP and compares **every byte** rather than trusting the exported manifest. A successful result can be downloaded as an unsigned machine-verification receipt. A failed or tampered archive refuses the receipt.
-
-The same verification is available offline with Node.js 22+:
-
-```sh
-node scripts/verify-research-zip.mjs path/to/manuscript.zip
-node scripts/verify-research-zip.mjs path/to/manuscript.zip --receipt path/to/verification.json
-```
-
-This verification can be repeated on another computer without network access, but it is an internal evidence-consistency test—not proof of original hardware conditions, human identity, independent replication or academic publication. Keep the Git revision that produced the archive, because evolving bibliography/layout code can legitimately require the original version for byte-identical reconstruction. See `docs/REPRODUCIBILITY.md` for the complete protocol and claim-level citation audit.
-
-The P6 independent ZIP verifier includes an exact `archiveSha256` in its verification receipt, visibly and through the offline CLI. This is the digest of the supplied ZIP byte stream, distinct from the study SHA-256, manuscript SHA-256, and the per-file inventory. Keep the corresponding Git checkout to reproduce source-dependent rendering. It is not a signature or publication approval.
-
-
-Every new research ZIP contains `source-lineage.json`, which records the exact producer-source snapshot and the pinned Git blob IDs of the source-generating and verification files. The independent archive checker refuses lineage that does not match its release, while fast CI fails if any pinned source file changes without updating the snapshot. Use the recorded Git snapshot when independently reproducing an older study. This protects against silent cross-version bibliography and PDF-layout drift without suggesting that code content hashes authenticate the origin of GPU pixels.
-
-### P7 citation-by-citation review notes
-
-**Source-level review workspace** (in the bibliography/research section) imports the original unsigned `review-packet.json` from an exported manuscript. A human reader can record a **cited** primary source, the exact claim examined, a passage/page locator, a specific supporting/contradicting/needs-revision assessment, a stated rationale, and their declared name. The Lab exports a SHA-256-addressed `glsl-lab/source-review-dossier/1` JSON file and verifies a re-import against the original manuscript-linked packet. This dossier is separate from and **never mutates** the original manuscript ZIP, source receipts or publication gate. Its recorded name and source-reading activity are user-declared, not authenticated or independently signed; peer review is **not** claimed. See `docs/SOURCE_CLAIM_CROSSWALK.md` for the initial primary-source and abstract-level evidence limits.
-
-### P7 claim coverage and competing source interpretations
-
-The **Source-level review workspace** now builds a separate, exportable claim crosswalk from a citation-linked human-declared dossier. It reports cited sources with no notes, claim-specific support/revision/contradiction declarations, and disagreements between recorded interpretations. Claim grouping requires exact normalized text; different claims are not collapsed because they reference the same paper. Notes cannot substitute a different website for a registered citation URL. The crosswalk is SHA-256 content-addressed, revalidates its source notes, and **never** marks human identity, independent review or publication as verified. See `docs/EDITORIAL_REVIEW.md`.
